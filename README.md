@@ -1,6 +1,6 @@
 # Taxi Transport Library
 
-[![Build Status](https://github.com/fpganinja/taxi/workflows/Regression%20Tests/badge.svg?branch=master)](https://github.com/fpganinja/taxi/actions/)
+[![Regression Tests](https://github.com/fpganinja/taxi/actions/workflows/regression-tests.yml/badge.svg)](https://github.com/fpganinja/taxi/actions/workflows/regression-tests.yml)
 
 AXI, AXI stream, Ethernet, and PCIe components in System Verilog.
 
