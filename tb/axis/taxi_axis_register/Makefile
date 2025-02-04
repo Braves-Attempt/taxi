@@ -33,7 +33,6 @@ export PARAM_DATA_W := 8
 export PARAM_KEEP_EN := $(shell echo $$(( $(PARAM_DATA_W) > 8 )))
 export PARAM_KEEP_W := $(shell echo $$(( ( $(PARAM_DATA_W) + 7 ) / 8 )))
 export PARAM_STRB_EN := 0
-export PARAM_DEPTH := $(shell echo $$(( 1024 * $(PARAM_KEEP_W) )))
 export PARAM_LAST_EN := 1
 export PARAM_ID_EN := 1
 export PARAM_ID_W := 8

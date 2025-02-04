@@ -18,7 +18,6 @@ Authors:
 module test_taxi_axis_register #
 (
     /* verilator lint_off WIDTHTRUNC */
-    parameter DEPTH = 4096,
     parameter DATA_W = 8,
     parameter logic KEEP_EN = (DATA_W>8),
     parameter KEEP_W = ((DATA_W+7)/8),
