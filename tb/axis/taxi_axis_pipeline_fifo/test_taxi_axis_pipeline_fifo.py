@@ -321,6 +321,7 @@ def test_taxi_axis_pipeline_fifo(request, length, data_w):
     parameters['DATA_W'] = data_w
     parameters['KEEP_EN'] = int(parameters['DATA_W'] > 8)
     parameters['KEEP_W'] = (parameters['DATA_W'] + 7) // 8
+    parameters['STRB_EN'] = 0
     parameters['LAST_EN'] = 1
     parameters['ID_EN'] = 1
     parameters['ID_W'] = 8
