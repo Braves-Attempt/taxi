@@ -185,12 +185,48 @@ wire               m_axis_tready_pipe;
 wire               m_axis_tvalid_pipe = mem_rd_valid_pipe_reg[RAM_PIPELINE+1-1];
 
 wire [DATA_W-1:0]  m_axis_tdata_pipe  = mem_rd_data[DATA_W-1:0];
-wire [KEEP_W-1:0]  m_axis_tkeep_pipe  = KEEP_EN ? mem_rd_data[KEEP_OFFSET +: KEEP_W] : '1;
-wire [KEEP_W-1:0]  m_axis_tstrb_pipe  = STRB_EN ? mem_rd_data[STRB_OFFSET +: KEEP_W] : m_axis_tkeep_pipe;
-wire               m_axis_tlast_pipe  = LAST_EN ? mem_rd_data[LAST_OFFSET] : 1'b1;
-wire [ID_W-1:0]    m_axis_tid_pipe    = ID_EN   ? mem_rd_data[ID_OFFSET +: ID_W] : '0;
-wire [DEST_W-1:0]  m_axis_tdest_pipe  = DEST_EN ? mem_rd_data[DEST_OFFSET +: DEST_W] : '0;
-wire [USER_W-1:0]  m_axis_tuser_pipe  = USER_EN ? mem_rd_data[USER_OFFSET +: USER_W] : '0;
+wire [KEEP_W-1:0]  m_axis_tkeep_pipe;
+wire [KEEP_W-1:0]  m_axis_tstrb_pipe;
+wire               m_axis_tlast_pipe;
+wire [ID_W-1:0]    m_axis_tid_pipe;
+wire [DEST_W-1:0]  m_axis_tdest_pipe;
+wire [USER_W-1:0]  m_axis_tuser_pipe;
+
+if (KEEP_EN) begin
+    assign m_axis_tkeep_pipe  = mem_rd_data[KEEP_OFFSET +: KEEP_W];
+end else begin
+    assign m_axis_tkeep_pipe  = '1;
+end
+
+if (STRB_EN) begin
+    assign m_axis_tstrb_pipe  = mem_rd_data[STRB_OFFSET +: KEEP_W];
+end else begin
+    assign m_axis_tstrb_pipe  = m_axis_tkeep_pipe;
+end
+
+if (LAST_EN) begin
+    assign m_axis_tlast_pipe  = mem_rd_data[LAST_OFFSET];
+end else begin
+    assign m_axis_tlast_pipe  = 1'b1;
+end
+
+if (ID_EN) begin
+    assign m_axis_tid_pipe    = mem_rd_data[ID_OFFSET +: ID_W];
+end else begin
+    assign m_axis_tid_pipe    = '0;
+end
+
+if (DEST_EN) begin
+    assign m_axis_tdest_pipe  = mem_rd_data[DEST_OFFSET +: DEST_W];
+end else begin
+    assign m_axis_tdest_pipe  = '0;
+end
+
+if (USER_EN) begin
+    assign m_axis_tuser_pipe  = mem_rd_data[USER_OFFSET +: USER_W];
+end else begin
+    assign m_axis_tuser_pipe  = '0;
+end
 
 wire               m_axis_tready_out;
 wire               m_axis_tvalid_out;
