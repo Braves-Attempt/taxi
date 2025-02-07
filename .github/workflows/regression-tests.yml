@@ -12,8 +12,14 @@ jobs:
         group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: v0xnihili/install-verilator-action@main
+    - name: Check disk usage
+      run: df -h
+
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Install Verilator
+      uses: v0xnihili/install-verilator-action@main
       with:
         version: v5.032
 
@@ -22,5 +28,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install tox tox-gh-actions
 
+    - name: Check disk usage
+      run: df -h
+
     - name: Test with tox
       run: tox -- -n auto --verbose --splits 20 --group ${{ matrix.group }} --splitting-algorithm least_duration
+
+    - name: Check disk usage
+      run: df -h
