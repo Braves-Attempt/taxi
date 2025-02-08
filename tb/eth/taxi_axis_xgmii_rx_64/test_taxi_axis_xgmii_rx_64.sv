@@ -35,7 +35,7 @@ logic rst;
 logic [DATA_W-1:0] xgmii_rxd;
 logic [CTRL_W-1:0] xgmii_rxc;
 
-taxi_axis_if #(.DATA_W(DATA_W), .USER_W(USER_W)) m_axis_rx();
+taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(USER_W)) m_axis_rx();
 
 logic [PTP_TS_W-1:0] ptp_ts;
 

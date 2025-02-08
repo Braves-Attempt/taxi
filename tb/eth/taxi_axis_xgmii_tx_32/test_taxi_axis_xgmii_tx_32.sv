@@ -36,7 +36,7 @@ localparam USER_W = TX_CPL_CTRL_IN_TUSER ? 2 : 1;
 logic clk;
 logic rst;
 
-taxi_axis_if #(.DATA_W(DATA_W), .USER_W(USER_W), .ID_EN(1), .ID_W(TX_TAG_W)) s_axis_tx();
+taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(USER_W), .ID_EN(1), .ID_W(TX_TAG_W)) s_axis_tx();
 taxi_axis_if #(.DATA_W(PTP_TS_W), .KEEP_W(1), .ID_EN(1), .ID_W(TX_TAG_W)) m_axis_tx_cpl();
 
 logic [DATA_W-1:0] xgmii_txd;
