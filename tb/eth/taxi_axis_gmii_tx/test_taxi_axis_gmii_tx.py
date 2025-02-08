@@ -95,7 +95,7 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12, enable_
     test_frames = [payload_data(x) for x in payload_lengths()]
 
     for test_data in test_frames:
-        await tb.source.send(AxiStreamFrame(test_data, tid=0, tuser=2))
+        await tb.source.send(AxiStreamFrame(test_data, tid=0, tuser=0))
 
     for test_data in test_frames:
         rx_frame = await tb.sink.recv()

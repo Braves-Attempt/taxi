@@ -262,7 +262,7 @@ always_comb begin
         end
         m_axis_tx_cpl_tag_next = s_axis_tx.tid;
         if (TX_CPL_CTRL_IN_TUSER) begin
-            m_axis_tx_cpl_valid_next = (s_axis_tx.tuser >> 1) != 0;
+            m_axis_tx_cpl_valid_next = (s_axis_tx.tuser >> 1) == 0;
         end else begin
             m_axis_tx_cpl_valid_next = 1'b1;
         end

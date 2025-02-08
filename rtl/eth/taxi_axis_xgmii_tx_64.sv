@@ -560,9 +560,9 @@ always_ff @(posedge clk) begin
         m_axis_tx_cpl_tag_reg <= s_axis_tx.tid;
         if (TX_CPL_CTRL_IN_TUSER) begin
             if (PTP_TS_FMT_TOD) begin
-                m_axis_tx_cpl_valid_int_reg <= (s_axis_tx.tuser >> 1) != 0;
+                m_axis_tx_cpl_valid_int_reg <= (s_axis_tx.tuser >> 1) == 0;
             end else begin
-                m_axis_tx_cpl_valid_reg <= (s_axis_tx.tuser >> 1) != 0;
+                m_axis_tx_cpl_valid_reg <= (s_axis_tx.tuser >> 1) == 0;
             end
         end else begin
             if (PTP_TS_FMT_TOD) begin
