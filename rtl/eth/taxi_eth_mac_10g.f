@@ -8,3 +8,4 @@ taxi_mac_ctrl_rx.sv
 taxi_mac_pause_ctrl_tx.sv
 taxi_mac_pause_ctrl_rx.sv
 ../lfsr/taxi_lfsr.sv
+../axis/taxi_axis_if.sv

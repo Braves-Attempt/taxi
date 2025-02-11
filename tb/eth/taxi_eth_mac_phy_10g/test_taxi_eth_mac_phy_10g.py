@@ -743,7 +743,6 @@ def test_taxi_eth_mac_phy_10g(request, data_w, dic_en, pfc_en):
     verilog_sources = [
         os.path.join(tests_dir, f"{toplevel}.sv"),
         os.path.join(rtl_dir, "eth", f"{dut}.f"),
-        os.path.join(rtl_dir, "axis", "taxi_axis_if.sv"),
     ]
 
     verilog_sources = process_f_files(verilog_sources)
