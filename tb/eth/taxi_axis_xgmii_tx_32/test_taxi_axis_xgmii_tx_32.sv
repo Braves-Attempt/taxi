@@ -19,7 +19,6 @@ module test_taxi_axis_xgmii_tx_32 #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 32,
-    parameter CTRL_W = (DATA_W/8),
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -31,6 +30,7 @@ module test_taxi_axis_xgmii_tx_32 #
 )
 ();
 
+localparam CTRL_W = DATA_W/8;
 localparam USER_W = TX_CPL_CTRL_IN_TUSER ? 2 : 1;
 
 logic clk;

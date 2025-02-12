@@ -19,7 +19,6 @@ module test_taxi_axis_xgmii_rx_64 #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 64,
-    parameter CTRL_W = (DATA_W/8),
     parameter logic PTP_TS_EN = 1'b0,
     parameter logic PTP_TS_FMT_TOD = 1'b1,
     parameter PTP_TS_W = PTP_TS_FMT_TOD ? 96 : 64
@@ -27,6 +26,7 @@ module test_taxi_axis_xgmii_rx_64 #
 )
 ();
 
+localparam CTRL_W = DATA_W/8;
 localparam USER_W = (PTP_TS_EN ? PTP_TS_W : 0) + 1;
 
 logic clk;

@@ -31,7 +31,6 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
 export PARAM_DATA_W := 64
-export PARAM_CTRL_W := $(shell expr $(PARAM_DATA_W) / 8 )
 export PARAM_PADDING_EN := 1
 export PARAM_DIC_EN := 1
 export PARAM_MIN_FRAME_LEN := 64

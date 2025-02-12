@@ -321,7 +321,6 @@ def test_taxi_axis_xgmii_tx_32(request, dic_en):
     parameters = {}
 
     parameters['DATA_W'] = 32
-    parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['PADDING_EN'] = 1
     parameters['DIC_EN'] = dic_en
     parameters['MIN_FRAME_LEN'] = 64

@@ -154,7 +154,6 @@ def test_taxi_axis_xgmii_rx_64(request):
     parameters = {}
 
     parameters['DATA_W'] = 64
-    parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['PTP_TS_EN'] = 1
     parameters['PTP_TS_FMT_TOD'] = 1
     parameters['PTP_TS_W'] = 96 if parameters['PTP_TS_FMT_TOD'] else 64

@@ -19,8 +19,7 @@ module test_taxi_eth_mac_phy_10g #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 64,
-    parameter KEEP_W = (DATA_W/8),
-    parameter HDR_W = (DATA_W/32),
+    parameter HDR_W = 2,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -50,9 +49,9 @@ logic rx_rst;
 logic tx_clk;
 logic tx_rst;
 
-taxi_axis_if #(.DATA_W(DATA_W), .KEEP_W(KEEP_W), .USER_EN(1), .USER_W(TX_USER_W), .ID_EN(1), .ID_W(TX_TAG_W)) s_axis_tx();
+taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(TX_USER_W), .ID_EN(1), .ID_W(TX_TAG_W)) s_axis_tx();
 taxi_axis_if #(.DATA_W(PTP_TS_W), .KEEP_W(1), .ID_EN(1), .ID_W(TX_TAG_W)) m_axis_tx_cpl();
-taxi_axis_if #(.DATA_W(DATA_W), .KEEP_W(KEEP_W), .USER_EN(1), .USER_W(RX_USER_W)) m_axis_rx();
+taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(RX_USER_W)) m_axis_rx();
 
 logic [DATA_W-1:0] serdes_tx_data;
 logic [HDR_W-1:0] serdes_tx_hdr;

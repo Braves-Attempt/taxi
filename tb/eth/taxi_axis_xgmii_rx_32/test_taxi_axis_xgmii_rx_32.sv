@@ -19,13 +19,13 @@ module test_taxi_axis_xgmii_rx_32 #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 32,
-    parameter CTRL_W = (DATA_W/8),
     parameter logic PTP_TS_EN = 1'b0,
     parameter PTP_TS_W = 96
     /* verilator lint_on WIDTHTRUNC */
 )
 ();
 
+localparam CTRL_W = DATA_W/8;
 localparam USER_W = (PTP_TS_EN ? PTP_TS_W : 0) + 1;
 
 logic clk;
