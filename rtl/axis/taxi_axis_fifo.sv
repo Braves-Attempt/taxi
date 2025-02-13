@@ -115,7 +115,7 @@ if (DROP_BAD_FRAME && !(FRAME_FIFO && DROP_OVERSIZE_FRAME))
 if (DROP_WHEN_FULL && !(FRAME_FIFO && DROP_OVERSIZE_FRAME))
     $fatal(0, "Error: DROP_WHEN_FULL set requires FRAME_FIFO and DROP_OVERSIZE_FRAME set (instance %m)");
 
-if ((DROP_BAD_FRAME || MARK_WHEN_FULL) && (USER_BAD_FRAME_MASK & {USER_W{1'b1}}) == 0)
+if ((DROP_BAD_FRAME || MARK_WHEN_FULL) && (USER_W'(USER_BAD_FRAME_MASK) & {USER_W{1'b1}}) == 0)
     $fatal(0, "Error: Invalid USER_BAD_FRAME_MASK value (instance %m)");
 
 if (MARK_WHEN_FULL && FRAME_FIFO)
@@ -177,7 +177,7 @@ if (STRB_EN) assign mem_wr_data[STRB_OFFSET +: KEEP_W] = s_axis.tkeep;
 if (LAST_EN) assign mem_wr_data[LAST_OFFSET]           = s_axis.tlast | mark_frame_reg;
 if (ID_EN)   assign mem_wr_data[ID_OFFSET   +: ID_W]   = s_axis.tid;
 if (DEST_EN) assign mem_wr_data[DEST_OFFSET +: DEST_W] = s_axis.tdest;
-if (USER_EN) assign mem_wr_data[USER_OFFSET +: USER_W] = mark_frame_reg ? USER_BAD_FRAME_VALUE : s_axis.tuser;
+if (USER_EN) assign mem_wr_data[USER_OFFSET +: USER_W] = mark_frame_reg ? USER_W'(USER_BAD_FRAME_VALUE) : s_axis.tuser;
 
 wire [WIDTH-1:0] mem_rd_data = mem_rd_data_pipe_reg[RAM_PIPELINE+1-1];
 
@@ -279,7 +279,7 @@ always_ff @(posedge clk) begin
                 if (s_axis.tlast || (!DROP_OVERSIZE_FRAME && (full_wr || send_frame_reg))) begin
                     // end of frame or send frame
                     send_frame_reg <= !s_axis.tlast;
-                    if (s_axis.tlast && DROP_BAD_FRAME && USER_BAD_FRAME_MASK & ~(s_axis.tuser ^ USER_BAD_FRAME_VALUE)) begin
+                    if (s_axis.tlast && DROP_BAD_FRAME && (USER_W'(USER_BAD_FRAME_MASK) & ~(s_axis.tuser ^ USER_W'(USER_BAD_FRAME_VALUE))) != 0) begin
                         // bad packet, reset write pointer
                         wr_ptr_reg <= wr_ptr_commit_reg;
                         bad_frame_reg <= 1'b1;
