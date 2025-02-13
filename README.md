@@ -19,3 +19,44 @@ Taxi is provided by FPGA Ninja, LLC under either the CERN Open Hardware Licence 
 Under the strongly-reciprocal CERN OHL, you must provide the source code of the entire digital design upon request, including all modifications, extensions, and customizations, such that the design can be rebuilt.  If this is not an acceptable restriction for your product, please contact info@fpga.ninja to inquire about a commercial license without this requirement.  License fees support the continued development and maintenance of this project and related projects.
 
 To facilitate the dual-license model, contributions to the project can only be accepted under a contributor license agreement.
+
+## Components
+
+*  AXI stream
+    *  SV interface for AXI stream
+    *  Register slice
+    *  Width converter
+    *  Synchronous FIFO
+    *  Asynchronous FIFO
+    *  Combined FIFO + width converter
+    *  Combined async FIFO + width converter
+*  Ethernet
+    *  1G MAC
+    *  1G MAC + FIFO
+    *  10G MAC
+    *  10G MAC + FIFO
+    *  10G MAC/PHY
+    *  10G MAC/PHY + FIFO
+    *  10G PHY
+*  Linear-feedback shift register
+    *  Parametrizable combinatorial LFSR/CRC module
+    *  CRC computation module
+    *  PRBS generator
+    *  PRBS checker
+    *  LFSR self-synchronizing scrambler
+    *  LFSR self-synchronizing descrambler
+*  Low-speed serial
+    *  UART
+*  Primitives
+    *  Arbiter
+    *  Priority encoder
+*  Precision Time Protocol (PTP)
+    *  PTP clock
+    *  PTP CDC
+*  Synchronization primitives
+    *  Reset synchronizer
+    *  Signal synchronizer
+
+## Testing
+
+Running the included testbenches requires [cocotb](https://github.com/cocotb/cocotb), [cocotbext-axi](https://github.com/alexforencich/cocotbext-axi), [cocotbext-eth](https://github.com/alexforencich/cocotbext-eth), [cocotbext-uart](https://github.com/alexforencich/cocotbext-uart), [cocotbext-pcie](https://github.com/alexforencich/cocotbext-pcie), and [Verilator](https://www.veripool.org/verilator/).  The testbenches can be run with pytest directly (requires [cocotb-test](https://github.com/themperek/cocotb-test)), pytest via tox, or via cocotb makefiles.
