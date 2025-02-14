@@ -30,6 +30,11 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  Asynchronous FIFO
     *  Combined FIFO + width converter
     *  Combined async FIFO + width converter
+    *  Broadcaster
+    *  COBS encoder
+    *  COBS decoder
+    *  Pipeline register
+    *  Pipeline FIFO
 *  Ethernet
     *  1G MAC
     *  1G MAC + FIFO
