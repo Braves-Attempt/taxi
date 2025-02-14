@@ -99,7 +99,7 @@ logic src_ts_step_sync_reg = '0;
 logic [47:0] ts_s_reg = '0, ts_s_next;
 logic [TS_NS_W+FNS_W-1:0] ts_ns_reg = '0, ts_ns_next;
 logic [TS_NS_W+FNS_W-1:0] ts_ns_inc_reg = '0, ts_ns_inc_next;
-logic [TS_NS_W+FNS_W+1-1:0] ts_ns_ovf_reg = {TS_NS_W+FNS_W+1{1'b1}}, ts_ns_ovf_next;
+logic [TS_NS_W+FNS_W+1-1:0] ts_ns_ovf_reg = '1, ts_ns_ovf_next;
 
 logic ts_step_reg = 1'b0, ts_step_next;
 
@@ -255,7 +255,7 @@ always_ff @(posedge input_clk) begin
     if (input_rst) begin
         input_ts_step_reg <= 1'b0;
 
-        src_phase_reg <= {PHASE_CNT_W{1'b0}};
+        src_phase_reg <= '0;
         src_sync_reg <= 1'b0;
         src_update_reg <= 1'b0;
     end
@@ -361,10 +361,10 @@ always_comb begin
         // saturate
         if (dest_ovf[1]) begin
             // sign bit set indicating underflow across zero; saturate to zero
-            dest_err_int_next = {PHASE_ACC_W{1'b0}};
+            dest_err_int_next = '0;
         end else if (dest_ovf[0]) begin
             // sign bit clear but carry bit set indicating overflow; saturate to all 1
-            dest_err_int_next = {PHASE_ACC_W{1'b1}};
+            dest_err_int_next = '1;
         end
 
         // compute output
@@ -377,15 +377,15 @@ always_comb begin
         // saturate
         if (dest_ovf[1]) begin
             // sign bit set indicating underflow across zero; saturate to zero
-            dest_phase_inc_next = {PHASE_ACC_W{1'b0}};
+            dest_phase_inc_next = '0;
         end else if (dest_ovf[0]) begin
             // sign bit clear but carry bit set indicating overflow; saturate to all 1
-            dest_phase_inc_next = {PHASE_ACC_W{1'b1}};
+            dest_phase_inc_next = '1;
         end
 
         // locked status
         if ($signed(sample_acc_sync_reg[SAMPLE_ACC_W-1:2]) == 0 || $signed(sample_acc_sync_reg[SAMPLE_ACC_W-1:1]) == -1) begin
-            if (dest_sync_lock_count_reg == {DEST_SYNC_LOCK_W{1'b1}}) begin
+            if (&dest_sync_lock_count_reg) begin
                 dest_sync_locked_next = 1'b1;
             end else begin
                 dest_sync_lock_count_next = dest_sync_lock_count_reg + 1;
@@ -492,8 +492,8 @@ always_ff @(posedge output_clk) begin
     dest_sync_locked_reg <= dest_sync_locked_next;
 
     if (output_rst) begin
-        dest_phase_reg <= {PHASE_ACC_W{1'b0}};
-        dest_phase_inc_reg <= {PHASE_ACC_W{1'b0}};
+        dest_phase_reg <= '0;
+        dest_phase_inc_reg <= '0;
         dest_sync_reg <= 1'b0;
         dest_update_reg <= 1'b0;
 
@@ -642,7 +642,7 @@ always_comb begin
             end
         end
 
-        if (freq_locked_reg == 0) begin
+        if (!freq_locked_reg) begin
             ts_ns_diff_next = $signed(phase_err_out_reg) * 8 * 2**CMP_FNS_W;
             ts_diff_valid_next = 1'b1;
         end
@@ -675,10 +675,10 @@ always_comb begin
         // saturate
         if (ptp_ovf[1]) begin
             // sign bit set indicating underflow across zero; saturate to zero
-            time_err_int_next = {TIME_ERR_INT_W{1'b0}};
+            time_err_int_next = '0;
         end else if (ptp_ovf[0]) begin
             // sign bit clear but carry bit set indicating overflow; saturate to all 1
-            time_err_int_next = {TIME_ERR_INT_W{1'b1}};
+            time_err_int_next = '1;
         end
 
         // compute output
@@ -690,17 +690,17 @@ always_comb begin
         // saturate
         if (ptp_ovf[1]) begin
             // sign bit set indicating underflow across zero; saturate to zero
-            period_ns_next = {NS_W+FNS_W{1'b0}};
+            period_ns_next = '0;
         end else if (ptp_ovf[0]) begin
             // sign bit clear but carry bit set indicating overflow; saturate to all 1
-            period_ns_next = {NS_W+FNS_W{1'b1}};
+            period_ns_next = '1;
         end
 
         // adjust period if integrator is saturated
         if (time_err_int_reg == 0) begin
-            period_ns_next = {NS_W+FNS_W{1'b0}};
+            period_ns_next = '0;
         end else if (~time_err_int_reg == 0) begin
-            period_ns_next = {NS_W+FNS_W{1'b1}};
+            period_ns_next = '1;
         end
 
         // locked status
