@@ -53,6 +53,10 @@ To facilitate the dual-license model, contributions to the project can only be a
 *  Precision Time Protocol (PTP)
     *  PTP clock
     *  PTP CDC
+    *  PTP period output
+    *  PTP TD leaf clock
+    *  PTP TD PHC
+    *  PTP TD relative-to-ToD converter
 *  Synchronization primitives
     *  Reset synchronizer
     *  Signal synchronizer
