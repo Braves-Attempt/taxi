@@ -58,7 +58,7 @@ class TB:
         self.serdes_sink = BaseRSerdesSink(dut.serdes_tx_data, dut.serdes_tx_hdr, dut.tx_clk)
 
         self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.logic_clk, dut.logic_rst)
-        self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.tx_clk, dut.tx_rst)
+        self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.logic_clk, dut.logic_rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.logic_clk, dut.logic_rst)
 
         self.ptp_clock = PtpClockSimTime(ts_tod=dut.ptp_ts, clock=dut.logic_clk)
