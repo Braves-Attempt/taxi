@@ -36,6 +36,12 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  Pipeline register
     *  Pipeline FIFO
 *  Ethernet
+    *  10/100 MII MAC
+    *  10/100 MII MAC + FIFO
+    *  10/100/1000 GMII MAC
+    *  10/100/1000 GMII MAC + FIFO
+    *  10/100/1000 RGMII MAC
+    *  10/100/1000 RGMII MAC + FIFO
     *  1G MAC
     *  1G MAC + FIFO
     *  10G MAC
@@ -43,6 +49,21 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  10G MAC/PHY
     *  10G MAC/PHY + FIFO
     *  10G PHY
+    *  MII PHY interface
+    *  GMII PHY interface
+    *  RGMII PHY interface
+*  General input/output
+    *  Switch debouncer
+    *  Generic IDDR
+    *  Generic ODDR
+    *  Source-synchronous DDR input
+    *  Source-synchronous DDR differential input
+    *  Source-synchronous DDR output
+    *  Source-synchronous DDR differential output
+    *  Source-synchronous SDR input
+    *  Source-synchronous SDR differential input
+    *  Source-synchronous SDR output
+    *  Source-synchronous SDR differential output
 *  Linear-feedback shift register
     *  Parametrizable combinatorial LFSR/CRC module
     *  CRC computation module
