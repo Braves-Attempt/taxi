@@ -38,8 +38,9 @@ class TB:
         self.rgmii_phy = RgmiiPhy(dut.rgmii_txd, dut.rgmii_tx_ctl, dut.rgmii_tx_clk,
             dut.rgmii_rxd, dut.rgmii_rx_ctl, dut.rgmii_rx_clk, speed=speed)
 
-        self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.tx_clk, dut.tx_rst)
-        self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.tx_clk, dut.tx_rst)
+        # the UUT forwards tx_clk/rx_clk, which can cause problems in cocotb
+        self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.gtx_clk, dut.tx_rst)
+        self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.gtx_clk, dut.tx_rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.rx_clk, dut.rx_rst)
 
         self.rx_ptp_clock = PtpClockSimTime(ts_tod=dut.rx_ptp_ts, clock=dut.rx_clk)

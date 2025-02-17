@@ -41,7 +41,7 @@ class TB:
         self.gmii_phy = GmiiPhy(dut.gmii_txd, dut.gmii_tx_er, dut.gmii_tx_en, dut.mii_tx_clk, dut.gmii_tx_clk,
             dut.gmii_rxd, dut.gmii_rx_er, dut.gmii_rx_dv, dut.gmii_rx_clk, speed=speed)
 
-        # the UUT tx_clk/rx_clk, which can cause problems in cocotb
+        # the UUT forwards tx_clk/rx_clk, which can cause problems in cocotb
         if speed == 1000e6:
             self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.gtx_clk, dut.tx_rst)
             self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.gtx_clk, dut.tx_rst)
