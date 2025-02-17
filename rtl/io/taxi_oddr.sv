@@ -112,25 +112,15 @@ end else if (!SIM && VENDOR == "ALTERA") begin
 end else begin
     // generic/simulation implementation (no vendor primitives)
 
-    logic [WIDTH-1:0] d_reg_1 = '0;
-    logic [WIDTH-1:0] d_reg_2 = '0;
-
-    logic [WIDTH-1:0] q_reg = '0;
+    logic [WIDTH-1:0] d1_reg = '0;
+    logic [WIDTH-1:0] d2_reg = '0;
 
     always_ff @(posedge clk) begin
-        d_reg_1 <= d1;
-        d_reg_2 <= d2;
+        d1_reg <= d1;
+        d2_reg <= d2;
     end
 
-    always_ff @(posedge clk) begin
-        q_reg <= d1;
-    end
-
-    always_ff @(negedge clk) begin
-        q_reg <= d_reg_2;
-    end
-
-    assign q = q_reg;
+    assign q = clk ? d1_reg : d2_reg;
 
 end
 
