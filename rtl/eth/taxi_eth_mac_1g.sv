@@ -21,8 +21,7 @@ module taxi_eth_mac_1g #
     parameter logic PADDING_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
     parameter logic PTP_TS_EN = 1'b0,
-    parameter logic PTP_TS_FMT_TOD = 1'b1,
-    parameter PTP_TS_W = PTP_TS_FMT_TOD ? 96 : 64,
+    parameter PTP_TS_W = 96,
     parameter logic PFC_EN = 1'b0,
     parameter logic PAUSE_EN = PFC_EN
 )

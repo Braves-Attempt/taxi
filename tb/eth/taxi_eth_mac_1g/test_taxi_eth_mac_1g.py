@@ -714,8 +714,7 @@ def test_taxi_eth_mac_1g(request, pfc_en):
     parameters['PADDING_EN'] = 1
     parameters['MIN_FRAME_LEN'] = 64
     parameters['PTP_TS_EN'] = 1
-    parameters['PTP_TS_FMT_TOD'] = 1
-    parameters['PTP_TS_W'] = 96 if parameters['PTP_TS_FMT_TOD'] else 64
+    parameters['PTP_TS_W'] = 96
     parameters['TX_TAG_W'] = 16
     parameters['PFC_EN'] = pfc_en
     parameters['PAUSE_EN'] = parameters['PFC_EN']
