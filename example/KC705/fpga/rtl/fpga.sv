@@ -125,15 +125,15 @@ MMCME2_BASE #(
     // 200 MHz PFD * 5 = 1000 MHz VCO (range 600 MHz to 1440 MHz)
     .CLKFBOUT_MULT_F(5),
     .CLKFBOUT_PHASE(0),
-    // 1250 MHz VCO / 8 = 125 MHz, 0 degrees
+    // 1000 MHz VCO / 8 = 125 MHz, 0 degrees
     .CLKOUT0_DIVIDE_F(8),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    // 1250 MHz VCO / 8 = 125 MHz, 90 degrees
+    // 1000 MHz VCO / 8 = 125 MHz, 90 degrees
     .CLKOUT1_DIVIDE(8),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(90),
-    // 1250 MHz VCO / 5 = 200 MHz, 0 degrees
+    // 1000 MHz VCO / 5 = 200 MHz, 0 degrees
     .CLKOUT2_DIVIDE(5),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
