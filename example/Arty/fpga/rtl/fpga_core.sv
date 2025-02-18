@@ -75,28 +75,7 @@ module fpga_core #
     output wire logic        phy_reset_n
 );
 
-// // Place first payload byte onto LEDs
-// reg valid_last = 0;
-// reg [7:0] led_reg = 0;
-
-// always @(posedge clk) begin
-//     if (rst) begin
-//         led_reg <= 0;
-//     end else begin
-//         if (tx_udp_payload_axis_tvalid) begin
-//             if (!valid_last) begin
-//                 led_reg <= tx_udp_payload_axis_tdata;
-//                 valid_last <= 1'b1;
-//             end
-//             if (tx_udp_payload_axis_tlast) begin
-//                 valid_last <= 1'b0;
-//             end
-//         end
-//     end
-// end
-
-//assign led = sw;
-assign {led0_g, led1_g, led2_g, led3_g, led4, led5, led6, led7} = 0;
+assign {led7, led6, led5, led4, led3_g, led2_g, led1_g, led0_g} = {sw, btn};
 assign phy_reset_n = !rst;
 
 taxi_axis_if #(.DATA_W(8)) axis_uart();
