@@ -112,7 +112,7 @@ MMCME3_BASE #(
     .CLKFBOUT_MULT_F(10),
     .CLKFBOUT_PHASE(0),
     // 1250 MHz / 10 = 125 MHz, 0 degrees
-    .CLKOUT0_DIVIDE_F(5),
+    .CLKOUT0_DIVIDE_F(10),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
     // 1250 MHz / 20 = 62.5 MHz, 0 degrees
@@ -156,7 +156,7 @@ clk_mmcm_inst (
     // 125 MHz, 0 degrees
     .CLKOUT0(clk_125mhz_mmcm_out),
     .CLKOUT0B(),
-    // 125 MHz, 0 degrees
+    // 62.5 MHz, 0 degrees
     .CLKOUT1(clk_62mhz_mmcm_out),
     .CLKOUT1B(),
     // Not used
