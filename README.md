@@ -93,6 +93,7 @@ Example designs are provided for several different FPGA boards, showcasing many 
 
 *  Digilent Arty A7 (Xilinx Artix 7 XC7A35T)
 *  Xilinx KC705 (Xilinx Kintex 7 XC7K325T)
+*  Xilinx KCU105 (Xilinx Kintex UltraScale XCKU040)
 *  Xilinx VCU108 (Xilinx Virtex UltraScale XCVU095)
 
 ## Testing
