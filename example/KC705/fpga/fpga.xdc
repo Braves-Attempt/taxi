@@ -59,11 +59,11 @@ set_property -dict {LOC G12  IOSTANDARD LVCMOS25} [get_ports btnc] ;# from SW5
 set_false_path -from [get_ports {btnu btnl btnd btnr btnc}]
 set_input_delay 0 [get_ports {btnu btnl btnd btnr btnc}]
 
-# Toggle switches
-set_property -dict {LOC Y29  IOSTANDARD LVCMOS25} [get_ports {sw[0]}] ;# from SW4.1
-set_property -dict {LOC W29  IOSTANDARD LVCMOS25} [get_ports {sw[1]}] ;# from SW4.2
-set_property -dict {LOC AA28 IOSTANDARD LVCMOS25} [get_ports {sw[2]}] ;# from SW4.3
-set_property -dict {LOC Y28  IOSTANDARD LVCMOS25} [get_ports {sw[3]}] ;# from SW4.4
+# DIP switches
+set_property -dict {LOC Y29  IOSTANDARD LVCMOS25} [get_ports {sw[0]}] ;# from SW4.4
+set_property -dict {LOC W29  IOSTANDARD LVCMOS25} [get_ports {sw[1]}] ;# from SW4.3
+set_property -dict {LOC AA28 IOSTANDARD LVCMOS25} [get_ports {sw[2]}] ;# from SW4.2
+set_property -dict {LOC Y28  IOSTANDARD LVCMOS25} [get_ports {sw[3]}] ;# from SW4.1
 
 set_false_path -from [get_ports {sw[*]}]
 set_input_delay 0 [get_ports {sw[*]}]
@@ -79,24 +79,14 @@ set_output_delay 0 [get_ports {uart_txd uart_rts}]
 set_false_path -from [get_ports {uart_rxd uart_cts}]
 set_input_delay 0 [get_ports {uart_rxd uart_cts}]
 
-# GTX for Ethernet
-set_property -dict {LOC G4   } [get_ports sfp_rx_p] ;# MGTXRXP2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.13
-set_property -dict {LOC G3   } [get_ports sfp_rx_n] ;# MGTXRXN2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.12
-set_property -dict {LOC H2   } [get_ports sfp_tx_p] ;# MGTXTXP2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.18
-set_property -dict {LOC H1   } [get_ports sfp_tx_n] ;# MGTXTXN2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.19
-set_property -dict {LOC H6   } [get_ports phy_sgmii_rx_p] ;# MGTXRXP1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A7 SOUT_P
-set_property -dict {LOC H5   } [get_ports phy_sgmii_rx_n] ;# MGTXRXN1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A8 SOUT_N
-set_property -dict {LOC J4   } [get_ports phy_sgmii_tx_p] ;# MGTXTXP1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A3 SIN_P
-set_property -dict {LOC J3   } [get_ports phy_sgmii_tx_n] ;# MGTXTXN1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A4 SIN_N
-set_property -dict {LOC G8   } [get_ports sgmii_clk_p] ;# MGTREFCLK0P_117 from U2.7
-set_property -dict {LOC G7   } [get_ports sgmii_clk_n] ;# MGTREFCLK0N_117 from U2.6
-#set_property -dict {LOC L8   } [get_ports sfp_clk_p] ;# MGTREFCLK0P_116 from Si5324 U70.28 CKOUT1_P
-#set_property -dict {LOC L7   } [get_ports sfp_clk_n] ;# MGTREFCLK0N_116 from Si5324 U70.29 CKOUT1_N
+# I2C interface
+#set_property -dict {LOC K21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
+#set_property -dict {LOC L21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
 
-set_property -dict {LOC Y20  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 12} [get_ports {sfp_tx_disable_b}]
-
-create_clock -period 8.000 -name sgmii_clk [get_ports sgmii_clk_p]
-#create_clock -period 6.400 -name sgmii_clk [get_ports sfp_clk_p]
+#set_false_path -to [get_ports {i2c_sda i2c_scl}]
+#set_output_delay 0 [get_ports {i2c_sda i2c_scl}]
+#set_false_path -from [get_ports {i2c_sda i2c_scl}]
+#set_input_delay 0 [get_ports {i2c_sda i2c_scl}]
 
 # Gigabit Ethernet GMII PHY
 set_property -dict {LOC U27  IOSTANDARD LVCMOS25} [get_ports phy_rx_clk] ;# from U37.C1 RXCLK
@@ -139,3 +129,70 @@ set_input_delay 0 [get_ports {phy_int_n}]
 #set_output_delay 0 [get_ports {phy_mdio phy_mdc}]
 #set_false_path -from [get_ports {phy_mdio}]
 #set_input_delay 0 [get_ports {phy_mdio}]
+
+# GTX for Ethernet
+set_property -dict {LOC G4   } [get_ports sfp_rx_p] ;# MGTXRXP2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.13
+set_property -dict {LOC G3   } [get_ports sfp_rx_n] ;# MGTXRXN2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.12
+set_property -dict {LOC H2   } [get_ports sfp_tx_p] ;# MGTXTXP2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.18
+set_property -dict {LOC H1   } [get_ports sfp_tx_n] ;# MGTXTXN2_117 GTXE2_CHANNEL_X0Y10 / GTXE2_COMMON_X0Y2 from P5.19
+set_property -dict {LOC H6   } [get_ports phy_sgmii_rx_p] ;# MGTXRXP1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A7 SOUT_P
+set_property -dict {LOC H5   } [get_ports phy_sgmii_rx_n] ;# MGTXRXN1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A8 SOUT_N
+set_property -dict {LOC J4   } [get_ports phy_sgmii_tx_p] ;# MGTXTXP1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A3 SIN_P
+set_property -dict {LOC J3   } [get_ports phy_sgmii_tx_n] ;# MGTXTXN1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A4 SIN_N
+set_property -dict {LOC G8   } [get_ports sgmii_clk_p] ;# MGTREFCLK0P_117 from U2.7
+set_property -dict {LOC G7   } [get_ports sgmii_clk_n] ;# MGTREFCLK0N_117 from U2.6
+#set_property -dict {LOC L8   } [get_ports sfp_clk_p] ;# MGTREFCLK0P_116 from Si5324 U70.28 CKOUT1_P
+#set_property -dict {LOC L7   } [get_ports sfp_clk_n] ;# MGTREFCLK0N_116 from Si5324 U70.29 CKOUT1_N
+#set_property -dict {LOC W27 IOSTANDARD LVDS} [get_ports sfp_recclk_p] ;# to Si5324 U70.16 CKIN1_P
+#set_property -dict {LOC W28 IOSTANDARD LVDS} [get_ports sfp_recclk_n] ;# to Si5324 U70.17 CKIN1_N
+
+set_property -dict {LOC Y20  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 12} [get_ports {sfp_tx_disable_b}]
+
+create_clock -period 8.000 -name sgmii_clk [get_ports sgmii_clk_p]
+#create_clock -period 6.400 -name sgmii_clk [get_ports sfp_clk_p]
+
+set_false_path -to [get_ports {sfp_tx_disable_b}]
+set_output_delay 0 [get_ports {sfp_tx_disable_b}]
+
+# PCIe Interface
+#set_property -dict {LOC M6  } [get_ports {pcie_rx_p[0]}] ;# MGTHRXP3_225 GTXE3_CHANNEL_X0Y7 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC M5  } [get_ports {pcie_rx_n[0]}] ;# MGTHRXN3_225 GTXE3_CHANNEL_X0Y7 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC L4  } [get_ports {pcie_tx_p[0]}] ;# MGTHTXP3_225 GTXE3_CHANNEL_X0Y7 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC L3  } [get_ports {pcie_tx_n[0]}] ;# MGTHTXN3_225 GTXE3_CHANNEL_X0Y7 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC P6  } [get_ports {pcie_rx_p[1]}] ;# MGTHRXP2_225 GTXE3_CHANNEL_X0Y6 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC P5  } [get_ports {pcie_rx_n[1]}] ;# MGTHRXN2_225 GTXE3_CHANNEL_X0Y6 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC M2  } [get_ports {pcie_tx_p[1]}] ;# MGTHTXP2_225 GTXE3_CHANNEL_X0Y6 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC M1  } [get_ports {pcie_tx_n[1]}] ;# MGTHTXN2_225 GTXE3_CHANNEL_X0Y6 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC R4  } [get_ports {pcie_rx_p[2]}] ;# MGTHRXP1_225 GTXE3_CHANNEL_X0Y5 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC R3  } [get_ports {pcie_rx_n[2]}] ;# MGTHRXN1_225 GTXE3_CHANNEL_X0Y5 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC N4  } [get_ports {pcie_tx_p[2]}] ;# MGTHTXP1_225 GTXE3_CHANNEL_X0Y5 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC N3  } [get_ports {pcie_tx_n[2]}] ;# MGTHTXN1_225 GTXE3_CHANNEL_X0Y5 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC T6  } [get_ports {pcie_rx_p[3]}] ;# MGTHRXP0_225 GTXE3_CHANNEL_X0Y4 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC T5  } [get_ports {pcie_rx_n[3]}] ;# MGTHRXN0_225 GTXE3_CHANNEL_X0Y4 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC P2  } [get_ports {pcie_tx_p[3]}] ;# MGTHTXP0_225 GTXE3_CHANNEL_X0Y4 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC P1  } [get_ports {pcie_tx_n[3]}] ;# MGTHTXN0_225 GTXE3_CHANNEL_X0Y4 / GTXE3_COMMON_X0Y1
+#set_property -dict {LOC V6  } [get_ports {pcie_rx_p[4]}] ;# MGTHRXP3_224 GTXE3_CHANNEL_X0Y3 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC V5  } [get_ports {pcie_rx_n[4]}] ;# MGTHRXN3_224 GTXE3_CHANNEL_X0Y3 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC T2  } [get_ports {pcie_tx_p[4]}] ;# MGTHTXP3_224 GTXE3_CHANNEL_X0Y3 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC T1  } [get_ports {pcie_tx_n[4]}] ;# MGTHTXN3_224 GTXE3_CHANNEL_X0Y3 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC W4  } [get_ports {pcie_rx_p[5]}] ;# MGTHRXP2_224 GTXE3_CHANNEL_X0Y2 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC W3  } [get_ports {pcie_rx_n[5]}] ;# MGTHRXN2_224 GTXE3_CHANNEL_X0Y2 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC U4  } [get_ports {pcie_tx_p[5]}] ;# MGTHTXP2_224 GTXE3_CHANNEL_X0Y2 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC U3  } [get_ports {pcie_tx_n[5]}] ;# MGTHTXN2_224 GTXE3_CHANNEL_X0Y2 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC Y6  } [get_ports {pcie_rx_p[6]}] ;# MGTHRXP1_224 GTXE3_CHANNEL_X0Y1 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC Y5  } [get_ports {pcie_rx_n[6]}] ;# MGTHRXN1_224 GTXE3_CHANNEL_X0Y1 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC V2  } [get_ports {pcie_tx_p[6]}] ;# MGTHTXP1_224 GTXE3_CHANNEL_X0Y1 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC V1  } [get_ports {pcie_tx_n[6]}] ;# MGTHTXN1_224 GTXE3_CHANNEL_X0Y1 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC AA4 } [get_ports {pcie_rx_p[7]}] ;# MGTHRXP0_224 GTXE3_CHANNEL_X0Y0 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC AA3 } [get_ports {pcie_rx_n[7]}] ;# MGTHRXN0_224 GTXE3_CHANNEL_X0Y0 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC Y2  } [get_ports {pcie_tx_p[7]}] ;# MGTHTXP0_224 GTXE3_CHANNEL_X0Y0 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC Y1  } [get_ports {pcie_tx_n[7]}] ;# MGTHTXN0_224 GTXE3_CHANNEL_X0Y0 / GTXE3_COMMON_X0Y0
+#set_property -dict {LOC U8  } [get_ports pcie_mgt_refclk_p] ;# MGTREFCLK0P_225
+#set_property -dict {LOC U7  } [get_ports pcie_mgt_refclk_n] ;# MGTREFCLK0N_225
+#set_property -dict {LOC G25  IOSTANDARD LVCMOS25 PULLUP true} [get_ports pcie_reset_n]
+
+# 100 MHz MGT reference clock
+#create_clock -period 10 -name pcie_mgt_refclk [get_ports pcie_mgt_refclk_p]
+
+#set_false_path -from [get_ports {pcie_reset_n}]
+#set_input_delay 0 [get_ports {pcie_reset_n}]

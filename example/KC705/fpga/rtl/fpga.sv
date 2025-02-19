@@ -430,7 +430,8 @@ assign sfp_config_vect[2] = 1'b0; // power down
 assign sfp_config_vect[1] = 1'b0; // loopback enable
 assign sfp_config_vect[0] = 1'b0; // unidirectional enable
 
-basex_pcs_pma_0 your_instance_name (
+basex_pcs_pma_0
+sfp_pcspma (
     // Transceiver Interface
     .gtrefclk(sgmii_gtrefclk),
     .gtrefclk_bufg(sgmii_gtrefclk_bufg),
@@ -517,9 +518,11 @@ basex_pcs_pma_0 your_instance_name (
 assign sfp_gmii_clk_en_int = 1'b1;
 
 // SGMII interface debug:
-// SW1:1 (sw[0]) off for payload byte, on for status vector
-// SW1:2 (sw[1]) off for LSB of status vector, on for MSB
-assign led = sw[3] ? (sw[2] ? sfp_status_vect[15:8] : sfp_status_vect[7:0]) : led_int;
+// SW4:1 (sw[3]) off for payload byte, on for status vector
+// SW4:2 (sw[2]) off for BASE-T port (SGMII), on for SFP
+// SW4:4 (sw[0]) off for LSB of status vector, on for MSB
+wire [15:0] sel_sv = sw[2] ? sfp_status_vect : sgmii_status_vect;
+assign led = sw[3] ? (sw[0] ? sel_sv[15:8] : sel_sv[7:0]) : led_int;
 
 wire phy_rgmii_rx_clk_int;
 wire [3:0] phy_rgmii_rxd_int;
