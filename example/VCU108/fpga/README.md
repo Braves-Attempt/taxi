@@ -16,6 +16,13 @@ The design places a looped-back MAC on the BASE-T port as well as a looped-back 
 *  FPGA: xcvu095-ffva2104-2-e
 *  1000BASE-T PHY: Marvell 88E1111 via SGMII
 
+## Licensing
+
+*  Toolchain
+    *  Vivado Enterprise (requires license)
+*  IP
+    *  No licensed vendor IP or 3rd party IP
+
 ## How to build
 
 Run `make` in the appropriate `fpga*` subdirectory to build the bitstream.  Ensure that the Xilinx Vivado toolchain components are in PATH.

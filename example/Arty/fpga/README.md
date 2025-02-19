@@ -16,6 +16,13 @@ The design places a looped-back MAC on the BASE-T port, as well as a looped-back
 *  FPGA: XC7A35TICSG324-1L
 *  PHY: TI DP83848J via MII
 
+## Licensing
+
+*  Toolchain
+    *  Vivado Standard (enterprise license not required)
+*  IP
+    *  No licensed vendor IP or 3rd party IP
+
 ## How to build
 
 Run `make` in the appropriate `fpga*` subdirectory to build the bitstream.  Ensure that the Xilinx Vivado toolchain components are in PATH.

@@ -18,6 +18,13 @@ The design places looped-back MACs on the BASE-T port and SFP+ cages, as well as
 *  FPGA: xcku040-ffva1156-2-e
 *  1000BASE-T PHY: Marvell 88E1111 via SGMII
 
+## Licensing
+
+*  Toolchain
+    *  Vivado Enterprise (requires license)
+*  IP
+    *  No licensed vendor IP or 3rd party IP
+
 ## How to build
 
 Run `make` in the appropriate `fpga*` subdirectory to build the bitstream.  Ensure that the Xilinx Vivado toolchain components are in PATH.
