@@ -43,39 +43,39 @@ create_clock -period 8.000 -name clk_125mhz [get_ports clk_125mhz_p]
 #create_clock -period 8.000 -name user_sma_clk [get_ports user_sma_clk_p]
 
 # LEDs
-set_property -dict {LOC AT32 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[0]}]
-set_property -dict {LOC AV34 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[1]}]
-set_property -dict {LOC AY30 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[2]}]
-set_property -dict {LOC BB32 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[3]}]
-set_property -dict {LOC BF32 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[4]}]
-set_property -dict {LOC AV36 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[5]}]
-set_property -dict {LOC AY35 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[6]}]
-set_property -dict {LOC BA37 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[7]}]
+set_property -dict {LOC AT32 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[0]}] ;# DS7
+set_property -dict {LOC AV34 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[1]}] ;# DS6
+set_property -dict {LOC AY30 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[2]}] ;# DS8
+set_property -dict {LOC BB32 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[3]}] ;# DS9
+set_property -dict {LOC BF32 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[4]}] ;# DS10
+set_property -dict {LOC AV36 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[5]}] ;# DS33
+set_property -dict {LOC AY35 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[6]}] ;# DS32
+set_property -dict {LOC BA37 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {led[7]}] ;# DS31
 
 set_false_path -to [get_ports {led[*]}]
 set_output_delay 0 [get_ports {led[*]}]
 
 # Reset button
-set_property -dict {LOC E36  IOSTANDARD LVCMOS12} [get_ports reset]
+set_property -dict {LOC E36  IOSTANDARD LVCMOS12} [get_ports reset] ;# SW5
 
 set_false_path -from [get_ports {reset}]
 set_input_delay 0 [get_ports {reset}]
 
 # Push buttons
-set_property -dict {LOC E34  IOSTANDARD LVCMOS12} [get_ports btnu]
-set_property -dict {LOC M22  IOSTANDARD LVCMOS12} [get_ports btnl]
-set_property -dict {LOC D9   IOSTANDARD LVCMOS12} [get_ports btnd]
-set_property -dict {LOC A10  IOSTANDARD LVCMOS12} [get_ports btnr]
-set_property -dict {LOC AW27 IOSTANDARD LVCMOS12} [get_ports btnc]
+set_property -dict {LOC E34  IOSTANDARD LVCMOS12} [get_ports btnu] ;# SW10
+set_property -dict {LOC M22  IOSTANDARD LVCMOS12} [get_ports btnl] ;# SW6
+set_property -dict {LOC D9   IOSTANDARD LVCMOS12} [get_ports btnd] ;# SW17
+set_property -dict {LOC A10  IOSTANDARD LVCMOS12} [get_ports btnr] ;# SW9
+set_property -dict {LOC AW27 IOSTANDARD LVCMOS12} [get_ports btnc] ;# SW7
 
 set_false_path -from [get_ports {btnu btnl btnd btnr btnc}]
 set_input_delay 0 [get_ports {btnu btnl btnd btnr btnc}]
 
 # DIP switches
-set_property -dict {LOC BC40 IOSTANDARD LVCMOS12} [get_ports {sw[0]}]
-set_property -dict {LOC L19  IOSTANDARD LVCMOS12} [get_ports {sw[1]}]
-set_property -dict {LOC C37  IOSTANDARD LVCMOS12} [get_ports {sw[2]}]
-set_property -dict {LOC C38  IOSTANDARD LVCMOS12} [get_ports {sw[3]}]
+set_property -dict {LOC BC40 IOSTANDARD LVCMOS12} [get_ports {sw[0]}] ;# SW12.4
+set_property -dict {LOC L19  IOSTANDARD LVCMOS12} [get_ports {sw[1]}] ;# SW12.3
+set_property -dict {LOC C37  IOSTANDARD LVCMOS12} [get_ports {sw[2]}] ;# SW12.2
+set_property -dict {LOC C38  IOSTANDARD LVCMOS12} [get_ports {sw[3]}] ;# SW12.1
 
 set_false_path -from [get_ports {sw[*]}]
 set_input_delay 0 [get_ports {sw[*]}]
@@ -116,6 +116,15 @@ set_false_path -to [get_ports {uart_txd uart_rts}]
 set_output_delay 0 [get_ports {uart_txd uart_rts}]
 set_false_path -from [get_ports {uart_rxd uart_cts}]
 set_input_delay 0 [get_ports {uart_rxd uart_cts}]
+
+# I2C interface
+#set_property -dict {LOC AN21 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
+#set_property -dict {LOC AP21 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
+
+#set_false_path -to [get_ports {i2c_sda i2c_scl}]
+#set_output_delay 0 [get_ports {i2c_sda i2c_scl}]
+#set_false_path -from [get_ports {i2c_sda i2c_scl}]
+#set_input_delay 0 [get_ports {i2c_sda i2c_scl}]
 
 # Gigabit Ethernet SGMII PHY
 set_property -dict {LOC AR24 IOSTANDARD DIFF_HSTL_I_18} [get_ports phy_sgmii_rx_p]
@@ -269,15 +278,6 @@ set_input_delay 0 [get_ports {phy_int_n}]
 
 # 156.25 MHz MGT reference clock
 #create_clock -period 6.4 -name cfp2_mgt_refclk [get_ports cfp2_mgt_refclk_0_p]
-
-# I2C interface
-#set_property -dict {LOC AN21 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
-#set_property -dict {LOC AP21 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
-
-#set_false_path -to [get_ports {i2c_sda i2c_scl}]
-#set_output_delay 0 [get_ports {i2c_sda i2c_scl}]
-#set_false_path -from [get_ports {i2c_sda i2c_scl}]
-#set_input_delay 0 [get_ports {i2c_sda i2c_scl}]
 
 # PCIe Interface
 #set_property -dict {LOC AJ4 } [get_ports {pcie_rx_p[0]}] ;# MGTHRXP3_225 GTHE3_CHANNEL_X0Y7 / GTHE3_COMMON_X0Y1

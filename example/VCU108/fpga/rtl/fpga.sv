@@ -320,9 +320,9 @@ eth_pcspma (
 wire [7:0] led_int;
 
 // SGMII interface debug:
-// SW12:4 (sw[0]) off for payload byte, on for status vector
-// SW12:3 (sw[1]) off for LSB of status vector, on for MSB
-assign led = sw[0] ? (sw[1] ? pcspma_status_vector[15:8] : pcspma_status_vector[7:0]) : led_int;
+// SW12:1 (sw[3]) off for payload byte, on for status vector
+// SW12:4 (sw[0]) off for LSB of status vector, on for MSB
+assign led = sw[3] ? (sw[0] ? pcspma_status_vector[15:8] : pcspma_status_vector[7:0]) : led_int;
 
 fpga_core
 core_inst (
