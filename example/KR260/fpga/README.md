@@ -16,7 +16,8 @@ The design places looped-back MACs on the BASE-T ports and SFP+ cage, as well as
 ## Board details
 
 *  FPGA: xck26-sfvc784-2LV-c
-*  1000BASE-T PHY: Marvell 88E1111 via SGMII
+*  1000BASE-T PHY: TI DP83867CSRGZ via RGMII
+*  1000BASE-X PHY: Xilinx PCS/PMA core via GTH transceiver
 
 ## Licensing
 
