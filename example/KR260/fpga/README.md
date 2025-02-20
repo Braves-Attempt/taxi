@@ -4,10 +4,8 @@
 
 This example design targets the Xilinx KR260 FPGA board.
 
-The design places looped-back MACs on the BASE-T ports and SFP+ cage, as well as a looped-back UART on on the USB UART connection.
+The design places looped-back MACs on the BASE-T ports and SFP+ cage.
 
-*  USB UART
-    *  Looped-back UART
 *  RJ-45 Ethernet ports with TI DP83867CSRGZ PHY
     *  Looped-back MAC via RGMII
 *  SFP+ cage
