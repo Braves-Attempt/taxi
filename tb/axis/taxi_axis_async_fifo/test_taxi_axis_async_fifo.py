@@ -682,8 +682,7 @@ def test_taxi_axis_async_fifo(request, data_w, ram_pipeline, output_fifo,
 
     verilog_sources = [
         os.path.join(tests_dir, f"{toplevel}.sv"),
-        os.path.join(rtl_dir, "axis", f"{dut}.sv"),
-        os.path.join(rtl_dir, "axis", "taxi_axis_if.sv"),
+        os.path.join(rtl_dir, "axis", f"{dut}.f"),
     ]
 
     verilog_sources = process_f_files(verilog_sources)

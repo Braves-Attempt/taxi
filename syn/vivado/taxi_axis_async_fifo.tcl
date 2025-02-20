@@ -20,37 +20,6 @@ foreach fifo_inst [get_cells -hier -filter {(ORIG_REF_NAME == taxi_axis_async_fi
 
     set min_clk_period [expr min($write_clk_period, $read_clk_period)]
 
-    # reset synchronization
-    set reset_ffs [get_cells -quiet -hier -regexp ".*/s_rst_sync\[23\]_reg_reg" -filter "PARENT == $fifo_inst"]
-
-    if {[llength $reset_ffs]} {
-        set_property ASYNC_REG TRUE $reset_ffs
-
-        # hunt down source
-        set dest [get_cells $fifo_inst/s_rst_sync2_reg_reg]
-        set dest_pins [get_pins -of_objects $dest -filter {REF_PIN_NAME == D}]
-        set net [get_nets -segments -of_objects $dest_pins]
-        set source_pins [get_pins -of_objects $net -filter {IS_LEAF && DIRECTION == OUT}]
-        set source [get_cells -of_objects $source_pins]
-
-        set_max_delay -from $source -to $dest -datapath_only $read_clk_period
-    }
-
-    set reset_ffs [get_cells -quiet -hier -regexp ".*/m_rst_sync\[23\]_reg_reg" -filter "PARENT == $fifo_inst"]
-
-    if {[llength $reset_ffs]} {
-        set_property ASYNC_REG TRUE $reset_ffs
-
-        # hunt down source
-        set dest [get_cells $fifo_inst/m_rst_sync2_reg_reg]
-        set dest_pins [get_pins -of_objects $dest -filter {REF_PIN_NAME == D}]
-        set net [get_nets -segments -of_objects $dest_pins]
-        set source_pins [get_pins -of_objects $net -filter {IS_LEAF && DIRECTION == OUT}]
-        set source [get_cells -of_objects $source_pins]
-
-        set_max_delay -from $source -to $dest -datapath_only $write_clk_period
-    }
-
     # pointer synchronization
     set sync_ffs [get_cells -quiet -hier -regexp ".*/rd_ptr_gray_sync\[12\]_reg_reg\\\[\\d+\\\]" -filter "PARENT == $fifo_inst"]
 

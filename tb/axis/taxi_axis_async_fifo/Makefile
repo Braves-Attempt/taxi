@@ -19,8 +19,7 @@ COCOTB_TOPLEVEL     = test_$(DUT)
 MODULE   = $(COCOTB_TEST_MODULES)
 TOPLEVEL = $(COCOTB_TOPLEVEL)
 VERILOG_SOURCES += $(COCOTB_TOPLEVEL).sv
-VERILOG_SOURCES += ../../../rtl/axis/$(DUT).sv
-VERILOG_SOURCES += ../../../rtl/axis/taxi_axis_if.sv
+VERILOG_SOURCES += ../../../rtl/axis/$(DUT).f
 
 # handle file list files
 process_f_file = $(call process_f_files,$(addprefix $(dir $1),$(shell cat $1)))

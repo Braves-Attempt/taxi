@@ -196,18 +196,8 @@ logic wr_ptr_update_ack_sync1_reg = 1'b0;
 (* SHREG_EXTRACT = "NO" *)
 logic wr_ptr_update_ack_sync2_reg = 1'b0;
 
-(* SHREG_EXTRACT = "NO" *)
-logic s_rst_sync1_reg = 1'b1;
-(* SHREG_EXTRACT = "NO" *)
-logic s_rst_sync2_reg = 1'b1;
-(* SHREG_EXTRACT = "NO" *)
-logic s_rst_sync3_reg = 1'b1;
-(* SHREG_EXTRACT = "NO" *)
-logic m_rst_sync1_reg = 1'b1;
-(* SHREG_EXTRACT = "NO" *)
-logic m_rst_sync2_reg = 1'b1;
-(* SHREG_EXTRACT = "NO" *)
-logic m_rst_sync3_reg = 1'b1;
+wire s_rst_sync;
+wire m_rst_sync;
 
 (* ramstyle = "no_rw_check" *)
 logic [WIDTH-1:0] mem[(2**FIFO_AW)-1:0];
@@ -261,7 +251,7 @@ logic good_frame_sync2_reg = 1'b0;
 logic good_frame_sync3_reg = 1'b0;
 logic good_frame_sync4_reg = 1'b0;
 
-assign s_axis.tready = (FRAME_FIFO ? (!full || (full_wr && DROP_OVERSIZE_FRAME) || DROP_WHEN_FULL) : (!full || MARK_WHEN_FULL)) && !s_rst_sync3_reg;
+assign s_axis.tready = (FRAME_FIFO ? (!full || (full_wr && DROP_OVERSIZE_FRAME) || DROP_WHEN_FULL) : (!full || MARK_WHEN_FULL)) && !s_rst_sync;
 
 wire [WIDTH-1:0] mem_wr_data;
 
@@ -350,31 +340,23 @@ assign m_status_bad_frame = bad_frame_sync3_reg ^ bad_frame_sync4_reg;
 assign m_status_good_frame = good_frame_sync3_reg ^ good_frame_sync4_reg;
 
 // reset synchronization
-always_ff @(posedge m_clk or posedge m_rst) begin
-    if (m_rst) begin
-        s_rst_sync1_reg <= 1'b1;
-    end else begin
-        s_rst_sync1_reg <= 1'b0;
-    end
-end
+taxi_sync_reset #(
+    .N(4)
+)
+s_reset_sync_inst (
+    .clk(s_clk),
+    .rst(m_rst),
+    .out(s_rst_sync)
+);
 
-always_ff @(posedge s_clk) begin
-    s_rst_sync2_reg <= s_rst_sync1_reg;
-    s_rst_sync3_reg <= s_rst_sync2_reg;
-end
-
-always_ff @(posedge s_clk or posedge s_rst) begin
-    if (s_rst) begin
-        m_rst_sync1_reg <= 1'b1;
-    end else begin
-        m_rst_sync1_reg <= 1'b0;
-    end
-end
-
-always_ff @(posedge m_clk) begin
-    m_rst_sync2_reg <= m_rst_sync1_reg;
-    m_rst_sync3_reg <= m_rst_sync2_reg;
-end
+taxi_sync_reset #(
+    .N(4)
+)
+m_reset_sync_inst (
+    .clk(m_clk),
+    .rst(s_rst),
+    .out(m_rst_sync)
+);
 
 // Write logic
 always_ff @(posedge s_clk) begin
@@ -397,7 +379,7 @@ always_ff @(posedge s_clk) begin
         s_frame_reg <= !s_axis.tlast;
     end
 
-    if (s_rst_sync3_reg && LAST_EN) begin
+    if (s_rst_sync && LAST_EN) begin
         // if sink side is reset during transfer, drop partial frame
         if (s_frame_reg && !(s_axis.tready && s_axis.tvalid && s_axis.tlast)) begin
             drop_frame_reg <= 1'b1;
@@ -525,7 +507,7 @@ always_ff @(posedge s_clk) begin
         end
     end
 
-    if (s_rst_sync3_reg) begin
+    if (s_rst_sync) begin
         wr_ptr_reg <= '0;
         wr_ptr_commit_reg <= '0;
         wr_ptr_gray_reg <= '0;
@@ -587,7 +569,7 @@ always_ff @(posedge m_clk) begin
     wr_ptr_update_sync2_reg <= wr_ptr_update_sync1_reg;
     wr_ptr_update_sync3_reg <= wr_ptr_update_sync2_reg;
 
-    if (FRAME_FIFO && m_rst_sync3_reg) begin
+    if (FRAME_FIFO && m_rst_sync) begin
         wr_ptr_gray_sync1_reg <= '0;
     end
 
@@ -660,7 +642,7 @@ always_ff @(posedge m_clk) begin
         // output ready or bubble in pipeline; read new data from FIFO
         mem_rd_valid_pipe_reg[0] <= 1'b0;
         mem_rd_data_pipe_reg[0] <= mem[rd_ptr_reg[FIFO_AW-1:0]];
-        if (!empty && !m_rst_sync3_reg && !m_empty_pipe_reg && pipe_ready) begin
+        if (!empty && !m_rst_sync && !m_empty_pipe_reg && pipe_ready) begin
             // not empty, increment pointer
             mem_rd_valid_pipe_reg[0] <= 1'b1;
             rd_ptr_temp = rd_ptr_reg + 1;
@@ -688,12 +670,12 @@ always_ff @(posedge m_clk) begin
         m_empty_pipe_reg <= 1'b0;
     end
 
-    if (m_rst_sync3_reg && LAST_EN) begin
+    if (m_rst_sync && LAST_EN) begin
         // if source side is reset during transfer, drop partial frame
         m_empty_pipe_reg <= 1'b1;
     end
 
-    if (m_rst_sync3_reg) begin
+    if (m_rst_sync) begin
         rd_ptr_reg <= '0;
         rd_ptr_gray_reg <= '0;
     end
