@@ -178,8 +178,7 @@ for (genvar n = 0; n < 4; n = n + 1) begin : crc
 
 end
 
-function [1:0] keep2empty;
-    input [3:0] k;
+function [1:0] keep2empty(input [3:0] k);
     casez (k)
         4'bzzz0: keep2empty = 2'd3;
         4'bzz01: keep2empty = 2'd3;

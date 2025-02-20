@@ -186,8 +186,7 @@ for (genvar n = 0; n < 8; n = n + 1) begin : crc
 
 end
 
-function [2:0] keep2empty;
-    input [7:0] k;
+function [2:0] keep2empty(input [7:0] k);
     casez (k)
         8'bzzzzzzz0: keep2empty = 3'd7;
         8'bzzzzzz01: keep2empty = 3'd7;
