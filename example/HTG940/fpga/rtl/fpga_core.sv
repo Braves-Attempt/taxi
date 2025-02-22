@@ -20,9 +20,9 @@ module fpga_core #
     // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
     // vendor ("GENERIC", "XILINX", "ALTERA")
-    parameter VENDOR = "XILINX",
+    parameter string VENDOR = "XILINX",
     // device family
-    parameter FAMILY = "zynquplus",
+    parameter string FAMILY = "zynquplus",
     // Use 90 degree clock for RGMII transmit
     parameter logic USE_CLK90 = 1'b1
 )

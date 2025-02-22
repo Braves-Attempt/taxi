@@ -20,9 +20,9 @@ module taxi_ssio_sdr_in #
     // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
     // vendor ("GENERIC", "XILINX", "ALTERA")
-    parameter VENDOR = "XILINX",
+    parameter string VENDOR = "XILINX",
     // device family
-    parameter FAMILY = "virtex7",
+    parameter string FAMILY = "virtex7",
     // Width of register in bits
     parameter WIDTH = 1
 )

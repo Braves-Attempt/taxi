@@ -18,8 +18,8 @@ Authors:
 module taxi_eth_mac_1g_gmii_fifo #
 (
     parameter logic SIM = 1'b0,
-    parameter VENDOR = "XILINX",
-    parameter FAMILY = "virtex7",
+    parameter string VENDOR = "XILINX",
+    parameter string FAMILY = "virtex7",
     parameter logic PADDING_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
     parameter TX_FIFO_DEPTH = 4096,

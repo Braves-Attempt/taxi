@@ -19,8 +19,8 @@ module test_taxi_eth_mac_1g_rgmii_fifo #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter logic SIM = 1'b1,
-    parameter VENDOR = "XILINX",
-    parameter FAMILY = "virtex7",
+    parameter string VENDOR = "XILINX",
+    parameter string FAMILY = "virtex7",
     parameter logic USE_CLK90 = 1'b1,
     parameter AXIS_DATA_W = 8,
     parameter logic PADDING_EN = 1'b1,

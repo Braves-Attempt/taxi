@@ -20,9 +20,9 @@ module taxi_ssio_ddr_out_diff #
     // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
     // vendor ("GENERIC", "XILINX", "ALTERA")
-    parameter VENDOR = "XILINX",
+    parameter string VENDOR = "XILINX",
     // device family
-    parameter FAMILY = "virtex7",
+    parameter string FAMILY = "virtex7",
     // Use 90 degree clock for transmit
     parameter logic USE_CLK90 = 1'b1,
     // Width of register in bits
