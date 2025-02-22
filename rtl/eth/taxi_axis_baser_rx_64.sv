@@ -428,31 +428,31 @@ always_ff @(posedge clk) begin
         end else if (encoded_rx_hdr == SYNC_DATA) begin
             input_type_d0 <= INPUT_TYPE_DATA;
         end else if (encoded_rx_hdr == SYNC_CTRL) begin
-            case (encoded_rx_data[7:0])
-                BLOCK_TYPE_TERM_0: input_type_d0 <= INPUT_TYPE_TERM_4;
-                BLOCK_TYPE_TERM_1: input_type_d0 <= INPUT_TYPE_TERM_5;
-                BLOCK_TYPE_TERM_2: input_type_d0 <= INPUT_TYPE_TERM_6;
-                BLOCK_TYPE_TERM_3: input_type_d0 <= INPUT_TYPE_TERM_7;
-                BLOCK_TYPE_TERM_4: begin
+            case (encoded_rx_data[7:4])
+                BLOCK_TYPE_TERM_0[7:4]: input_type_d0 <= INPUT_TYPE_TERM_4;
+                BLOCK_TYPE_TERM_1[7:4]: input_type_d0 <= INPUT_TYPE_TERM_5;
+                BLOCK_TYPE_TERM_2[7:4]: input_type_d0 <= INPUT_TYPE_TERM_6;
+                BLOCK_TYPE_TERM_3[7:4]: input_type_d0 <= INPUT_TYPE_TERM_7;
+                BLOCK_TYPE_TERM_4[7:4]: begin
                     delay_type_valid <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_DATA;
                 end
-                BLOCK_TYPE_TERM_5: begin
+                BLOCK_TYPE_TERM_5[7:4]: begin
                     delay_type_valid <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_DATA;
                 end
-                BLOCK_TYPE_TERM_6: begin
+                BLOCK_TYPE_TERM_6[7:4]: begin
                     delay_type_valid <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_DATA;
                 end
-                BLOCK_TYPE_TERM_7: begin
+                BLOCK_TYPE_TERM_7[7:4]: begin
                     delay_type_valid <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_DATA;
                 end
-                BLOCK_TYPE_CTRL:  input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_OS_4:  input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_OS_04: input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_OS_0:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_CTRL[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_4[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_04[7:4]: input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_0[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
                 default: begin
                     rx_bad_block_reg <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_ERROR;
@@ -472,19 +472,19 @@ always_ff @(posedge clk) begin
         if (encoded_rx_hdr == SYNC_DATA) begin
             input_type_d0 <= INPUT_TYPE_DATA;
         end else if (encoded_rx_hdr == SYNC_CTRL) begin
-            case (encoded_rx_data[7:0])
-                BLOCK_TYPE_CTRL:   input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_OS_4:   input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_OS_04:  input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_OS_0:   input_type_d0 <= INPUT_TYPE_IDLE;
-                BLOCK_TYPE_TERM_0: input_type_d0 <= INPUT_TYPE_TERM_0;
-                BLOCK_TYPE_TERM_1: input_type_d0 <= INPUT_TYPE_TERM_1;
-                BLOCK_TYPE_TERM_2: input_type_d0 <= INPUT_TYPE_TERM_2;
-                BLOCK_TYPE_TERM_3: input_type_d0 <= INPUT_TYPE_TERM_3;
-                BLOCK_TYPE_TERM_4: input_type_d0 <= INPUT_TYPE_TERM_4;
-                BLOCK_TYPE_TERM_5: input_type_d0 <= INPUT_TYPE_TERM_5;
-                BLOCK_TYPE_TERM_6: input_type_d0 <= INPUT_TYPE_TERM_6;
-                BLOCK_TYPE_TERM_7: input_type_d0 <= INPUT_TYPE_TERM_7;
+            case (encoded_rx_data[7:4])
+                BLOCK_TYPE_CTRL[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_4[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_04[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_0[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_TERM_0[7:4]: input_type_d0 <= INPUT_TYPE_TERM_0;
+                BLOCK_TYPE_TERM_1[7:4]: input_type_d0 <= INPUT_TYPE_TERM_1;
+                BLOCK_TYPE_TERM_2[7:4]: input_type_d0 <= INPUT_TYPE_TERM_2;
+                BLOCK_TYPE_TERM_3[7:4]: input_type_d0 <= INPUT_TYPE_TERM_3;
+                BLOCK_TYPE_TERM_4[7:4]: input_type_d0 <= INPUT_TYPE_TERM_4;
+                BLOCK_TYPE_TERM_5[7:4]: input_type_d0 <= INPUT_TYPE_TERM_5;
+                BLOCK_TYPE_TERM_6[7:4]: input_type_d0 <= INPUT_TYPE_TERM_6;
+                BLOCK_TYPE_TERM_7[7:4]: input_type_d0 <= INPUT_TYPE_TERM_7;
                 default: begin
                     rx_bad_block_reg <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_ERROR;
@@ -500,21 +500,54 @@ always_ff @(posedge clk) begin
     if (encoded_rx_hdr == SYNC_DATA) begin
         delay_type <= INPUT_TYPE_DATA;
     end else if (encoded_rx_hdr == SYNC_CTRL) begin
-        case (encoded_rx_data[7:0])
-            BLOCK_TYPE_START_4: delay_type <= INPUT_TYPE_START_0;
-            BLOCK_TYPE_OS_START: delay_type <= INPUT_TYPE_START_0;
-            BLOCK_TYPE_TERM_0: delay_type <= INPUT_TYPE_TERM_4;
-            BLOCK_TYPE_TERM_1: delay_type <= INPUT_TYPE_TERM_5;
-            BLOCK_TYPE_TERM_2: delay_type <= INPUT_TYPE_TERM_6;
-            BLOCK_TYPE_TERM_3: delay_type <= INPUT_TYPE_TERM_7;
-            BLOCK_TYPE_TERM_4: delay_type <= INPUT_TYPE_TERM_0;
-            BLOCK_TYPE_TERM_5: delay_type <= INPUT_TYPE_TERM_1;
-            BLOCK_TYPE_TERM_6: delay_type <= INPUT_TYPE_TERM_2;
-            BLOCK_TYPE_TERM_7: delay_type <= INPUT_TYPE_TERM_3;
+        case (encoded_rx_data[7:4])
+            BLOCK_TYPE_START_4[7:4]: delay_type <= INPUT_TYPE_START_0;
+            BLOCK_TYPE_OS_START[7:4]: delay_type <= INPUT_TYPE_START_0;
+            BLOCK_TYPE_TERM_0[7:4]: delay_type <= INPUT_TYPE_TERM_4;
+            BLOCK_TYPE_TERM_1[7:4]: delay_type <= INPUT_TYPE_TERM_5;
+            BLOCK_TYPE_TERM_2[7:4]: delay_type <= INPUT_TYPE_TERM_6;
+            BLOCK_TYPE_TERM_3[7:4]: delay_type <= INPUT_TYPE_TERM_7;
+            BLOCK_TYPE_TERM_4[7:4]: delay_type <= INPUT_TYPE_TERM_0;
+            BLOCK_TYPE_TERM_5[7:4]: delay_type <= INPUT_TYPE_TERM_1;
+            BLOCK_TYPE_TERM_6[7:4]: delay_type <= INPUT_TYPE_TERM_2;
+            BLOCK_TYPE_TERM_7[7:4]: delay_type <= INPUT_TYPE_TERM_3;
             default: delay_type <= INPUT_TYPE_ERROR;
         endcase
     end else begin
         delay_type <= INPUT_TYPE_ERROR;
+    end
+
+    // check all block type bits to detect bad encodings
+    if (encoded_rx_hdr == SYNC_DATA) begin
+        // data - nothing encoded
+    end else if (encoded_rx_hdr == SYNC_CTRL) begin
+        // control - check for bad block types
+        case (encoded_rx_data[7:0])
+            BLOCK_TYPE_CTRL: begin end
+            BLOCK_TYPE_OS_4: begin end
+            BLOCK_TYPE_START_4: begin end
+            BLOCK_TYPE_OS_START: begin end
+            BLOCK_TYPE_OS_04: begin end
+            BLOCK_TYPE_START_0: begin end
+            BLOCK_TYPE_OS_0: begin end
+            BLOCK_TYPE_TERM_0: begin end
+            BLOCK_TYPE_TERM_1: begin end
+            BLOCK_TYPE_TERM_2: begin end
+            BLOCK_TYPE_TERM_3: begin end
+            BLOCK_TYPE_TERM_4: begin end
+            BLOCK_TYPE_TERM_5: begin end
+            BLOCK_TYPE_TERM_6: begin end
+            BLOCK_TYPE_TERM_7: begin end
+            default: begin
+                // invalid block type
+                rx_bad_block_reg <= 1'b1;
+                input_type_d0 <= INPUT_TYPE_ERROR;
+            end
+        endcase
+    end else begin
+        // invalid header
+        rx_bad_block_reg <= 1'b1;
+        input_type_d0 <= INPUT_TYPE_ERROR;
     end
 
     if (delay_type == INPUT_TYPE_START_0 && delay_type_valid) begin
