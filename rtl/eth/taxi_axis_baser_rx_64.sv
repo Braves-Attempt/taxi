@@ -171,6 +171,7 @@ logic error_bad_frame_reg = 1'b0, error_bad_frame_next;
 logic error_bad_fcs_reg = 1'b0, error_bad_fcs_next;
 logic rx_bad_block_reg = 1'b0;
 logic rx_sequence_error_reg = 1'b0;
+logic frame_reg = 1'b0;
 
 logic [PTP_TS_W-1:0] ptp_ts_reg = '0;
 logic [PTP_TS_W-1:0] ptp_ts_out_reg = '0, ptp_ts_out_next;
@@ -517,6 +518,71 @@ always_ff @(posedge clk) begin
         delay_type <= INPUT_TYPE_ERROR;
     end
 
+    // check for framing errors
+    rx_sequence_error_reg <= 1'b0;
+    if (encoded_rx_hdr == SYNC_DATA) begin
+        // data - must be in a frame
+        rx_sequence_error_reg <= !frame_reg;
+    end else if (encoded_rx_hdr == SYNC_CTRL) begin
+        // control - control only allowed between frames
+        frame_reg <= 1'b0;
+        case (encoded_rx_data[7:4])
+            BLOCK_TYPE_CTRL[7:4]: begin
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_OS_4[7:4]: begin
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_START_4[7:4]: begin
+                frame_reg <= 1'b1;
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_OS_START[7:4]: begin
+                frame_reg <= 1'b1;
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_OS_04[7:4]: begin
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_START_0[7:4]: begin
+                frame_reg <= 1'b1;
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_OS_0[7:4]: begin
+                rx_sequence_error_reg <= frame_reg;
+            end
+            BLOCK_TYPE_TERM_0[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_1[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_2[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_3[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_4[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_5[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_6[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            BLOCK_TYPE_TERM_7[7:4]: begin
+                rx_sequence_error_reg <= !frame_reg;
+            end
+            default: begin
+                // invalid block type
+            end
+        endcase
+    end else begin
+        // invalid header
+    end
+
     // check all block type bits to detect bad encodings
     if (encoded_rx_hdr == SYNC_DATA) begin
         // data - nothing encoded
@@ -591,6 +657,7 @@ always_ff @(posedge clk) begin
         error_bad_fcs_reg <= 1'b0;
         rx_bad_block_reg <= 1'b0;
         rx_sequence_error_reg <= 1'b0;
+        frame_reg <= 1'b0;
 
         input_type_d0 <= INPUT_TYPE_IDLE;
         input_type_d1 <= INPUT_TYPE_IDLE;
