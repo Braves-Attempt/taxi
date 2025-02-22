@@ -449,6 +449,10 @@ always_ff @(posedge clk) begin
                     delay_type_valid <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_DATA;
                 end
+                BLOCK_TYPE_CTRL:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_4:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_04: input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_0:  input_type_d0 <= INPUT_TYPE_IDLE;
                 default: begin
                     rx_bad_block_reg <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_ERROR;
@@ -469,6 +473,10 @@ always_ff @(posedge clk) begin
             input_type_d0 <= INPUT_TYPE_DATA;
         end else if (encoded_rx_hdr == SYNC_CTRL) begin
             case (encoded_rx_data[7:0])
+                BLOCK_TYPE_CTRL:   input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_4:   input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_04:  input_type_d0 <= INPUT_TYPE_IDLE;
+                BLOCK_TYPE_OS_0:   input_type_d0 <= INPUT_TYPE_IDLE;
                 BLOCK_TYPE_TERM_0: input_type_d0 <= INPUT_TYPE_TERM_0;
                 BLOCK_TYPE_TERM_1: input_type_d0 <= INPUT_TYPE_TERM_1;
                 BLOCK_TYPE_TERM_2: input_type_d0 <= INPUT_TYPE_TERM_2;
@@ -494,6 +502,7 @@ always_ff @(posedge clk) begin
     end else if (encoded_rx_hdr == SYNC_CTRL) begin
         case (encoded_rx_data[7:0])
             BLOCK_TYPE_START_4: delay_type <= INPUT_TYPE_START_0;
+            BLOCK_TYPE_OS_START: delay_type <= INPUT_TYPE_START_0;
             BLOCK_TYPE_TERM_0: delay_type <= INPUT_TYPE_TERM_4;
             BLOCK_TYPE_TERM_1: delay_type <= INPUT_TYPE_TERM_5;
             BLOCK_TYPE_TERM_2: delay_type <= INPUT_TYPE_TERM_6;
