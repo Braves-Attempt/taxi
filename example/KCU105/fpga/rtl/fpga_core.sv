@@ -78,7 +78,6 @@ module fpga_core #
     input  wire logic        sfp_mgt_refclk_0_p,
     input  wire logic        sfp_mgt_refclk_0_n,
 
-
     input  wire logic        sfp0_gmii_clk,
     input  wire logic        sfp0_gmii_rst,
     input  wire logic        sfp0_gmii_clk_en,

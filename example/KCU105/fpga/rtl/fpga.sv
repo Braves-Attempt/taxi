@@ -357,9 +357,9 @@ wire [1:0] sfp_tx_n_int;
 
 wire sfp0_gmii_clk_int;
 wire sfp0_gmii_rst_int;
-wire sfp0_gmii_clk_en_int;
+wire sfp0_gmii_clk_en_int = 1'b1;
 wire [7:0] sfp0_gmii_txd_int;
-wire sfp0_gmii_tx_en_int = 1'b1;
+wire sfp0_gmii_tx_en_int;
 wire sfp0_gmii_tx_er_int;
 wire [7:0] sfp0_gmii_rxd_int;
 wire sfp0_gmii_rx_dv_int;
@@ -369,9 +369,9 @@ wire [15:0] sfp0_status_vect;
 
 wire sfp1_gmii_clk_int;
 wire sfp1_gmii_rst_int;
-wire sfp1_gmii_clk_en_int;
+wire sfp1_gmii_clk_en_int = 1'b1;
 wire [7:0] sfp1_gmii_txd_int;
-wire sfp1_gmii_tx_en_int = 1'b1;
+wire sfp1_gmii_tx_en_int;
 wire sfp1_gmii_tx_er_int;
 wire [7:0] sfp1_gmii_rxd_int;
 wire sfp1_gmii_rx_dv_int;
