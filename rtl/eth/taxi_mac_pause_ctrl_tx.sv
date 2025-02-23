@@ -62,8 +62,8 @@ module taxi_mac_pause_ctrl_tx #
     input  wire logic [15:0]                   cfg_tx_pfc_eth_type = 16'h8808,
     input  wire logic [15:0]                   cfg_tx_pfc_opcode = 16'h0101,
     input  wire logic                          cfg_tx_pfc_en = 1'b0,
-    input  wire logic [8*16-1:0]               cfg_tx_pfc_quanta = {8{16'hffff}},
-    input  wire logic [8*16-1:0]               cfg_tx_pfc_refresh = {8{16'h7fff}},
+    input  wire logic [7:0][15:0]              cfg_tx_pfc_quanta = '{8{16'hffff}},
+    input  wire logic [7:0][15:0]              cfg_tx_pfc_refresh = '{8{16'h7fff}},
     input  wire logic [9:0]                    cfg_quanta_step,
     input  wire logic                          cfg_quanta_clk_en = 1'b1,
 
@@ -114,14 +114,14 @@ assign mcf_lfc_params[QW*0 +: QW] = lfc_req_reg ? {cfg_tx_lfc_quanta[0 +: 8], cf
 
 wire [18*8-1:0] mcf_pfc_params;
 assign mcf_pfc_params[QW*0 +: QW] = {pfc_en_reg, 8'd0};
-assign mcf_pfc_params[QW*1 +: QW] = pfc_req_reg[0] ? {cfg_tx_pfc_quanta[QW*0+0 +: 8], cfg_tx_pfc_quanta[QW*0+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*2 +: QW] = pfc_req_reg[1] ? {cfg_tx_pfc_quanta[QW*1+0 +: 8], cfg_tx_pfc_quanta[QW*1+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*3 +: QW] = pfc_req_reg[2] ? {cfg_tx_pfc_quanta[QW*2+0 +: 8], cfg_tx_pfc_quanta[QW*2+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*4 +: QW] = pfc_req_reg[3] ? {cfg_tx_pfc_quanta[QW*3+0 +: 8], cfg_tx_pfc_quanta[QW*3+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*5 +: QW] = pfc_req_reg[4] ? {cfg_tx_pfc_quanta[QW*4+0 +: 8], cfg_tx_pfc_quanta[QW*4+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*6 +: QW] = pfc_req_reg[5] ? {cfg_tx_pfc_quanta[QW*5+0 +: 8], cfg_tx_pfc_quanta[QW*5+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*7 +: QW] = pfc_req_reg[6] ? {cfg_tx_pfc_quanta[QW*6+0 +: 8], cfg_tx_pfc_quanta[QW*6+8 +: 8]} : '0;
-assign mcf_pfc_params[QW*8 +: QW] = pfc_req_reg[7] ? {cfg_tx_pfc_quanta[QW*7+0 +: 8], cfg_tx_pfc_quanta[QW*7+8 +: 8]} : '0;
+assign mcf_pfc_params[QW*1 +: QW] = pfc_req_reg[0] ? {cfg_tx_pfc_quanta[0][0 +: 8], cfg_tx_pfc_quanta[0][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*2 +: QW] = pfc_req_reg[1] ? {cfg_tx_pfc_quanta[1][0 +: 8], cfg_tx_pfc_quanta[1][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*3 +: QW] = pfc_req_reg[2] ? {cfg_tx_pfc_quanta[2][0 +: 8], cfg_tx_pfc_quanta[2][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*4 +: QW] = pfc_req_reg[3] ? {cfg_tx_pfc_quanta[3][0 +: 8], cfg_tx_pfc_quanta[3][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*5 +: QW] = pfc_req_reg[4] ? {cfg_tx_pfc_quanta[4][0 +: 8], cfg_tx_pfc_quanta[4][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*6 +: QW] = pfc_req_reg[5] ? {cfg_tx_pfc_quanta[5][0 +: 8], cfg_tx_pfc_quanta[5][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*7 +: QW] = pfc_req_reg[6] ? {cfg_tx_pfc_quanta[6][0 +: 8], cfg_tx_pfc_quanta[6][8 +: 8]} : '0;
+assign mcf_pfc_params[QW*8 +: QW] = pfc_req_reg[7] ? {cfg_tx_pfc_quanta[7][0 +: 8], cfg_tx_pfc_quanta[7][8 +: 8]} : '0;
 
 assign mcf_valid = mcf_valid_reg;
 assign mcf_eth_dst  = (PFC_EN && mcf_pfc_sel_reg) ? cfg_tx_pfc_eth_dst  : cfg_tx_lfc_eth_dst;
@@ -232,7 +232,7 @@ always_comb begin
                 pfc_en_next = pfc_act_reg;
                 pfc_act_next = pfc_req_reg;
                 for (integer k = 0; k < 8; k = k + 1) begin
-                    pfc_refresh_next[k] = pfc_req_reg[k] ? {cfg_tx_pfc_refresh[QW*k +: QW], {QFB{1'b0}}} : '0;
+                    pfc_refresh_next[k] = pfc_req_reg[k] ? {cfg_tx_pfc_refresh[k], {QFB{1'b0}}} : '0;
                 end
                 pfc_send_next = 1'b0;
 
