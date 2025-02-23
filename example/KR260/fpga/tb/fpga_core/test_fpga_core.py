@@ -11,7 +11,9 @@ Authors:
 
 import logging
 import os
+import sys
 
+import pytest
 import cocotb_test.simulator
 
 import cocotb
@@ -20,6 +22,17 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer, Combine
 
 from cocotbext.eth import GmiiFrame, GmiiSource, GmiiSink, RgmiiPhy
+from cocotbext.eth import XgmiiFrame
+
+try:
+    from baser import BaseRSerdesSource, BaseRSerdesSink
+except ImportError:
+    # attempt import from current directory
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+    try:
+        from baser import BaseRSerdesSource, BaseRSerdesSink
+    finally:
+        del sys.path[0]
 
 
 class TB:
@@ -29,18 +42,29 @@ class TB:
         self.log = SimLog("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.start_soon(Clock(dut.sfp_gmii_clk, 8, units="ns").start())
-
         self.baset_phy2 = RgmiiPhy(dut.phy2_rgmii_txd, dut.phy2_rgmii_tx_ctl, dut.phy2_rgmii_tx_clk,
             dut.phy2_rgmii_rxd, dut.phy2_rgmii_rx_ctl, dut.phy2_rgmii_rx_clk, speed=speed)
 
         self.baset_phy3 = RgmiiPhy(dut.phy3_rgmii_txd, dut.phy3_rgmii_tx_ctl, dut.phy3_rgmii_tx_clk,
             dut.phy3_rgmii_rxd, dut.phy3_rgmii_rx_ctl, dut.phy3_rgmii_rx_clk, speed=speed)
 
-        self.sfp_source = GmiiSource(dut.sfp_gmii_rxd, dut.sfp_gmii_rx_er, dut.sfp_gmii_rx_dv,
-            dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en)
-        self.sfp_sink = GmiiSink(dut.sfp_gmii_txd, dut.sfp_gmii_tx_er, dut.sfp_gmii_tx_en,
-            dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en)
+        if dut.SFP_RATE.value == 0:
+            cocotb.start_soon(Clock(dut.sfp_gmii_clk, 8, units="ns").start())
+
+            self.sfp_source = GmiiSource(dut.sfp_gmii_rxd, dut.sfp_gmii_rx_er, dut.sfp_gmii_rx_dv,
+                dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en)
+            self.sfp_sink = GmiiSink(dut.sfp_gmii_txd, dut.sfp_gmii_tx_er, dut.sfp_gmii_tx_en,
+                dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en)
+        else:
+            cocotb.start_soon(Clock(dut.sfp_mgt_refclk_p, 6.4, units="ns").start())
+
+            ch = dut.sfp_mac.sfp_mac_inst.ch[0]
+
+            cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 6.4, units="ns").start())
+            cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 6.4, units="ns").start())
+
+            self.sfp_source = BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True)
+            self.sfp_sink = BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True)
 
         cocotb.start_soon(self._run_clk())
 
@@ -60,6 +84,9 @@ class TB:
 
         self.dut.rst.value = 0
         self.dut.sfp_gmii_rst.value = 0
+
+        for k in range(10):
+            await RisingEdge(self.dut.clk)
 
     async def _run_clk(self):
         t = Timer(2, 'ns')
@@ -116,6 +143,46 @@ async def mac_test(tb, source, sink):
     tb.log.info("MAC test done")
 
 
+async def mac_test_25g(tb, source, sink):
+    tb.log.info("Test MAC")
+
+    tb.log.info("Multiple small packets")
+
+    count = 64
+
+    pkts = [bytearray([(x+k) % 256 for x in range(60)]) for k in range(count)]
+
+    for p in pkts:
+        await source.send(XgmiiFrame.from_payload(p))
+
+    for k in range(count):
+        rx_frame = await sink.recv()
+
+        tb.log.info("RX frame: %s", rx_frame)
+
+        assert rx_frame.get_payload() == pkts[k]
+        assert rx_frame.check_fcs()
+
+    tb.log.info("Multiple large packets")
+
+    count = 32
+
+    pkts = [bytearray([(x+k) % 256 for x in range(1514)]) for k in range(count)]
+
+    for p in pkts:
+        await source.send(XgmiiFrame.from_payload(p))
+
+    for k in range(count):
+        rx_frame = await sink.recv()
+
+        tb.log.info("RX frame: %s", rx_frame)
+
+        assert rx_frame.get_payload() == pkts[k]
+        assert rx_frame.check_fcs()
+
+    tb.log.info("MAC test done")
+
+
 @cocotb.test()
 async def run_test(dut):
 
@@ -123,19 +190,24 @@ async def run_test(dut):
 
     await tb.init()
 
+    tests = []
+
     tb.log.info("Start BASE-T MAC loopback test on PHY2")
 
-    phy2_test_cr = cocotb.start_soon(mac_test(tb, tb.baset_phy2.rx, tb.baset_phy2.tx))
+    tests.append(cocotb.start_soon(mac_test(tb, tb.baset_phy2.rx, tb.baset_phy2.tx)))
 
     tb.log.info("Start BASE-T MAC loopback test on PHY3")
 
-    phy3_test_cr = cocotb.start_soon(mac_test(tb, tb.baset_phy3.rx, tb.baset_phy3.tx))
+    tests.append(cocotb.start_soon(mac_test(tb, tb.baset_phy3.rx, tb.baset_phy3.tx)))
 
-    tb.log.info("Start SFP MAC loopback test")
+    if dut.SFP_RATE.value == 0:
+        tb.log.info("Start 1G SFP MAC loopback test")
+        tests.append(cocotb.start_soon(mac_test(tb, tb.sfp_source, tb.sfp_sink)))
+    else:
+        tb.log.info("Start 10G SFP MAC loopback test")
+        tests.append(cocotb.start_soon(mac_test_25g(tb, tb.sfp_source, tb.sfp_sink)))
 
-    sfp_test_cr = cocotb.start_soon(mac_test(tb, tb.sfp_source, tb.sfp_sink))
-
-    await Combine(phy2_test_cr, phy3_test_cr, sfp_test_cr)
+    await Combine(*tests)
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -161,7 +233,8 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_fpga_core(request):
+@pytest.mark.parametrize("sfp_rate", [0, 1])
+def test_fpga_core(request, sfp_rate):
     dut = "fpga_core"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
@@ -169,6 +242,7 @@ def test_fpga_core(request):
     verilog_sources = [
         os.path.join(rtl_dir, f"{dut}.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "taxi_eth_mac_1g_fifo.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "eth", "us", "taxi_eth_mac_25g_us.f"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "taxi_eth_mac_1g_rgmii_fifo.f"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_reset.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_signal.sv"),
@@ -182,6 +256,7 @@ def test_fpga_core(request):
     parameters['VENDOR'] = "\"XILINX\""
     parameters['FAMILY'] = "\"zynquplus\""
     parameters['USE_CLK90'] = "1'b1"
+    parameters['SFP_RATE'] = f"1'b{sfp_rate}"
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

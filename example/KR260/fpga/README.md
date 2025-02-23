@@ -10,12 +10,14 @@ The design places looped-back MACs on the BASE-T ports and SFP+ cage.
     *  Looped-back MAC via RGMII
 *  SFP+ cage
     *  Looped-back 1000BASE-X via Xilinx PCS/PMA core and GTH transceiver
+    *  Looped-back 10GBASE-R MAC via GTH transceiver
 
 ## Board details
 
 *  FPGA: xck26-sfvc784-2LV-c
 *  1000BASE-T PHY: TI DP83867CSRGZ via RGMII
 *  1000BASE-X PHY: Xilinx PCS/PMA core via GTH transceiver
+*  10GBASE-R PHY: Soft PCS with GTH transceiver
 
 ## Licensing
 

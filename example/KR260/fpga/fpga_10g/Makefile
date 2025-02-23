@@ -14,7 +14,7 @@ FPGA_ARCH = zynquplus
 # Files for synthesis
 SYN_FILES = ../rtl/fpga.sv
 SYN_FILES += ../rtl/fpga_core.sv
-SYN_FILES += ../lib/taxi/rtl/eth/taxi_eth_mac_1g_fifo.f
+SYN_FILES += ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us.f
 SYN_FILES += ../lib/taxi/rtl/eth/taxi_eth_mac_1g_rgmii_fifo.f
 SYN_FILES += ../lib/taxi/rtl/sync/taxi_sync_reset.sv
 SYN_FILES += ../lib/taxi/rtl/sync/taxi_sync_signal.sv
@@ -29,7 +29,7 @@ XDC_FILES += ../lib/taxi/syn/vivado/taxi_axis_async_fifo.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_reset.tcl
 
 # IP
-IP_TCL_FILES = ../ip/basex_pcs_pma_0.tcl
+IP_TCL_FILES = ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us_gth_10g_156.tcl
 
 # Configuration
 CONFIG_TCL_FILES = ./config.tcl
