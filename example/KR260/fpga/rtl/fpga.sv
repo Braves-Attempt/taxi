@@ -100,13 +100,13 @@ wire mmcm_locked;
 wire mmcm_clkfb;
 
 // MMCM instance
-MMCME3_BASE #(
+MMCME4_BASE #(
     // 25 MHz input
     .CLKIN1_PERIOD(40),
     .REF_JITTER1(0.010),
     // 25 MHz input / 1 = 25 MHz PFD (range 10 MHz to 500 MHz)
     .DIVCLK_DIVIDE(1),
-    // 25 MHz PFD * 50 = 1250 MHz VCO (range 600 MHz to 1440 MHz)
+    // 25 MHz PFD * 50 = 1250 MHz VCO (range 800 MHz to 1600 MHz)
     .CLKFBOUT_MULT_F(50),
     .CLKFBOUT_PHASE(0),
     // 1250 MHz / 10 = 125 MHz, 0 degrees
