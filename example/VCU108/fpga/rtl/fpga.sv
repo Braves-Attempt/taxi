@@ -15,7 +15,12 @@ Authors:
 /*
  * FPGA top-level module
  */
-module fpga
+module fpga #
+(
+    parameter logic SIM = 1'b0,
+    parameter string VENDOR = "XILINX",
+    parameter string FAMILY = "virtexu"
+)
 (
     /*
      * Clock: 125MHz LVDS
@@ -54,7 +59,26 @@ module fpga
     input  wire logic        phy_sgmii_clk_p,
     input  wire logic        phy_sgmii_clk_n,
     output wire logic        phy_reset_n,
-    input  wire logic        phy_int_n
+    input  wire logic        phy_int_n,
+
+    /*
+     * Ethernet: QSFP28
+     */
+    input  wire logic [3:0]  qsfp_rx_p,
+    input  wire logic [3:0]  qsfp_rx_n,
+    output wire logic [3:0]  qsfp_tx_p,
+    output wire logic [3:0]  qsfp_tx_n,
+    input  wire logic        qsfp_mgt_refclk_0_p,
+    input  wire logic        qsfp_mgt_refclk_0_n,
+    // input  wire logic        qsfp_mgt_refclk_1_p,
+    // input  wire logic        qsfp_mgt_refclk_1_n,
+    // output wire logic        qsfp_recclk_p,
+    // output wire logic        qsfp_recclk_n,
+    output wire logic        qsfp_modsell,
+    output wire logic        qsfp_resetl,
+    input  wire logic        qsfp_modprsl,
+    input  wire logic        qsfp_intl,
+    output wire logic        qsfp_lpmode
 );
 
 // Clock and reset
@@ -324,7 +348,11 @@ wire [7:0] led_int;
 // SW12:4 (sw[0]) off for LSB of status vector, on for MSB
 assign led = sw[3] ? (sw[0] ? pcspma_status_vector[15:8] : pcspma_status_vector[7:0]) : led_int;
 
-fpga_core
+fpga_core #(
+    .SIM(SIM),
+    .VENDOR(VENDOR),
+    .FAMILY(FAMILY)
+)
 core_inst (
     /*
      * Clock: 125MHz
@@ -365,7 +393,26 @@ core_inst (
     .phy_gmii_tx_en(phy_gmii_tx_en_int),
     .phy_gmii_tx_er(phy_gmii_tx_er_int),
     .phy_reset_n(phy_reset_n),
-    .phy_int_n(phy_int_n)
+    .phy_int_n(phy_int_n),
+
+    /*
+     * Ethernet: QSFP28
+     */
+    .qsfp_rx_p(qsfp_rx_p),
+    .qsfp_rx_n(qsfp_rx_n),
+    .qsfp_tx_p(qsfp_tx_p),
+    .qsfp_tx_n(qsfp_tx_n),
+    .qsfp_mgt_refclk_0_p(qsfp_mgt_refclk_0_p),
+    .qsfp_mgt_refclk_0_n(qsfp_mgt_refclk_0_n),
+    // .qsfp_mgt_refclk_1_p(qsfp_mgt_refclk_1_p),
+    // .qsfp_mgt_refclk_1_n(qsfp_mgt_refclk_1_n),
+    // .qsfp_recclk_p(qsfp_recclk_p),
+    // .qsfp_recclk_n(qsfp_recclk_n),
+    .qsfp_modsell(qsfp_modsell),
+    .qsfp_resetl(qsfp_resetl),
+    .qsfp_modprsl(qsfp_modprsl),
+    .qsfp_intl(qsfp_intl),
+    .qsfp_lpmode(qsfp_lpmode)
 );
 
 endmodule

@@ -4,17 +4,20 @@
 
 This example design targets the Xilinx VCU108 FPGA board.
 
-The design places a looped-back MAC on the BASE-T port as well as a looped-back UART on on the USB UART connection.
+The design places looped-back MACs on the BASE-T and QSFP28 ports as well as a looped-back UART on on the USB UART connection.
 
 *  USB UART
     *  Looped-back UART
 *  RJ-45 Ethernet port with Marvell 88E1111 PHY
     *  Looped-back MAC via SGMII via Xilinx PCS/PMA core and LVDS IOSERDES
+*  QSFP28
+    *  Looped-back 10G or 25G MACs via GTY transceivers
 
 ## Board details
 
 *  FPGA: xcvu095-ffva2104-2-e
 *  1000BASE-T PHY: Marvell 88E1111 via SGMII
+*  25GBASE-R PHY: Soft PCS with GTY transceivers
 
 ## Licensing
 

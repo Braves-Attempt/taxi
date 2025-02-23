@@ -29,7 +29,7 @@ XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_reset.tcl
 
 # IP
 IP_TCL_FILES = ../ip/sgmii_pcs_pma_0.tcl
-IP_TCL_FILES += ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us_gty_25g_156.tcl
+IP_TCL_FILES += ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us_gty_10g_156.tcl
 
 include ../common/vivado.mk
 

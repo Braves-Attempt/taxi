@@ -20,6 +20,7 @@ MODULE   = $(COCOTB_TEST_MODULES)
 TOPLEVEL = $(COCOTB_TOPLEVEL)
 VERILOG_SOURCES += ../../rtl/$(DUT).sv
 VERILOG_SOURCES += ../../lib/taxi/rtl/eth/taxi_eth_mac_1g_fifo.f
+VERILOG_SOURCES += ../../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us.f
 VERILOG_SOURCES += ../../lib/taxi/rtl/lss/taxi_uart.f
 VERILOG_SOURCES += ../../lib/taxi/rtl/sync/taxi_sync_reset.sv
 VERILOG_SOURCES += ../../lib/taxi/rtl/sync/taxi_sync_signal.sv
@@ -32,7 +33,9 @@ uniq_base = $(if $1,$(call uniq_base,$(foreach f,$1,$(if $(filter-out $(notdir $
 VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
-#export PARAM_A := value
+export PARAM_SIM := "1'b1"
+export PARAM_VENDOR := "\"XILINX\""
+export PARAM_FAMILY := "\"virtexu\""
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
