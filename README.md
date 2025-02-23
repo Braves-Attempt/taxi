@@ -44,14 +44,15 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  10/100/1000 RGMII MAC + FIFO
     *  1G MAC
     *  1G MAC + FIFO
-    *  10G MAC
-    *  10G MAC + FIFO
-    *  10G MAC/PHY
-    *  10G MAC/PHY + FIFO
-    *  10G PHY
+    *  10G/25G MAC
+    *  10G/25G MAC + FIFO
+    *  10G/25G MAC/PHY
+    *  10G/25G MAC/PHY + FIFO
+    *  10G/25G PHY
     *  MII PHY interface
     *  GMII PHY interface
     *  RGMII PHY interface
+    *  10G/25G MAC/PHY/GT wrapper for UltraScale/UltraScale+
 *  General input/output
     *  Switch debouncer
     *  Generic IDDR
