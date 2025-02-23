@@ -196,10 +196,10 @@ wire btnl_int;
 wire btnd_int;
 wire btnr_int;
 wire btnc_int;
-wire [3:0] sw_int;
+wire [7:0] sw_int;
 
 taxi_debounce_switch #(
-    .WIDTH(9),
+    .WIDTH(5+8),
     .N(4),
     .RATE(125000)
 )
