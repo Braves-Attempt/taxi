@@ -11,7 +11,9 @@ Authors:
 
 import logging
 import os
+import sys
 
+import pytest
 import cocotb_test.simulator
 
 import cocotb
@@ -20,7 +22,18 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Combine
 
 from cocotbext.eth import GmiiFrame, GmiiSource, GmiiSink
+from cocotbext.eth import XgmiiFrame
 from cocotbext.uart import UartSource, UartSink
+
+try:
+    from baser import BaseRSerdesSource, BaseRSerdesSink
+except ImportError:
+    # attempt import from current directory
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+    try:
+        from baser import BaseRSerdesSource, BaseRSerdesSink
+    finally:
+        del sys.path[0]
 
 
 class TB:
@@ -32,23 +45,37 @@ class TB:
 
         cocotb.start_soon(Clock(dut.clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.phy_gmii_clk, 8, units="ns").start())
-        cocotb.start_soon(Clock(dut.sfp0_gmii_clk, 8, units="ns").start())
-        cocotb.start_soon(Clock(dut.sfp1_gmii_clk, 8, units="ns").start())
 
         self.gmii_source = GmiiSource(dut.phy_gmii_rxd, dut.phy_gmii_rx_er, dut.phy_gmii_rx_dv,
             dut.phy_gmii_clk, dut.phy_gmii_rst, dut.phy_gmii_clk_en)
         self.gmii_sink = GmiiSink(dut.phy_gmii_txd, dut.phy_gmii_tx_er, dut.phy_gmii_tx_en,
             dut.phy_gmii_clk, dut.phy_gmii_rst, dut.phy_gmii_clk_en)
 
-        self.sfp0_source = GmiiSource(dut.sfp0_gmii_rxd, dut.sfp0_gmii_rx_er, dut.sfp0_gmii_rx_dv,
-            dut.sfp0_gmii_clk, dut.sfp0_gmii_rst, dut.sfp0_gmii_clk_en)
-        self.sfp0_sink = GmiiSink(dut.sfp0_gmii_txd, dut.sfp0_gmii_tx_er, dut.sfp0_gmii_tx_en,
-            dut.sfp0_gmii_clk, dut.sfp0_gmii_rst, dut.sfp0_gmii_clk_en)
+        self.sfp_sources = []
+        self.sfp_sinks = []
 
-        self.sfp1_source = GmiiSource(dut.sfp1_gmii_rxd, dut.sfp1_gmii_rx_er, dut.sfp1_gmii_rx_dv,
-            dut.sfp1_gmii_clk, dut.sfp1_gmii_rst, dut.sfp1_gmii_clk_en)
-        self.sfp1_sink = GmiiSink(dut.sfp1_gmii_txd, dut.sfp1_gmii_tx_er, dut.sfp1_gmii_tx_en,
-            dut.sfp1_gmii_clk, dut.sfp1_gmii_rst, dut.sfp1_gmii_clk_en)
+        if dut.SFP_RATE.value == 0:
+            cocotb.start_soon(Clock(dut.sfp0_gmii_clk, 8, units="ns").start())
+            cocotb.start_soon(Clock(dut.sfp1_gmii_clk, 8, units="ns").start())
+
+            self.sfp_sources.append(GmiiSource(dut.sfp0_gmii_rxd, dut.sfp0_gmii_rx_er, dut.sfp0_gmii_rx_dv,
+                dut.sfp0_gmii_clk, dut.sfp0_gmii_rst, dut.sfp0_gmii_clk_en))
+            self.sfp_sinks.append(GmiiSink(dut.sfp0_gmii_txd, dut.sfp0_gmii_tx_er, dut.sfp0_gmii_tx_en,
+                dut.sfp0_gmii_clk, dut.sfp0_gmii_rst, dut.sfp0_gmii_clk_en))
+
+            self.sfp_sources.append(GmiiSource(dut.sfp1_gmii_rxd, dut.sfp1_gmii_rx_er, dut.sfp1_gmii_rx_dv,
+                dut.sfp1_gmii_clk, dut.sfp1_gmii_rst, dut.sfp1_gmii_clk_en))
+            self.sfp_sinks.append(GmiiSink(dut.sfp1_gmii_txd, dut.sfp1_gmii_tx_er, dut.sfp1_gmii_tx_en,
+                dut.sfp1_gmii_clk, dut.sfp1_gmii_rst, dut.sfp1_gmii_clk_en))
+        else:
+            cocotb.start_soon(Clock(dut.sfp_mgt_refclk_0_p, 6.4, units="ns").start())
+
+            for ch in dut.sfp_mac.sfp_mac_inst.ch:
+                cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 6.4, units="ns").start())
+                cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 6.4, units="ns").start())
+
+                self.sfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
+                self.sfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True))
 
         self.uart_source = UartSource(dut.uart_rxd, baud=115200, bits=8, stop_bits=1)
         self.uart_sink = UartSink(dut.uart_txd, baud=115200, bits=8, stop_bits=1)
@@ -85,6 +112,9 @@ class TB:
         self.dut.phy_gmii_rst.value = 0
         self.dut.sfp0_gmii_rst.value = 0
         self.dut.sfp1_gmii_rst.value = 0
+
+        for k in range(10):
+            await RisingEdge(self.dut.clk)
 
 
 async def uart_test(tb, source, sink):
@@ -148,6 +178,46 @@ async def mac_test(tb, source, sink):
     tb.log.info("MAC test done")
 
 
+async def mac_test_25g(tb, source, sink):
+    tb.log.info("Test MAC")
+
+    tb.log.info("Multiple small packets")
+
+    count = 64
+
+    pkts = [bytearray([(x+k) % 256 for x in range(60)]) for k in range(count)]
+
+    for p in pkts:
+        await source.send(XgmiiFrame.from_payload(p))
+
+    for k in range(count):
+        rx_frame = await sink.recv()
+
+        tb.log.info("RX frame: %s", rx_frame)
+
+        assert rx_frame.get_payload() == pkts[k]
+        assert rx_frame.check_fcs()
+
+    tb.log.info("Multiple large packets")
+
+    count = 32
+
+    pkts = [bytearray([(x+k) % 256 for x in range(1514)]) for k in range(count)]
+
+    for p in pkts:
+        await source.send(XgmiiFrame.from_payload(p))
+
+    for k in range(count):
+        rx_frame = await sink.recv()
+
+        tb.log.info("RX frame: %s", rx_frame)
+
+        assert rx_frame.get_payload() == pkts[k]
+        assert rx_frame.check_fcs()
+
+    tb.log.info("MAC test done")
+
+
 @cocotb.test()
 async def run_test(dut):
 
@@ -155,23 +225,25 @@ async def run_test(dut):
 
     await tb.init()
 
+    tests = []
+
     tb.log.info("Start UART test")
 
-    uart_test_cr = cocotb.start_soon(uart_test(tb, tb.uart_source, tb.uart_sink))
+    tests.append(cocotb.start_soon(uart_test(tb, tb.uart_source, tb.uart_sink)))
 
     tb.log.info("Start BASE-T MAC loopback test")
 
-    baset_test_cr = cocotb.start_soon(mac_test(tb, tb.gmii_source, tb.gmii_sink))
+    tests.append(cocotb.start_soon(mac_test(tb, tb.gmii_source, tb.gmii_sink)))
 
-    tb.log.info("Start SFP0 MAC loopback test")
+    for k in range(len(tb.sfp_sources)):
+        if dut.SFP_RATE.value == 0:
+            tb.log.info("Start SFP %d 1G MAC loopback test", k)
+            tests.append(cocotb.start_soon(mac_test(tb, tb.sfp_sources[k], tb.sfp_sinks[k])))
+        else:
+            tb.log.info("Start SFP %d 10G MAC loopback test", k)
+            tests.append(cocotb.start_soon(mac_test_25g(tb, tb.sfp_sources[k], tb.sfp_sinks[k])))
 
-    sfp0_test_cr = cocotb.start_soon(mac_test(tb, tb.sfp0_source, tb.sfp0_sink))
-
-    tb.log.info("Start SFP1 MAC loopback test")
-
-    sfp1_test_cr = cocotb.start_soon(mac_test(tb, tb.sfp1_source, tb.sfp1_sink))
-
-    await Combine(uart_test_cr, baset_test_cr, sfp0_test_cr, sfp1_test_cr)
+    await Combine(*tests)
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -197,7 +269,8 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_fpga_core(request):
+@pytest.mark.parametrize("sfp_rate", [0, 1])
+def test_fpga_core(request, sfp_rate):
     dut = "fpga_core"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
@@ -205,6 +278,7 @@ def test_fpga_core(request):
     verilog_sources = [
         os.path.join(rtl_dir, f"{dut}.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "taxi_eth_mac_1g_fifo.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "eth", "us", "taxi_eth_mac_25g_us.f"),
         os.path.join(lib_dir, "taxi", "rtl", "lss", "taxi_uart.f"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_reset.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_signal.sv"),
@@ -215,7 +289,10 @@ def test_fpga_core(request):
 
     parameters = {}
 
-    # parameters['A'] = val
+    parameters['SIM'] = "1'b1"
+    parameters['VENDOR'] = "\"XILINX\""
+    parameters['FAMILY'] = "\"kintexu\""
+    parameters['SFP_RATE'] = f"1'b{sfp_rate}"
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
