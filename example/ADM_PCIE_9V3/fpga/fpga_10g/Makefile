@@ -34,18 +34,18 @@ IP_TCL_FILES = ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us_gty_10g_161.tcl
 
 include ../common/vivado.mk
 
-program: $(FPGA_TOP).bit
-	echo "open_hw" > program.tcl
+program: $(PROJECT).bit
+	echo "open_hw_manager" > program.tcl
 	echo "connect_hw_server" >> program.tcl
 	echo "open_hw_target" >> program.tcl
 	echo "current_hw_device [lindex [get_hw_devices] 0]" >> program.tcl
 	echo "refresh_hw_device -update_hw_probes false [current_hw_device]" >> program.tcl
-	echo "set_property PROGRAM.FILE {$(FPGA_TOP).bit} [current_hw_device]" >> program.tcl
+	echo "set_property PROGRAM.FILE {$(PROJECT).bit} [current_hw_device]" >> program.tcl
 	echo "program_hw_devices [current_hw_device]" >> program.tcl
 	echo "exit" >> program.tcl
 	vivado -nojournal -nolog -mode batch -source program.tcl
 
-%_primary.mcs %_secondary.mcs %_primary.prm %_secondary.prm: %.bit
+$(PROJECT)_primary.mcs $(PROJECT)_secondary.mcs $(PROJECT)_primary.prm $(PROJECT)_secondary.prm: $(PROJECT).bit
 	echo "write_cfgmem -force -format mcs -size 64 -interface SPIx8 -loadbit {up 0x0000000 $*.bit} -checksum -file $*.mcs" > generate_mcs.tcl
 	echo "exit" >> generate_mcs.tcl
 	vivado -nojournal -nolog -mode batch -source generate_mcs.tcl
@@ -58,16 +58,16 @@ program: $(FPGA_TOP).bit
 	do cp $*$$x rev/$*_rev$$COUNT$$x; \
 	echo "Output: rev/$*_rev$$COUNT$$x"; done;
 
-flash: $(FPGA_TOP)_primary.mcs $(FPGA_TOP)_secondary.mcs $(FPGA_TOP)_primary.prm $(FPGA_TOP)_secondary.prm
-	echo "open_hw" > flash.tcl
+flash: $(PROJECT)_primary.mcs $(PROJECT)_secondary.mcs $(PROJECT)_primary.prm $(PROJECT)_secondary.prm
+	echo "open_hw_manager" > flash.tcl
 	echo "connect_hw_server" >> flash.tcl
 	echo "open_hw_target" >> flash.tcl
 	echo "current_hw_device [lindex [get_hw_devices] 0]" >> flash.tcl
 	echo "refresh_hw_device -update_hw_probes false [current_hw_device]" >> flash.tcl
 	echo "create_hw_cfgmem -hw_device [current_hw_device] [lindex [get_cfgmem_parts {mt25qu256-spi-x1_x2_x4_x8}] 0]" >> flash.tcl
 	echo "current_hw_cfgmem -hw_device [current_hw_device] [get_property PROGRAM.HW_CFGMEM [current_hw_device]]" >> flash.tcl
-	echo "set_property PROGRAM.FILES [list \"$(FPGA_TOP)_primary.mcs\" \"$(FPGA_TOP)_secondary.mcs\"] [current_hw_cfgmem]" >> flash.tcl
-	echo "set_property PROGRAM.PRM_FILES [list \"$(FPGA_TOP)_primary.prm\" \"$(FPGA_TOP)_secondary.prm\"] [current_hw_cfgmem]" >> flash.tcl
+	echo "set_property PROGRAM.FILES [list \"$(PROJECT)_primary.mcs\" \"$(PROJECT)_secondary.mcs\"] [current_hw_cfgmem]" >> flash.tcl
+	echo "set_property PROGRAM.PRM_FILES [list \"$(PROJECT)_primary.prm\" \"$(PROJECT)_secondary.prm\"] [current_hw_cfgmem]" >> flash.tcl
 	echo "set_property PROGRAM.ERASE 1 [current_hw_cfgmem]" >> flash.tcl
 	echo "set_property PROGRAM.CFG_PROGRAM 1 [current_hw_cfgmem]" >> flash.tcl
 	echo "set_property PROGRAM.VERIFY 1 [current_hw_cfgmem]" >> flash.tcl
