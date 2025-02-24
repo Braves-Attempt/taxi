@@ -32,53 +32,53 @@ set_false_path -to [get_ports {led[*] sfp_led[*]}]
 set_output_delay 0 [get_ports {led[*] sfp_led[*]}]
 
 # PMOD1
-#set_property -dict {LOC H12  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[0]}] ;# J2.1 / HDA11 som240_1_a17
-#set_property -dict {LOC E10  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[1]}] ;# J2.3 / HDA12 som240_1_d20
-#set_property -dict {LOC D10  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[2]}] ;# J2.5 / HDA13 som240_1_d21
-#set_property -dict {LOC C11  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[3]}] ;# J2.7 / HDA14 som240_1_d22
-#set_property -dict {LOC B10  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[4]}] ;# J2.2 / HDA15 som240_1_b20
-#set_property -dict {LOC E12  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[5]}] ;# J2.4 / HDA16_CC som240_1_b21
-#set_property -dict {LOC D11  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[6]}] ;# J2.6 / HDA17 som240_1_b22
-#set_property -dict {LOC B11  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod1[7]}] ;# J2.8 / HDA18 som240_1_c22
+#set_property -dict {LOC H12  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[0]}] ;# J2.1 / HDA11 som240_1_a17
+#set_property -dict {LOC E10  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[1]}] ;# J2.3 / HDA12 som240_1_d20
+#set_property -dict {LOC D10  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[2]}] ;# J2.5 / HDA13 som240_1_d21
+#set_property -dict {LOC C11  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[3]}] ;# J2.7 / HDA14 som240_1_d22
+#set_property -dict {LOC B10  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[4]}] ;# J2.2 / HDA15 som240_1_b20
+#set_property -dict {LOC E12  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[5]}] ;# J2.4 / HDA16_CC som240_1_b21
+#set_property -dict {LOC D11  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[6]}] ;# J2.6 / HDA17 som240_1_b22
+#set_property -dict {LOC B11  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod1[7]}] ;# J2.8 / HDA18 som240_1_c22
 
 #set_false_path -to [get_ports {pmod1[*]}]
 #set_output_delay 0 [get_ports {pmod1[*]}]
 
 # PMOD2
-#set_property -dict {LOC J11  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[0]}] ;# J18.1 / HDA02 som240_1_d18
-#set_property -dict {LOC J10  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[1]}] ;# J18.3 / HDA03 som240_1_b16
-#set_property -dict {LOC K13  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[2]}] ;# J18.5 / HDA04 som240_1_b17
-#set_property -dict {LOC K12  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[3]}] ;# J18.7 / HDA05 som240_1_b18
-#set_property -dict {LOC H11  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[4]}] ;# J18.2 / HDA06 som240_1_c18
-#set_property -dict {LOC G10  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[5]}] ;# J18.4 / HDA07 som240_1_c19
-#set_property -dict {LOC F12  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[6]}] ;# J18.6 / HDA08_CC som240_1_c20
-#set_property -dict {LOC F11  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod2[7]}] ;# J18.8 / HDA09 som240_1_a15
+#set_property -dict {LOC J11  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[0]}] ;# J18.1 / HDA02 som240_1_d18
+#set_property -dict {LOC J10  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[1]}] ;# J18.3 / HDA03 som240_1_b16
+#set_property -dict {LOC K13  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[2]}] ;# J18.5 / HDA04 som240_1_b17
+#set_property -dict {LOC K12  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[3]}] ;# J18.7 / HDA05 som240_1_b18
+#set_property -dict {LOC H11  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[4]}] ;# J18.2 / HDA06 som240_1_c18
+#set_property -dict {LOC G10  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[5]}] ;# J18.4 / HDA07 som240_1_c19
+#set_property -dict {LOC F12  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[6]}] ;# J18.6 / HDA08_CC som240_1_c20
+#set_property -dict {LOC F11  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod2[7]}] ;# J18.8 / HDA09 som240_1_a15
 
 #set_false_path -to [get_ports {pmod2[*]}]
 #set_output_delay 0 [get_ports {pmod2[*]}]
 
 # PMOD3
-#set_property -dict {LOC AE12 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[0]}] ;# J19.1 / HDB00_CC som240_2_d44
-#set_property -dict {LOC AF12 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[1]}] ;# J19.3 / HDB01 som240_2_d45
-#set_property -dict {LOC AG10 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[2]}] ;# J19.5 / HDB02 som240_2_d46
-#set_property -dict {LOC AH10 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[3]}] ;# J19.7 / HDB03 som240_2_d48
-#set_property -dict {LOC AF11 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[4]}] ;# J19.2 / HDB04 som240_2_d49
-#set_property -dict {LOC AG11 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[5]}] ;# J19.4 / HDB05 som240_2_d50
-#set_property -dict {LOC AH12 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[6]}] ;# J19.6 / HDB06 som240_2_c46
-#set_property -dict {LOC AH11 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod3[7]}] ;# J19.8 / HDB07 som240_2_c47
+#set_property -dict {LOC AE12 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[0]}] ;# J19.1 / HDB00_CC som240_2_d44
+#set_property -dict {LOC AF12 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[1]}] ;# J19.3 / HDB01 som240_2_d45
+#set_property -dict {LOC AG10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[2]}] ;# J19.5 / HDB02 som240_2_d46
+#set_property -dict {LOC AH10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[3]}] ;# J19.7 / HDB03 som240_2_d48
+#set_property -dict {LOC AF11 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[4]}] ;# J19.2 / HDB04 som240_2_d49
+#set_property -dict {LOC AG11 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[5]}] ;# J19.4 / HDB05 som240_2_d50
+#set_property -dict {LOC AH12 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[6]}] ;# J19.6 / HDB06 som240_2_c46
+#set_property -dict {LOC AH11 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod3[7]}] ;# J19.8 / HDB07 som240_2_c47
 
 #set_false_path -to [get_ports {pmod3[*]}]
 #set_output_delay 0 [get_ports {pmod3[*]}]
 
 # PMOD4
-#set_property -dict {LOC AC12 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[0]}] ;# J20.1 / HDB08_CC som240_2_c48
-#set_property -dict {LOC AD12 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[1]}] ;# J20.3 / HDB09 som240_2_c50
-#set_property -dict {LOC AE10 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[2]}] ;# J20.5 / HDB10 som240_2_c51
-#set_property -dict {LOC AF10 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[3]}] ;# J20.7 / HDB11 som240_2_c52
-#set_property -dict {LOC AD11 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[4]}] ;# J20.2 / HDB12 som240_2_b44
-#set_property -dict {LOC AD10 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[5]}] ;# J20.4 / HDB13 som240_2_b45
-#set_property -dict {LOC AA11 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[6]}] ;# J20.6 / HDB14 som240_2_b46
-#set_property -dict {LOC AA10 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports {pmod4[7]}] ;# J20.8 / HDB15 som240_2_b48
+#set_property -dict {LOC AC12 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[0]}] ;# J20.1 / HDB08_CC som240_2_c48
+#set_property -dict {LOC AD12 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[1]}] ;# J20.3 / HDB09 som240_2_c50
+#set_property -dict {LOC AE10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[2]}] ;# J20.5 / HDB10 som240_2_c51
+#set_property -dict {LOC AF10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[3]}] ;# J20.7 / HDB11 som240_2_c52
+#set_property -dict {LOC AD11 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[4]}] ;# J20.2 / HDB12 som240_2_b44
+#set_property -dict {LOC AD10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[5]}] ;# J20.4 / HDB13 som240_2_b45
+#set_property -dict {LOC AA11 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[6]}] ;# J20.6 / HDB14 som240_2_b46
+#set_property -dict {LOC AA10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {pmod4[7]}] ;# J20.8 / HDB15 som240_2_b48
 
 #set_false_path -to [get_ports {pmod4[*]}]
 #set_output_delay 0 [get_ports {pmod4[*]}]

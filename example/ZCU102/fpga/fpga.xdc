@@ -60,6 +60,47 @@ set_property -dict {LOC AK13 IOSTANDARD LVCMOS33} [get_ports {sw[7]}]
 set_false_path -from [get_ports {sw[*]}]
 set_input_delay 0 [get_ports {sw[*]}]
 
+# PMOD0
+#set_property -dict {LOC A20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[0]}] ;# J55.1
+#set_property -dict {LOC B20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[1]}] ;# J55.3
+#set_property -dict {LOC A22  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[2]}] ;# J55.5
+#set_property -dict {LOC A21  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[3]}] ;# J55.7
+#set_property -dict {LOC B21  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[4]}] ;# J55.2
+#set_property -dict {LOC C21  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[5]}] ;# J55.4
+#set_property -dict {LOC C22  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[6]}] ;# J55.6
+#set_property -dict {LOC D21  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod0[7]}] ;# J55.8
+
+#set_false_path -to [get_ports {pmod0[*]}]
+#set_output_delay 0 [get_ports {pmod0[*]}]
+
+# PMOD1
+#set_property -dict {LOC D20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[0]}] ;# J87.1
+#set_property -dict {LOC E20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[1]}] ;# J87.3
+#set_property -dict {LOC D22  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[2]}] ;# J87.5
+#set_property -dict {LOC E22  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[3]}] ;# J87.7
+#set_property -dict {LOC F20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[4]}] ;# J87.2
+#set_property -dict {LOC G20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[5]}] ;# J87.4
+#set_property -dict {LOC J20  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[6]}] ;# J87.6
+#set_property -dict {LOC J19  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {pmod1[7]}] ;# J87.8
+
+#set_false_path -to [get_ports {pmod1[*]}]
+#set_output_delay 0 [get_ports {pmod1[*]}]
+
+# "Prototype header" GPIO
+#set_property -dict {LOC H14  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[0]}] ;# J3.6
+#set_property -dict {LOC J14  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[1]}] ;# J3.8
+#set_property -dict {LOC G14  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[2]}] ;# J3.10
+#set_property -dict {LOC G15  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[3]}] ;# J3.12
+#set_property -dict {LOC J15  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[4]}] ;# J3.14
+#set_property -dict {LOC J16  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[5]}] ;# J3.16
+#set_property -dict {LOC G16  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[6]}] ;# J3.18
+#set_property -dict {LOC H16  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[7]}] ;# J3.20
+#set_property -dict {LOC G13  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[8]}] ;# J3.22
+#set_property -dict {LOC H13  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports {proto_gpio[9]}] ;# J3.24
+
+#set_false_path -to [get_ports {proto_gpio[*]}]
+#set_output_delay 0 [get_ports {proto_gpio[*]}]
+
 # UART
 set_property -dict {LOC F13  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports uart_txd]
 set_property -dict {LOC E13  IOSTANDARD LVCMOS33} [get_ports uart_rxd]
