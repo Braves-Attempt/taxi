@@ -101,6 +101,7 @@ Example designs are provided for several different FPGA boards, showcasing many 
 *  Xilinx VCU108 (Xilinx Virtex UltraScale XCVU095)
 *  Xilinx ZCU102 (Xilinx Zynq UltraScale+ XCZU9EG)
 *  Xilinx ZCU106 (Xilinx Zynq UltraScale+ XCZU7EV)
+*  Xilinx ZCU111 (Xilinx Zynq UltraScale+ XCZU28DR)
 
 ## Testing
 
