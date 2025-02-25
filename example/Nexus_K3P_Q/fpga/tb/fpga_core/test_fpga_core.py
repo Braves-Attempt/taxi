@@ -34,7 +34,7 @@ except ImportError:
 
 
 class TB:
-    def __init__(self, dut, speed=1000e6):
+    def __init__(self, dut):
         self.dut = dut
 
         self.log = SimLog("cocotb.tb")
@@ -46,8 +46,8 @@ class TB:
         self.qsfp_sources = []
         self.qsfp_sinks = []
 
-        for inst in [dut.qsfp_0_mac_inst, dut.qsfp_1_mac_inst]:
-            for ch in inst.ch:
+        for inst in dut.gty_quad:
+            for ch in inst.mac_inst.ch:
                 cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 2.56, units="ns").start())
                 cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 2.56, units="ns").start())
 
