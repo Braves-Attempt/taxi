@@ -46,12 +46,13 @@ class TB:
         self.qsfp_sources = []
         self.qsfp_sinks = []
 
-        for ch in list(dut.qsfp_0_mac_inst.ch)+list(dut.qsfp_1_mac_inst.ch):
-            cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 2.56, units="ns").start())
-            cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 2.56, units="ns").start())
+        for inst in [dut.qsfp_0_mac_inst, dut.qsfp_1_mac_inst]:
+            for ch in inst.ch:
+                cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 2.56, units="ns").start())
+                cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 2.56, units="ns").start())
 
-            self.qsfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
-            self.qsfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True))
+                self.qsfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
+                self.qsfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True))
 
         dut.user_sw.setimmediatevalue(0)
 
