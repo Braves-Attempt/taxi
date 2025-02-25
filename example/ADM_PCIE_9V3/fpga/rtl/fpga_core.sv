@@ -89,8 +89,6 @@ taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_qsfp_rx[7:0]();
 
 if (SIM) begin
 
-    assign qsfp_gtpowergood = '1;
-
     assign qsfp_0_mgt_refclk = qsfp_0_mgt_refclk_p;
     assign qsfp_0_mgt_refclk_int = qsfp_0_mgt_refclk_p;
     assign qsfp_0_mgt_refclk_bufg = qsfp_0_mgt_refclk_int;

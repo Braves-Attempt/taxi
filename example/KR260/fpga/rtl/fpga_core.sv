@@ -326,8 +326,6 @@ end else begin : sfp_mac
 
     if (SIM) begin
 
-        assign sfp_gtpowergood = 1'b1;
-
         assign sfp_mgt_refclk = sfp_mgt_refclk_p;
         assign sfp_mgt_refclk_int = sfp_mgt_refclk_p;
         assign sfp_mgt_refclk_bufg = sfp_mgt_refclk_int;

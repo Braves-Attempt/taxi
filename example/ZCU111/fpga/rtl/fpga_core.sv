@@ -130,8 +130,6 @@ taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[3:0]();
 
 if (SIM) begin
 
-    assign sfp_gtpowergood = 1'b1;
-
     assign sfp_mgt_refclk_0 = sfp_mgt_refclk_0_p;
     assign sfp_mgt_refclk_0_int = sfp_mgt_refclk_0_p;
     assign sfp_mgt_refclk_0_bufg = sfp_mgt_refclk_0_int;

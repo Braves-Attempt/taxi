@@ -227,6 +227,12 @@ wire [1:0] gt_rxdatavalid;
 if (SIM) begin : xcvr
     // simulation (no GT core)
 
+    assign xcvr_gtpowergood_out = 1'b1;
+
+    assign xcvr_qpll0lock_out = 1'b1;
+    assign xcvr_qpll0clk_out = 1'b0;
+    assign xcvr_qpll0refclk_out = 1'b0;
+
     assign gt_reset_tx_done = !xcvr_ctrl_rst;
     assign gt_reset_rx_done = !xcvr_ctrl_rst;
 
