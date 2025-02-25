@@ -62,7 +62,6 @@ module fpga_core #
     input  wire logic        qsfp_int_l
 );
 
-
 // QSFP28
 assign qsfp_0_sel_l = 1'b1;
 assign qsfp_1_sel_l = 1'b1;
@@ -124,351 +123,194 @@ qsfp_sync_reset_inst (
     .out(qsfp_rst)
 );
 
-taxi_eth_mac_25g_us #(
-    .SIM(SIM),
-    .VENDOR(VENDOR),
-    .FAMILY(FAMILY),
+wire [7:0] qsfp_tx_p;
+wire [7:0] qsfp_tx_n;
+wire [7:0] qsfp_rx_p = {qsfp_1_rx_p, qsfp_0_rx_p};
+wire [7:0] qsfp_rx_n = {qsfp_1_rx_n, qsfp_0_rx_n};
 
-    .CNT(4),
+assign qsfp_0_tx_p = qsfp_tx_p[3:0];
+assign qsfp_0_tx_n = qsfp_tx_n[3:0];
+assign qsfp_1_tx_p = qsfp_tx_p[7:4];
+assign qsfp_1_tx_n = qsfp_tx_n[7:4];
 
-    // GT type
-    .GT_TYPE("GTY"),
+for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
 
-    // PHY parameters
-    .PADDING_EN(1'b1),
-    .DIC_EN(1'b1),
-    .MIN_FRAME_LEN(64),
-    .PTP_TS_EN(1'b0),
-    .PTP_TS_FMT_TOD(1'b1),
-    .PTP_TS_W(96),
-    .PRBS31_EN(1'b0),
-    .TX_SERDES_PIPELINE(1),
-    .RX_SERDES_PIPELINE(1),
-    .COUNT_125US(125000/6.4)
-)
-qsfp_0_mac_inst (
-    .xcvr_ctrl_clk(clk_125mhz),
-    .xcvr_ctrl_rst(qsfp_rst),
+    localparam CNT = 4;
 
-    /*
-     * Common
-     */
-    .xcvr_gtpowergood_out(qsfp_gtpowergood[0]),
-    .xcvr_gtrefclk00_in(qsfp_0_mgt_refclk),
-    .xcvr_qpll0lock_out(),
-    .xcvr_qpll0clk_out(),
-    .xcvr_qpll0refclk_out(),
+    taxi_eth_mac_25g_us #(
+        .SIM(SIM),
+        .VENDOR(VENDOR),
+        .FAMILY(FAMILY),
 
-    /*
-     * Serial data
-     */
-    .xcvr_txp(qsfp_0_tx_p),
-    .xcvr_txn(qsfp_0_tx_n),
-    .xcvr_rxp(qsfp_0_rx_p),
-    .xcvr_rxn(qsfp_0_rx_n),
+        .CNT(CNT),
 
-    /*
-     * MAC clocks
-     */
-    .rx_clk(qsfp_rx_clk[3:0]),
-    .rx_rst_in('0),
-    .rx_rst_out(qsfp_rx_rst[3:0]),
-    .tx_clk(qsfp_tx_clk[3:0]),
-    .tx_rst_in('0),
-    .tx_rst_out(qsfp_tx_rst[3:0]),
-    .ptp_sample_clk('0),
+        // GT type
+        .GT_TYPE("GTY"),
 
-    /*
-     * Transmit interface (AXI stream)
-     */
-    .s_axis_tx(axis_qsfp_tx[3:0]),
-    .m_axis_tx_cpl(axis_qsfp_tx_cpl[3:0]),
+        // PHY parameters
+        .PADDING_EN(1'b1),
+        .DIC_EN(1'b1),
+        .MIN_FRAME_LEN(64),
+        .PTP_TS_EN(1'b0),
+        .PTP_TS_FMT_TOD(1'b1),
+        .PTP_TS_W(96),
+        .PRBS31_EN(1'b0),
+        .TX_SERDES_PIPELINE(1),
+        .RX_SERDES_PIPELINE(1),
+        .COUNT_125US(125000/6.4)
+    )
+    mac_inst (
+        .xcvr_ctrl_clk(clk_125mhz),
+        .xcvr_ctrl_rst(qsfp_rst),
 
-    /*
-     * Receive interface (AXI stream)
-     */
-    .m_axis_rx(axis_qsfp_rx[3:0]),
+        /*
+         * Common
+         */
+        .xcvr_gtpowergood_out(qsfp_gtpowergood[n]),
+        .xcvr_gtrefclk00_in(qsfp_0_mgt_refclk),
+        .xcvr_qpll0lock_out(),
+        .xcvr_qpll0clk_out(),
+        .xcvr_qpll0refclk_out(),
 
-    /*
-     * PTP clock
-     */
-    .tx_ptp_ts('0),
-    .tx_ptp_ts_step('0),
-    .rx_ptp_ts('0),
-    .rx_ptp_ts_step('0),
+        /*
+         * Serial data
+         */
+        .xcvr_txp(qsfp_tx_p[n*CNT +: CNT]),
+        .xcvr_txn(qsfp_tx_n[n*CNT +: CNT]),
+        .xcvr_rxp(qsfp_rx_p[n*CNT +: CNT]),
+        .xcvr_rxn(qsfp_rx_n[n*CNT +: CNT]),
 
+        /*
+         * MAC clocks
+         */
+        .rx_clk(qsfp_rx_clk[n*CNT +: CNT]),
+        .rx_rst_in('0),
+        .rx_rst_out(qsfp_rx_rst[n*CNT +: CNT]),
+        .tx_clk(qsfp_tx_clk[n*CNT +: CNT]),
+        .tx_rst_in('0),
+        .tx_rst_out(qsfp_tx_rst[n*CNT +: CNT]),
+        .ptp_sample_clk('0),
 
-    /*
-     * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
-     */
-    .tx_lfc_req('0),
-    .tx_lfc_resend('0),
-    .rx_lfc_en('0),
-    .rx_lfc_req(),
-    .rx_lfc_ack('0),
+        /*
+         * Transmit interface (AXI stream)
+         */
+        .s_axis_tx(axis_qsfp_tx[n*CNT +: CNT]),
+        .m_axis_tx_cpl(axis_qsfp_tx_cpl[n*CNT +: CNT]),
 
-    /*
-     * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
-     */
-    .tx_pfc_req('0),
-    .tx_pfc_resend('0),
-    .rx_pfc_en('0),
-    .rx_pfc_req(),
-    .rx_pfc_ack('0),
+        /*
+         * Receive interface (AXI stream)
+         */
+        .m_axis_rx(axis_qsfp_rx[n*CNT +: CNT]),
 
-    /*
-     * Pause interface
-     */
-    .tx_lfc_pause_en('0),
-    .tx_pause_req('0),
-    .tx_pause_ack(),
-
-    /*
-     * Status
-     */
-    .tx_start_packet(),
-    .tx_error_underflow(),
-    .rx_start_packet(),
-    .rx_error_count(),
-    .rx_error_bad_frame(),
-    .rx_error_bad_fcs(),
-    .rx_bad_block(),
-    .rx_sequence_error(),
-    .rx_block_lock(),
-    .rx_high_ber(),
-    .rx_status(qsfp_rx_status[3:0]),
-    .stat_tx_mcf(),
-    .stat_rx_mcf(),
-    .stat_tx_lfc_pkt(),
-    .stat_tx_lfc_xon(),
-    .stat_tx_lfc_xoff(),
-    .stat_tx_lfc_paused(),
-    .stat_tx_pfc_pkt(),
-    .stat_tx_pfc_xon(),
-    .stat_tx_pfc_xoff(),
-    .stat_tx_pfc_paused(),
-    .stat_rx_lfc_pkt(),
-    .stat_rx_lfc_xon(),
-    .stat_rx_lfc_xoff(),
-    .stat_rx_lfc_paused(),
-    .stat_rx_pfc_pkt(),
-    .stat_rx_pfc_xon(),
-    .stat_rx_pfc_xoff(),
-    .stat_rx_pfc_paused(),
-
-    /*
-     * Configuration
-     */
-    .cfg_ifg('{4{8'd12}}),
-    .cfg_tx_enable('1),
-    .cfg_rx_enable('1),
-    .cfg_tx_prbs31_enable('0),
-    .cfg_rx_prbs31_enable('0),
-    .cfg_mcf_rx_eth_dst_mcast('{4{48'h01_80_C2_00_00_01}}),
-    .cfg_mcf_rx_check_eth_dst_mcast('1),
-    .cfg_mcf_rx_eth_dst_ucast('{4{48'd0}}),
-    .cfg_mcf_rx_check_eth_dst_ucast('0),
-    .cfg_mcf_rx_eth_src('{4{48'd0}}),
-    .cfg_mcf_rx_check_eth_src('0),
-    .cfg_mcf_rx_eth_type('{4{16'h8808}}),
-    .cfg_mcf_rx_opcode_lfc('{4{16'h0001}}),
-    .cfg_mcf_rx_check_opcode_lfc('1),
-    .cfg_mcf_rx_opcode_pfc('{4{16'h0101}}),
-    .cfg_mcf_rx_check_opcode_pfc('1),
-    .cfg_mcf_rx_forward('0),
-    .cfg_mcf_rx_enable('0),
-    .cfg_tx_lfc_eth_dst('{4{48'h01_80_C2_00_00_01}}),
-    .cfg_tx_lfc_eth_src('{4{48'h80_23_31_43_54_4C}}),
-    .cfg_tx_lfc_eth_type('{4{16'h8808}}),
-    .cfg_tx_lfc_opcode('{4{16'h0001}}),
-    .cfg_tx_lfc_en('0),
-    .cfg_tx_lfc_quanta('{4{16'hffff}}),
-    .cfg_tx_lfc_refresh('{4{16'h7fff}}),
-    .cfg_tx_pfc_eth_dst('{4{48'h01_80_C2_00_00_01}}),
-    .cfg_tx_pfc_eth_src('{4{48'h80_23_31_43_54_4C}}),
-    .cfg_tx_pfc_eth_type('{4{16'h8808}}),
-    .cfg_tx_pfc_opcode('{4{16'h0101}}),
-    .cfg_tx_pfc_en('0),
-    .cfg_tx_pfc_quanta('{4{'{8{16'hffff}}}}),
-    .cfg_tx_pfc_refresh('{4{'{8{16'h7fff}}}}),
-    .cfg_rx_lfc_opcode('{4{16'h0001}}),
-    .cfg_rx_lfc_en('0),
-    .cfg_rx_pfc_opcode('{4{16'h0101}}),
-    .cfg_rx_pfc_en('0)
-);
-
-taxi_eth_mac_25g_us #(
-    .SIM(SIM),
-    .VENDOR(VENDOR),
-    .FAMILY(FAMILY),
-
-    .CNT(4),
-
-    // GT type
-    .GT_TYPE("GTY"),
-
-    // PHY parameters
-    .PADDING_EN(1'b1),
-    .DIC_EN(1'b1),
-    .MIN_FRAME_LEN(64),
-    .PTP_TS_EN(1'b0),
-    .PTP_TS_FMT_TOD(1'b1),
-    .PTP_TS_W(96),
-    .PRBS31_EN(1'b0),
-    .TX_SERDES_PIPELINE(1),
-    .RX_SERDES_PIPELINE(1),
-    .COUNT_125US(125000/6.4)
-)
-qsfp_1_mac_inst (
-    .xcvr_ctrl_clk(clk_125mhz),
-    .xcvr_ctrl_rst(qsfp_rst),
-
-    /*
-     * Common
-     */
-    .xcvr_gtpowergood_out(qsfp_gtpowergood[1]),
-    .xcvr_gtrefclk00_in(qsfp_0_mgt_refclk),
-    .xcvr_qpll0lock_out(),
-    .xcvr_qpll0clk_out(),
-    .xcvr_qpll0refclk_out(),
-
-    /*
-     * Serial data
-     */
-    .xcvr_txp(qsfp_1_tx_p),
-    .xcvr_txn(qsfp_1_tx_n),
-    .xcvr_rxp(qsfp_1_rx_p),
-    .xcvr_rxn(qsfp_1_rx_n),
-
-    /*
-     * MAC clocks
-     */
-    .rx_clk(qsfp_rx_clk[7:4]),
-    .rx_rst_in('0),
-    .rx_rst_out(qsfp_rx_rst[7:4]),
-    .tx_clk(qsfp_tx_clk[7:4]),
-    .tx_rst_in('0),
-    .tx_rst_out(qsfp_tx_rst[7:4]),
-    .ptp_sample_clk('0),
-
-    /*
-     * Transmit interface (AXI stream)
-     */
-    .s_axis_tx(axis_qsfp_tx[7:4]),
-    .m_axis_tx_cpl(axis_qsfp_tx_cpl[7:4]),
-
-    /*
-     * Receive interface (AXI stream)
-     */
-    .m_axis_rx(axis_qsfp_rx[7:4]),
-
-    /*
-     * PTP clock
-     */
-    .tx_ptp_ts('0),
-    .tx_ptp_ts_step('0),
-    .rx_ptp_ts('0),
-    .rx_ptp_ts_step('0),
+        /*
+         * PTP clock
+         */
+        .tx_ptp_ts('0),
+        .tx_ptp_ts_step('0),
+        .rx_ptp_ts('0),
+        .rx_ptp_ts_step('0),
 
 
-    /*
-     * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
-     */
-    .tx_lfc_req('0),
-    .tx_lfc_resend('0),
-    .rx_lfc_en('0),
-    .rx_lfc_req(),
-    .rx_lfc_ack('0),
+        /*
+         * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
+         */
+        .tx_lfc_req('0),
+        .tx_lfc_resend('0),
+        .rx_lfc_en('0),
+        .rx_lfc_req(),
+        .rx_lfc_ack('0),
 
-    /*
-     * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
-     */
-    .tx_pfc_req('0),
-    .tx_pfc_resend('0),
-    .rx_pfc_en('0),
-    .rx_pfc_req(),
-    .rx_pfc_ack('0),
+        /*
+         * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
+         */
+        .tx_pfc_req('0),
+        .tx_pfc_resend('0),
+        .rx_pfc_en('0),
+        .rx_pfc_req(),
+        .rx_pfc_ack('0),
 
-    /*
-     * Pause interface
-     */
-    .tx_lfc_pause_en('0),
-    .tx_pause_req('0),
-    .tx_pause_ack(),
+        /*
+         * Pause interface
+         */
+        .tx_lfc_pause_en('0),
+        .tx_pause_req('0),
+        .tx_pause_ack(),
 
-    /*
-     * Status
-     */
-    .tx_start_packet(),
-    .tx_error_underflow(),
-    .rx_start_packet(),
-    .rx_error_count(),
-    .rx_error_bad_frame(),
-    .rx_error_bad_fcs(),
-    .rx_bad_block(),
-    .rx_sequence_error(),
-    .rx_block_lock(),
-    .rx_high_ber(),
-    .rx_status(qsfp_rx_status[7:4]),
-    .stat_tx_mcf(),
-    .stat_rx_mcf(),
-    .stat_tx_lfc_pkt(),
-    .stat_tx_lfc_xon(),
-    .stat_tx_lfc_xoff(),
-    .stat_tx_lfc_paused(),
-    .stat_tx_pfc_pkt(),
-    .stat_tx_pfc_xon(),
-    .stat_tx_pfc_xoff(),
-    .stat_tx_pfc_paused(),
-    .stat_rx_lfc_pkt(),
-    .stat_rx_lfc_xon(),
-    .stat_rx_lfc_xoff(),
-    .stat_rx_lfc_paused(),
-    .stat_rx_pfc_pkt(),
-    .stat_rx_pfc_xon(),
-    .stat_rx_pfc_xoff(),
-    .stat_rx_pfc_paused(),
+        /*
+         * Status
+         */
+        .tx_start_packet(),
+        .tx_error_underflow(),
+        .rx_start_packet(),
+        .rx_error_count(),
+        .rx_error_bad_frame(),
+        .rx_error_bad_fcs(),
+        .rx_bad_block(),
+        .rx_sequence_error(),
+        .rx_block_lock(),
+        .rx_high_ber(),
+        .rx_status(qsfp_rx_status[n*CNT +: CNT]),
+        .stat_tx_mcf(),
+        .stat_rx_mcf(),
+        .stat_tx_lfc_pkt(),
+        .stat_tx_lfc_xon(),
+        .stat_tx_lfc_xoff(),
+        .stat_tx_lfc_paused(),
+        .stat_tx_pfc_pkt(),
+        .stat_tx_pfc_xon(),
+        .stat_tx_pfc_xoff(),
+        .stat_tx_pfc_paused(),
+        .stat_rx_lfc_pkt(),
+        .stat_rx_lfc_xon(),
+        .stat_rx_lfc_xoff(),
+        .stat_rx_lfc_paused(),
+        .stat_rx_pfc_pkt(),
+        .stat_rx_pfc_xon(),
+        .stat_rx_pfc_xoff(),
+        .stat_rx_pfc_paused(),
 
-    /*
-     * Configuration
-     */
-    .cfg_ifg('{4{8'd12}}),
-    .cfg_tx_enable('1),
-    .cfg_rx_enable('1),
-    .cfg_tx_prbs31_enable('0),
-    .cfg_rx_prbs31_enable('0),
-    .cfg_mcf_rx_eth_dst_mcast('{4{48'h01_80_C2_00_00_01}}),
-    .cfg_mcf_rx_check_eth_dst_mcast('1),
-    .cfg_mcf_rx_eth_dst_ucast('{4{48'd0}}),
-    .cfg_mcf_rx_check_eth_dst_ucast('0),
-    .cfg_mcf_rx_eth_src('{4{48'd0}}),
-    .cfg_mcf_rx_check_eth_src('0),
-    .cfg_mcf_rx_eth_type('{4{16'h8808}}),
-    .cfg_mcf_rx_opcode_lfc('{4{16'h0001}}),
-    .cfg_mcf_rx_check_opcode_lfc('1),
-    .cfg_mcf_rx_opcode_pfc('{4{16'h0101}}),
-    .cfg_mcf_rx_check_opcode_pfc('1),
-    .cfg_mcf_rx_forward('0),
-    .cfg_mcf_rx_enable('0),
-    .cfg_tx_lfc_eth_dst('{4{48'h01_80_C2_00_00_01}}),
-    .cfg_tx_lfc_eth_src('{4{48'h80_23_31_43_54_4C}}),
-    .cfg_tx_lfc_eth_type('{4{16'h8808}}),
-    .cfg_tx_lfc_opcode('{4{16'h0001}}),
-    .cfg_tx_lfc_en('0),
-    .cfg_tx_lfc_quanta('{4{16'hffff}}),
-    .cfg_tx_lfc_refresh('{4{16'h7fff}}),
-    .cfg_tx_pfc_eth_dst('{4{48'h01_80_C2_00_00_01}}),
-    .cfg_tx_pfc_eth_src('{4{48'h80_23_31_43_54_4C}}),
-    .cfg_tx_pfc_eth_type('{4{16'h8808}}),
-    .cfg_tx_pfc_opcode('{4{16'h0101}}),
-    .cfg_tx_pfc_en('0),
-    .cfg_tx_pfc_quanta('{4{'{8{16'hffff}}}}),
-    .cfg_tx_pfc_refresh('{4{'{8{16'h7fff}}}}),
-    .cfg_rx_lfc_opcode('{4{16'h0001}}),
-    .cfg_rx_lfc_en('0),
-    .cfg_rx_pfc_opcode('{4{16'h0101}}),
-    .cfg_rx_pfc_en('0)
-);
+        /*
+         * Configuration
+         */
+        .cfg_ifg('{CNT{8'd12}}),
+        .cfg_tx_enable('1),
+        .cfg_rx_enable('1),
+        .cfg_tx_prbs31_enable('0),
+        .cfg_rx_prbs31_enable('0),
+        .cfg_mcf_rx_eth_dst_mcast('{CNT{48'h01_80_C2_00_00_01}}),
+        .cfg_mcf_rx_check_eth_dst_mcast('1),
+        .cfg_mcf_rx_eth_dst_ucast('{CNT{48'd0}}),
+        .cfg_mcf_rx_check_eth_dst_ucast('0),
+        .cfg_mcf_rx_eth_src('{CNT{48'd0}}),
+        .cfg_mcf_rx_check_eth_src('0),
+        .cfg_mcf_rx_eth_type('{CNT{16'h8808}}),
+        .cfg_mcf_rx_opcode_lfc('{CNT{16'h0001}}),
+        .cfg_mcf_rx_check_opcode_lfc('1),
+        .cfg_mcf_rx_opcode_pfc('{CNT{16'h0101}}),
+        .cfg_mcf_rx_check_opcode_pfc('1),
+        .cfg_mcf_rx_forward('0),
+        .cfg_mcf_rx_enable('0),
+        .cfg_tx_lfc_eth_dst('{CNT{48'h01_80_C2_00_00_01}}),
+        .cfg_tx_lfc_eth_src('{CNT{48'h80_23_31_43_54_4C}}),
+        .cfg_tx_lfc_eth_type('{CNT{16'h8808}}),
+        .cfg_tx_lfc_opcode('{CNT{16'h0001}}),
+        .cfg_tx_lfc_en('0),
+        .cfg_tx_lfc_quanta('{CNT{16'hffff}}),
+        .cfg_tx_lfc_refresh('{CNT{16'h7fff}}),
+        .cfg_tx_pfc_eth_dst('{CNT{48'h01_80_C2_00_00_01}}),
+        .cfg_tx_pfc_eth_src('{CNT{48'h80_23_31_43_54_4C}}),
+        .cfg_tx_pfc_eth_type('{CNT{16'h8808}}),
+        .cfg_tx_pfc_opcode('{CNT{16'h0101}}),
+        .cfg_tx_pfc_en('0),
+        .cfg_tx_pfc_quanta('{CNT{'{8{16'hffff}}}}),
+        .cfg_tx_pfc_refresh('{CNT{'{8{16'h7fff}}}}),
+        .cfg_rx_lfc_opcode('{CNT{16'h0001}}),
+        .cfg_rx_lfc_en('0),
+        .cfg_rx_pfc_opcode('{CNT{16'h0101}}),
+        .cfg_rx_pfc_en('0)
+    );
+
+end
 
 for (genvar n = 0; n < 8; n = n + 1) begin : qsfp_ch
 
