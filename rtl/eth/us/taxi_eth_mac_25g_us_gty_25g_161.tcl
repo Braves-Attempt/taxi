@@ -22,6 +22,8 @@ set int_data_width $user_data_width
 set rx_eq_mode {DFE}
 set extra_ports [list]
 set extra_pll_ports [list {qpll0lock_out}]
+# channel polarity
+lappend extra_ports txpolarity_in rxpolarity_in
 
 set config [dict create]
 

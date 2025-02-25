@@ -26,6 +26,10 @@ module taxi_eth_mac_25g_us_ch #
     // GT type
     parameter string GT_TYPE = "GTY",
 
+    // GT parameters
+    parameter logic GT_TX_POLARITY = 1'b0,
+    parameter logic GT_RX_POLARITY = 1'b0,
+
     // MAC/PHY parameters
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
@@ -270,6 +274,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
         .txpmaresetdone_out(),
         .txprgdivresetdone_out(),
 
+        .txpolarity_in(GT_TX_POLARITY),
+
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
         .txsequence_in(7'b0),
@@ -286,6 +292,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
         .gtwiz_reset_rx_done_out(gt_reset_rx_done),
         .rxpmaresetdone_out(),
         .rxprgdivresetdone_out(),
+
+        .rxpolarity_in(GT_RX_POLARITY),
 
         .rxgearboxslip_in(gt_rxgearboxslip),
         .gtwiz_userdata_rx_out(gt_rxdata),
@@ -331,6 +339,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
         .txpmaresetdone_out(),
         .txprgdivresetdone_out(),
 
+        .txpolarity_in(GT_TX_POLARITY),
+
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
         .txsequence_in(7'b0),
@@ -347,6 +357,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
         .gtwiz_reset_rx_done_out(gt_reset_rx_done),
         .rxpmaresetdone_out(),
         .rxprgdivresetdone_out(),
+
+        .rxpolarity_in(GT_RX_POLARITY),
 
         .rxgearboxslip_in(gt_rxgearboxslip),
         .gtwiz_userdata_rx_out(gt_rxdata),
@@ -392,6 +404,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
         .txpmaresetdone_out(),
         .txprgdivresetdone_out(),
 
+        .txpolarity_in(GT_TX_POLARITY),
+
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
         .txsequence_in(7'b0),
@@ -408,6 +422,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
         .gtwiz_reset_rx_done_out(gt_reset_rx_done),
         .rxpmaresetdone_out(),
         .rxprgdivresetdone_out(),
+
+        .rxpolarity_in(GT_RX_POLARITY),
 
         .rxgearboxslip_in(gt_rxgearboxslip),
         .gtwiz_userdata_rx_out(gt_rxdata),
@@ -453,6 +469,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
         .txpmaresetdone_out(),
         .txprgdivresetdone_out(),
 
+        .txpolarity_in(GT_TX_POLARITY),
+
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
         .txsequence_in(7'b0),
@@ -469,6 +487,8 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
         .gtwiz_reset_rx_done_out(gt_reset_rx_done),
         .rxpmaresetdone_out(),
         .rxprgdivresetdone_out(),
+
+        .rxpolarity_in(GT_RX_POLARITY),
 
         .rxgearboxslip_in(gt_rxgearboxslip),
         .gtwiz_userdata_rx_out(gt_rxdata),
@@ -516,6 +536,8 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
         .txpmaresetdone_out(),
         .txprgdivresetdone_out(),
 
+        .txpolarity_in(GT_TX_POLARITY),
+
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
         .txsequence_in(7'b0),
@@ -532,6 +554,8 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
         .gtwiz_reset_rx_done_out(gt_reset_rx_done),
         .rxpmaresetdone_out(),
         .rxprgdivresetdone_out(),
+
+        .rxpolarity_in(GT_RX_POLARITY),
 
         .rxgearboxslip_in(gt_rxgearboxslip),
         .gtwiz_userdata_rx_out(gt_rxdata),
@@ -581,6 +605,8 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
         .txpmaresetdone_out(),
         .txprgdivresetdone_out(),
 
+        .txpolarity_in(GT_TX_POLARITY),
+
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
         .txsequence_in(7'b0),
@@ -597,6 +623,8 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
         .gtwiz_reset_rx_done_out(gt_reset_rx_done),
         .rxpmaresetdone_out(),
         .rxprgdivresetdone_out(),
+
+        .rxpolarity_in(GT_RX_POLARITY),
 
         .rxgearboxslip_in(gt_rxgearboxslip),
         .gtwiz_userdata_rx_out(gt_rxdata),

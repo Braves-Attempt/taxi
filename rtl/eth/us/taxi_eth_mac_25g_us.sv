@@ -26,6 +26,10 @@ module taxi_eth_mac_25g_us #
     // GT type
     parameter string GT_TYPE = "GTY",
 
+    // GT parameters
+    parameter logic [CNT-1:0] GT_TX_POLARITY = '0,
+    parameter logic [CNT-1:0] GT_RX_POLARITY = '0,
+
     // MAC/PHY parameters
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
@@ -219,7 +223,11 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         // GT type
         .GT_TYPE(GT_TYPE),
 
-        // PHY parameters
+        // GT parameters
+        .GT_TX_POLARITY(GT_TX_POLARITY[n]),
+        .GT_RX_POLARITY(GT_RX_POLARITY[n]),
+
+        // MAC/PHY parameters
         .PADDING_EN(PADDING_EN),
         .DIC_EN(DIC_EN),
         .MIN_FRAME_LEN(MIN_FRAME_LEN),
