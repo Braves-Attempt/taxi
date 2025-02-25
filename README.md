@@ -95,6 +95,7 @@ Example designs are provided for several different FPGA boards, showcasing many 
 *  Alpha Data ADM-PCIE-9V3 (Xilinx Virtex UltraScale+ XCVU3P)
 *  Cisco Nexus K35-S/ExaNIC X10 (Xilinx Kintex UltraScale XCKU035)
 *  Cisco Nexus K3P-S/ExaNIC X25 (Xilinx Kintex UltraScale+ XCKU3P)
+*  Cisco Nexus K3P-Q/ExaNIC X100 (Xilinx Kintex UltraScale+ XCKU3P)
 *  Digilent Arty A7 (Xilinx Artix 7 XC7A35T)
 *  HiTech Global HTG-940 (Xilinx Virtex UltraScale+ XCVU9P/XCVU13P)
 *  Xilinx KC705 (Xilinx Kintex 7 XC7K325T)
