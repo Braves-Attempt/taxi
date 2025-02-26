@@ -304,15 +304,16 @@ rtl_dir = os.path.abspath(os.path.join(tests_dir, '..', '..', '..', 'rtl'))
 
 
 def process_f_files(files):
-    lst = []
+    lst = {}
     for f in files:
         if f[-2:].lower() == '.f':
             with open(f, 'r') as fp:
                 l = fp.read().split()
-            lst.extend(process_f_files([os.path.join(os.path.dirname(f), x) for x in l]))
+            for f in process_f_files([os.path.join(os.path.dirname(f), x) for x in l]):
+                lst[os.path.basename(f)] = f
         else:
-            lst.append(f)
-    return list(dict.fromkeys(lst))
+            lst[os.path.basename(f)] = f
+    return list(lst.values())
 
 
 @pytest.mark.parametrize("dic_en", [1, 0])
