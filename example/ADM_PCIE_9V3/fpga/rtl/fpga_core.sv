@@ -26,16 +26,16 @@ module fpga_core #
      * Clock: 125 MHz
      * Synchronous reset
      */
-    input  wire       clk_125mhz,
-    input  wire       rst_125mhz,
+    input  wire logic        clk_125mhz,
+    input  wire logic        rst_125mhz,
 
     /*
      * GPIO
      */
-    output wire [1:0] user_led_g,
-    output wire       user_led_r,
-    output wire [1:0] front_led,
-    input  wire [1:0] user_sw,
+    output wire logic [1:0]  user_led_g,
+    output wire logic        user_led_r,
+    output wire logic [1:0]  front_led,
+    input  wire logic [1:0]  user_sw,
 
     /*
      * Ethernet: QSFP28
