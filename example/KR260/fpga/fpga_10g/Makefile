@@ -23,7 +23,6 @@ SYN_FILES += ../lib/taxi/rtl/sync/taxi_sync_signal.sv
 XDC_FILES = ../fpga.xdc
 XDC_FILES += ../eth_rgmii.xdc
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_rgmii_phy_if.tcl
-XDC_FILES += ../lib/taxi/syn/vivado/taxi_eth_mac_1g_rgmii.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_eth_mac_fifo.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_axis_async_fifo.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_reset.tcl
