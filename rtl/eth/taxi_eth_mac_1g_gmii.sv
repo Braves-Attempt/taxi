@@ -160,19 +160,29 @@ module taxi_eth_mac_1g_gmii #
 reg [1:0] link_speed_reg = 2'b10;
 reg mii_select_reg = 1'b0;
 
-(* srl_style = "register" *)
-reg [1:0] tx_mii_select_sync = 2'd0;
+wire tx_mii_select_sync;
 
-always_ff @(posedge tx_clk) begin
-    tx_mii_select_sync <= {tx_mii_select_sync[0], mii_select_reg};
-end
+taxi_sync_signal #(
+    .WIDTH(1),
+    .N(2)
+)
+tx_mii_select_sync_inst (
+    .clk(tx_clk),
+    .in(mii_select_reg),
+    .out(tx_mii_select_sync)
+);
 
-(* srl_style = "register" *)
-reg [1:0] rx_mii_select_sync = 2'd0;
+wire rx_mii_select_sync;
 
-always_ff @(posedge rx_clk) begin
-    rx_mii_select_sync <= {rx_mii_select_sync[0], mii_select_reg};
-end
+taxi_sync_signal #(
+    .WIDTH(1),
+    .N(2)
+)
+rx_mii_select_sync_inst (
+    .clk(rx_clk),
+    .in(mii_select_reg),
+    .out(rx_mii_select_sync)
+);
 
 // PHY speed detection
 reg [2:0] rx_prescale = 3'd0;
@@ -181,51 +191,58 @@ always_ff @(posedge rx_clk) begin
     rx_prescale <= rx_prescale + 3'd1;
 end
 
-(* srl_style = "register" *)
-reg [2:0] rx_prescale_sync = 3'd0;
+wire rx_prescale_sync;
 
-always_ff @(posedge gtx_clk) begin
-    rx_prescale_sync <= {rx_prescale_sync[1:0], rx_prescale[2]};
-end
+taxi_sync_signal #(
+    .WIDTH(1),
+    .N(2)
+)
+rx_prescale_sync_inst (
+    .clk(gtx_clk),
+    .in(rx_prescale[2]),
+    .out(rx_prescale_sync)
+);
 
 reg [6:0] rx_speed_count_1 = 0;
 reg [1:0] rx_speed_count_2 = 0;
+reg rx_prescale_sync_last_reg = 1'b0;
 
 always_ff @(posedge gtx_clk) begin
+    rx_prescale_sync_last_reg <= rx_prescale_sync;
+    rx_speed_count_1 <= rx_speed_count_1 + 1;
+
+    if (rx_prescale_sync ^ rx_prescale_sync_last_reg) begin
+        rx_speed_count_2 <= rx_speed_count_2 + 1;
+    end
+
+    if (&rx_speed_count_1) begin
+        // reference count overflow - 10M
+        rx_speed_count_1 <= 0;
+        rx_speed_count_2 <= 0;
+        link_speed_reg <= 2'b00;
+        mii_select_reg <= 1'b1;
+    end
+
+    if (&rx_speed_count_2) begin
+        // prescaled count overflow - 100M or 1000M
+        rx_speed_count_1 <= 0;
+        rx_speed_count_2 <= 0;
+        if (rx_speed_count_1[6:5] != 0) begin
+            // large reference count - 100M
+            link_speed_reg <= 2'b01;
+            mii_select_reg <= 1'b1;
+        end else begin
+            // small reference count - 1000M
+            link_speed_reg <= 2'b10;
+            mii_select_reg <= 1'b0;
+        end
+    end
+
     if (gtx_rst) begin
         rx_speed_count_1 <= 0;
         rx_speed_count_2 <= 0;
         link_speed_reg <= 2'b10;
         mii_select_reg <= 1'b0;
-    end else begin
-        rx_speed_count_1 <= rx_speed_count_1 + 1;
-        
-        if (rx_prescale_sync[1] ^ rx_prescale_sync[2]) begin
-            rx_speed_count_2 <= rx_speed_count_2 + 1;
-        end
-
-        if (&rx_speed_count_1) begin
-            // reference count overflow - 10M
-            rx_speed_count_1 <= 0;
-            rx_speed_count_2 <= 0;
-            link_speed_reg <= 2'b00;
-            mii_select_reg <= 1'b1;
-        end
-
-        if (&rx_speed_count_2) begin
-            // prescaled count overflow - 100M or 1000M
-            rx_speed_count_1 <= 0;
-            rx_speed_count_2 <= 0;
-            if (rx_speed_count_1[6:5] != 0) begin
-                // large reference count - 100M
-                link_speed_reg <= 2'b01;
-                mii_select_reg <= 1'b1;
-            end else begin
-                // small reference count - 1000M
-                link_speed_reg <= 2'b10;
-                mii_select_reg <= 1'b0;
-            end
-        end
     end
 end
 
@@ -349,8 +366,8 @@ eth_mac_1g_inst (
      */
     .rx_clk_enable(1'b1),
     .tx_clk_enable(1'b1),
-    .rx_mii_select(rx_mii_select_sync[1]),
-    .tx_mii_select(tx_mii_select_sync[1]),
+    .rx_mii_select(rx_mii_select_sync),
+    .tx_mii_select(tx_mii_select_sync),
 
     /*
      * Status
