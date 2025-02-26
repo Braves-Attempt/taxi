@@ -802,24 +802,27 @@ if (PAUSE_EN) begin : pause
     logic pause_reg = 1'b0;
     logic pause_frame_reg = 1'b0;
 
-    logic s_pause_req_sync1_reg;
-    logic s_pause_req_sync2_reg;
-    logic s_pause_req_sync3_reg;
-    logic s_pause_ack_sync1_reg;
-    logic s_pause_ack_sync2_reg;
-    logic s_pause_ack_sync3_reg;
+    wire s_pause_req_sync;
 
-    always_ff @(posedge s_clk) begin
-        s_pause_req_sync1_reg <= s_pause_req;
-        s_pause_ack_sync2_reg <= s_pause_ack_sync1_reg;
-        s_pause_ack_sync3_reg <= s_pause_ack_sync2_reg;
-    end
+    taxi_sync_signal #(
+        .WIDTH(1),
+        .N(2)
+    )
+    pause_req_sync_inst (
+        .clk(m_clk),
+        .in(s_pause_req),
+        .out(s_pause_req_sync)
+    );
 
-    always_ff @(posedge m_clk) begin
-        s_pause_req_sync2_reg <= s_pause_req_sync1_reg;
-        s_pause_req_sync3_reg <= s_pause_req_sync2_reg;
-        s_pause_ack_sync1_reg <= pause_reg;
-    end
+    taxi_sync_signal #(
+        .WIDTH(1),
+        .N(2)
+    )
+    pause_ack_sync_inst (
+        .clk(s_clk),
+        .in(pause_reg),
+        .out(s_pause_ack)
+    );
 
     assign m_axis_tready_out = m_axis.tready && !pause_reg;
     assign m_axis.tvalid = m_axis_tvalid_out && !pause_reg;
@@ -832,28 +835,27 @@ if (PAUSE_EN) begin : pause
     assign m_axis.tdest = m_axis_tdest_out;
     assign m_axis.tuser = m_axis_tuser_out;
 
-    assign s_pause_ack = s_pause_ack_sync3_reg;
     assign m_pause_ack = pause_reg;
 
     always_ff @(posedge m_clk) begin
         if (FRAME_PAUSE) begin
             if (pause_reg) begin
                 // paused; update pause status
-                pause_reg <= m_pause_req || s_pause_req_sync3_reg;
+                pause_reg <= m_pause_req || s_pause_req_sync;
             end else if (m_axis_tvalid_out) begin
                 // frame transfer; set frame bit
                 pause_frame_reg <= 1'b1;
                 if (m_axis.tready && m_axis.tlast) begin
                     // end of frame; clear frame bit and update pause status
                     pause_frame_reg <= 1'b0;
-                    pause_reg <= m_pause_req || s_pause_req_sync3_reg;
+                    pause_reg <= m_pause_req || s_pause_req_sync;
                 end
             end else if (!pause_frame_reg) begin
                 // idle; update pause status
-                pause_reg <= m_pause_req || s_pause_req_sync3_reg;
+                pause_reg <= m_pause_req || s_pause_req_sync;
             end
         end else begin
-            pause_reg <= m_pause_req || s_pause_req_sync3_reg;
+            pause_reg <= m_pause_req || s_pause_req_sync;
         end
 
         if (m_rst) begin
