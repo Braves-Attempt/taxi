@@ -283,56 +283,36 @@ if (MAC_CTRL_EN) begin : mac_ctrl
     wire [MCF_PARAMS_SIZE*8-1:0]  rx_mcf_params;
 
     // terminate LFC pause requests from RX internally on TX side
-    wire                          tx_pause_req_int;
-    wire                          rx_lfc_ack_int;
+    wire tx_pause_req_int;
+    wire rx_lfc_ack_int;
 
-    reg tx_lfc_req_sync_reg_1 = 1'b0;
-    reg tx_lfc_req_sync_reg_2 = 1'b0;
-    reg tx_lfc_req_sync_reg_3 = 1'b0;
+    wire rx_lfc_req_sync;
 
-    always @(posedge rx_clk or posedge rx_rst) begin
-        if (rx_rst) begin
-            tx_lfc_req_sync_reg_1 <= 1'b0;
-        end else begin
-            tx_lfc_req_sync_reg_1 <= rx_lfc_req;
-        end
-    end
+    taxi_sync_signal #(
+        .WIDTH(1),
+        .N(2)
+    )
+    rx_lfc_req_sync_inst (
+        .clk(tx_clk),
+        .in(rx_lfc_req),
+        .out(rx_lfc_req_sync)
+    );
 
-    always @(posedge tx_clk or posedge tx_rst) begin
-        if (tx_rst) begin
-            tx_lfc_req_sync_reg_2 <= 1'b0;
-            tx_lfc_req_sync_reg_3 <= 1'b0;
-        end else begin
-            tx_lfc_req_sync_reg_2 <= tx_lfc_req_sync_reg_1;
-            tx_lfc_req_sync_reg_3 <= tx_lfc_req_sync_reg_2;
-        end
-    end
+    wire tx_pause_ack_sync;
 
-    reg rx_lfc_ack_sync_reg_1 = 1'b0;
-    reg rx_lfc_ack_sync_reg_2 = 1'b0;
-    reg rx_lfc_ack_sync_reg_3 = 1'b0;
+    taxi_sync_signal #(
+        .WIDTH(1),
+        .N(2)
+    )
+    tx_pause_ack_sync_inst (
+        .clk(rx_clk),
+        .in(tx_lfc_pause_en && tx_pause_ack),
+        .out(tx_pause_ack_sync)
+    );
 
-    always @(posedge tx_clk or posedge tx_rst) begin
-        if (tx_rst) begin
-            rx_lfc_ack_sync_reg_1 <= 1'b0;
-        end else begin
-            rx_lfc_ack_sync_reg_1 <= tx_lfc_pause_en ? tx_pause_ack : 0;
-        end
-    end
+    assign tx_pause_req_int = tx_pause_req || (tx_lfc_pause_en && rx_lfc_req_sync);
 
-    always @(posedge rx_clk or posedge rx_rst) begin
-        if (rx_rst) begin
-            rx_lfc_ack_sync_reg_2 <= 1'b0;
-            rx_lfc_ack_sync_reg_3 <= 1'b0;
-        end else begin
-            rx_lfc_ack_sync_reg_2 <= rx_lfc_ack_sync_reg_1;
-            rx_lfc_ack_sync_reg_3 <= rx_lfc_ack_sync_reg_2;
-        end
-    end
-
-    assign tx_pause_req_int = tx_pause_req || (tx_lfc_pause_en ? tx_lfc_req_sync_reg_3 : 0);
-
-    assign rx_lfc_ack_int = rx_lfc_ack || rx_lfc_ack_sync_reg_3;
+    assign rx_lfc_ack_int = rx_lfc_ack || tx_pause_ack_sync;
 
     taxi_mac_ctrl_tx #(
         .ID_W(s_axis_tx.ID_W),

@@ -9,3 +9,4 @@ taxi_mac_pause_ctrl_tx.sv
 taxi_mac_pause_ctrl_rx.sv
 ../lfsr/taxi_lfsr.sv
 ../axis/taxi_axis_if.sv
+../sync/taxi_sync_signal.sv
