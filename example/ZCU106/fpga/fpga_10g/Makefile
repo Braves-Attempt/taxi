@@ -26,6 +26,7 @@ XDC_FILES = ../fpga.xdc
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_eth_mac_fifo.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_axis_async_fifo.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_reset.tcl
+XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_signal.tcl
 
 # IP
 IP_TCL_FILES = ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us_gth_10g_156.tcl
