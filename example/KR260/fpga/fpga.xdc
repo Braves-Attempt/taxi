@@ -99,9 +99,9 @@ set_property -dict {LOC F1   IOSTANDARD LVCMOS18 SLEW FAST DRIVE 12} [get_ports 
 set_property -dict {LOC B1   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy2_reset_n}] ;# from U79.43 RESET_B / HPA05_CCN som240_1_b2
 #set_property -dict {LOC F3   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy2_mdio}] ;# from U79.17 MDIO / HPA03N som240_1_c7
 #set_property -dict {LOC G3   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy2_mdc}] ;# from U79.16 MDC / HPA03P som240_1_c6
-#set_property -dict {LOC E4   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy2_led[0]}] ;# from U79.47 LED_0 / HPA04P som240_1_b4
-#set_property -dict {LOC E3   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy2_led[1]}] ;# from U79.46 LED_1 / HPA04N som240_1_b5
-#set_property -dict {LOC C1   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy2_led[2]}] ;# from U79.45 LED_2 / HPA05_CCP som240_1_b1
+#set_property -dict {LOC E4   IOSTANDARD LVCMOS18} [get_ports {phy2_led[0]}] ;# from U79.47 LED_0 / HPA04P som240_1_b4
+#set_property -dict {LOC E3   IOSTANDARD LVCMOS18} [get_ports {phy2_led[1]}] ;# from U79.46 LED_1 / HPA04N som240_1_b5
+#set_property -dict {LOC C1   IOSTANDARD LVCMOS18} [get_ports {phy2_led[2]}] ;# from U79.45 LED_2 / HPA05_CCP som240_1_b1
 
 create_clock -period 8.000 -name {phy2_rx_clk} [get_ports {phy2_rx_clk}]
 
@@ -130,9 +130,9 @@ set_property -dict {LOC Y8   IOSTANDARD LVCMOS18 SLEW FAST DRIVE 12} [get_ports 
 set_property -dict {LOC K1   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy3_reset_n}] ;# from U80.43 RESET_B / HPB05_CCN som240_2_b19
 #set_property -dict {LOC T8   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy3_mdio}] ;# from U80.17 MDIO / HPB03N som240_2_b25
 #set_property -dict {LOC R8   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy3_mdc}] ;# from U80.16 MDC / HPB03P som240_2_b24
-#set_property -dict {LOC R7   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy3_led[0]}] ;# from U80.47 LED_0 / HPB04P som240_2_d21
-#set_property -dict {LOC T7   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy3_led[1]}] ;# from U80.46 LED_1 / HPB04N som240_2_d22
-#set_property -dict {LOC L1   IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 12} [get_ports {phy3_led[2]}] ;# from U80.45 LED_2 / HPB05_CCP som240_2_b18
+#set_property -dict {LOC R7   IOSTANDARD LVCMOS18} [get_ports {phy3_led[0]}] ;# from U80.47 LED_0 / HPB04P som240_2_d21
+#set_property -dict {LOC T7   IOSTANDARD LVCMOS18} [get_ports {phy3_led[1]}] ;# from U80.46 LED_1 / HPB04N som240_2_d22
+#set_property -dict {LOC L1   IOSTANDARD LVCMOS18} [get_ports {phy3_led[2]}] ;# from U80.45 LED_2 / HPB05_CCP som240_2_b18
 
 create_clock -period 8.000 -name {phy3_rx_clk} [get_ports {phy3_rx_clk}]
 
@@ -154,9 +154,9 @@ set_property -dict {LOC R3  } [get_ports sfp_tx_n] ;# MGTHTXN2_224 GTHE4_CHANNEL
 set_property -dict {LOC Y6  } [get_ports sfp_mgt_refclk_p] ;# MGTREFCLK0P_224 from U90 / GTH_REFCLK0_C2M_P som240_2_c3
 set_property -dict {LOC Y5  } [get_ports sfp_mgt_refclk_n] ;# MGTREFCLK0N_224 from U90 / GTH_REFCLK0_C2M_N som240_2_c4
 set_property -dict {LOC Y10  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports sfp_tx_disable] ;# HDB19 som240_2_a47
-set_property -dict {LOC A10  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports sfp_tx_fault]   ;# HDA19 som240_1_c23
-set_property -dict {LOC J12  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports sfp_rx_los]     ;# HDA10 som240_1_a16
-set_property -dict {LOC W10  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports sfp_mod_abs]    ;# HDB18 som240_2_a46
+set_property -dict {LOC A10  IOSTANDARD LVCMOS33} [get_ports sfp_tx_fault]   ;# HDA19 som240_1_c23
+set_property -dict {LOC J12  IOSTANDARD LVCMOS33} [get_ports sfp_rx_los]     ;# HDA10 som240_1_a16
+set_property -dict {LOC W10  IOSTANDARD LVCMOS33} [get_ports sfp_mod_abs]    ;# HDB18 som240_2_a46
 set_property -dict {LOC AB11 IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports sfp_i2c_scl]    ;# HDB16 som240_2_b49
 set_property -dict {LOC AC11 IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports sfp_i2c_sda]    ;# HDB17 som240_2_b50
 
