@@ -39,9 +39,7 @@ logic rx_frame_error;
 
 logic [15:0] prescale;
 
-taxi_uart #(
-    .DATA_W(DATA_W)
-)
+taxi_uart
 uut (
     .clk(clk),
     .rst(rst),

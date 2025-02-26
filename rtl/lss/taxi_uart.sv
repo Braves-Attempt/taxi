@@ -15,10 +15,7 @@ Authors:
 /*
  * AXI4-Stream UART
  */
-module taxi_uart #
-(
-    parameter DATA_W = 8
-)
+module taxi_uart
 (
     input  wire logic         clk,
     input  wire logic         rst,
@@ -54,9 +51,7 @@ module taxi_uart #
 
 );
 
-taxi_uart_tx #(
-    .DATA_W(DATA_W)
-)
+taxi_uart_tx
 uart_tx_inst (
     .clk(clk),
     .rst(rst),
@@ -82,9 +77,7 @@ uart_tx_inst (
     .prescale(prescale)
 );
 
-taxi_uart_rx #(
-    .DATA_W(DATA_W)
-)
+taxi_uart_rx
 uart_rx_inst (
     .clk(clk),
     .rst(rst),

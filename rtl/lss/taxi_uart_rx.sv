@@ -15,10 +15,7 @@ Authors:
 /*
  * AXI4-Stream UART (RX)
  */
-module taxi_uart_rx #
-(
-    parameter DATA_W = 8
-)
+module taxi_uart_rx
 (
     input  wire logic         clk,
     input  wire logic         rst,
@@ -47,9 +44,7 @@ module taxi_uart_rx #
 
 );
 
-// check configuration
-if (m_axis_rx.DATA_W != DATA_W)
-    $fatal(0, "Error: Interface parameter DATA_W mismatch (instance %m)");
+localparam DATA_W = m_axis_rx.DATA_W;
 
 logic [DATA_W-1:0] m_axis_tdata_reg = 0;
 logic m_axis_tvalid_reg = 0;
