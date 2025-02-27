@@ -54,20 +54,20 @@ if (s_axil_wr.DATA_W != s_axil_rd.DATA_W)
 if (s_axil_wr.ADDR_W < ADDR_W || s_axil_rd.ADDR_W < ADDR_W)
     $fatal(0, "Error: AXI address width is insufficient (instance %m)");
 
-reg mem_wr_en;
-reg mem_rd_en;
+logic mem_wr_en;
+logic mem_rd_en;
 
-reg s_axil_awready_reg = 1'b0, s_axil_awready_next;
-reg s_axil_wready_reg = 1'b0, s_axil_wready_next;
-reg s_axil_bvalid_reg = 1'b0, s_axil_bvalid_next;
-reg s_axil_arready_reg = 1'b0, s_axil_arready_next;
-reg [DATA_W-1:0] s_axil_rdata_reg = '0, s_axil_rdata_next;
-reg s_axil_rvalid_reg = 1'b0, s_axil_rvalid_next;
-reg [DATA_W-1:0] s_axil_rdata_pipe_reg = '0;
-reg s_axil_rvalid_pipe_reg = 1'b0;
+logic s_axil_awready_reg = 1'b0, s_axil_awready_next;
+logic s_axil_wready_reg = 1'b0, s_axil_wready_next;
+logic s_axil_bvalid_reg = 1'b0, s_axil_bvalid_next;
+logic s_axil_arready_reg = 1'b0, s_axil_arready_next;
+logic [DATA_W-1:0] s_axil_rdata_reg = '0, s_axil_rdata_next;
+logic s_axil_rvalid_reg = 1'b0, s_axil_rvalid_next;
+logic [DATA_W-1:0] s_axil_rdata_pipe_reg = '0;
+logic s_axil_rvalid_pipe_reg = 1'b0;
 
 // (* RAM_STYLE="BLOCK" *)
-reg [DATA_W-1:0] mem[(2**VALID_ADDR_W)-1:0];
+logic [DATA_W-1:0] mem[(2**VALID_ADDR_W)-1:0];
 
 wire [VALID_ADDR_W-1:0] s_axil_awaddr_valid = VALID_ADDR_W'(s_axil_wr.awaddr >> (ADDR_W - VALID_ADDR_W));
 wire [VALID_ADDR_W-1:0] s_axil_araddr_valid = VALID_ADDR_W'(s_axil_rd.araddr >> (ADDR_W - VALID_ADDR_W));
