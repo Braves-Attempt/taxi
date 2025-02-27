@@ -22,6 +22,12 @@ To facilitate the dual-license model, contributions to the project can only be a
 
 ## Components
 
+*  AXI
+    *  SV interface for AXI
+    *  Register slice
+*  AXI lite
+    *  SV interface for AXI lite
+    *  Register slice
 *  AXI stream
     *  SV interface for AXI stream
     *  Register slice
