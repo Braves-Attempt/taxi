@@ -25,11 +25,11 @@ To facilitate the dual-license model, contributions to the project can only be a
 *  AXI
     *  SV interface for AXI
     *  Register slice
-    *  Single port RAM
+    *  Single-port RAM
 *  AXI lite
     *  SV interface for AXI lite
     *  Register slice
-    *  Single port RAM
+    *  Single-port RAM
     *  Dual-port RAM
 *  AXI stream
     *  SV interface for AXI stream
@@ -64,6 +64,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  10G/25G MAC/PHY/GT wrapper for UltraScale/UltraScale+
 *  General input/output
     *  Switch debouncer
+    *  LED shift register driver
     *  Generic IDDR
     *  Generic ODDR
     *  Source-synchronous DDR input
@@ -118,7 +119,7 @@ Example designs are provided for several different FPGA boards, showcasing many 
 *  Xilinx Alveo X3/X3522 (Xilinx Virtex UltraScale+ XCUX35)
 *  Xilinx KC705 (Xilinx Kintex 7 XC7K325T)
 *  Xilinx KCU105 (Xilinx Kintex UltraScale XCKU040)
-*  Xilinx KR260 (Xilinx Kria K26 SoM / Zynq UltraScale+ XCK26)
+*  Xilinx Kria KR260 (Xilinx Kria K26 SoM / Zynq UltraScale+ XCK26)
 *  Xilinx VCU108 (Xilinx Virtex UltraScale XCVU095)
 *  Xilinx VCU1525 (Xilinx Virtex UltraScale+ XCVU9P)
 *  Xilinx ZCU102 (Xilinx Zynq UltraScale+ XCZU9EG)
