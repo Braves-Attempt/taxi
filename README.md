@@ -39,6 +39,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  Asynchronous FIFO
     *  Combined FIFO + width converter
     *  Combined async FIFO + width converter
+    *  Multiplexer
     *  Broadcaster
     *  COBS encoder
     *  COBS decoder
