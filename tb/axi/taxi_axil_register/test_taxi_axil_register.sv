@@ -20,6 +20,7 @@ module test_taxi_axil_register #
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 32,
     parameter ADDR_W = 32,
+    parameter STRB_W = (DATA_W/8),
     parameter logic AWUSER_EN = 1'b0,
     parameter AWUSER_W = 1,
     parameter logic WUSER_EN = 1'b0,
@@ -45,6 +46,7 @@ logic rst;
 taxi_axil_if #(
     .DATA_W(DATA_W),
     .ADDR_W(ADDR_W),
+    .STRB_W(STRB_W),
     .AWUSER_EN(AWUSER_EN),
     .AWUSER_W(AWUSER_W),
     .WUSER_EN(WUSER_EN),

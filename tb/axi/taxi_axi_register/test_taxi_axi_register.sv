@@ -20,6 +20,7 @@ module test_taxi_axi_register #
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 32,
     parameter ADDR_W = 32,
+    parameter STRB_W = (DATA_W/8),
     parameter ID_W = 8,
     parameter logic AWUSER_EN = 1'b0,
     parameter AWUSER_W = 1,
@@ -46,6 +47,7 @@ logic rst;
 taxi_axi_if #(
     .DATA_W(DATA_W),
     .ADDR_W(ADDR_W),
+    .STRB_W(STRB_W),
     .ID_W(ID_W),
     .AWUSER_EN(AWUSER_EN),
     .AWUSER_W(AWUSER_W),

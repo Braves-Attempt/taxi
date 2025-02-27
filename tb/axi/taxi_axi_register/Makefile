@@ -31,6 +31,7 @@ REG_TYPE ?= 1
 # module parameters
 export PARAM_DATA_W := 32
 export PARAM_ADDR_W := 32
+export PARAM_STRB_W := $(shell expr $(PARAM_DATA_W) / 8 )
 export PARAM_ID_W := 8
 export PARAM_AWUSER_EN := 0
 export PARAM_AWUSER_W := 1

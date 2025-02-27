@@ -228,6 +228,7 @@ def test_taxi_axi_register(request, data_w, reg_type):
 
     parameters['DATA_W'] = data_w
     parameters['ADDR_W'] = 32
+    parameters['STRB_W'] = parameters['DATA_W'] // 8
     parameters['ID_W'] = 8
     parameters['AWUSER_EN'] = 0
     parameters['AWUSER_W'] = 1

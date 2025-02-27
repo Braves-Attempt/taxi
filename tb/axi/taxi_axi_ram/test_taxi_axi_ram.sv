@@ -20,6 +20,7 @@ module test_taxi_axi_ram #
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 32,
     parameter ADDR_W = 16,
+    parameter STRB_W = (DATA_W/8),
     parameter ID_W = 8,
     parameter PIPELINE_OUTPUT = 0
     /* verilator lint_on WIDTHTRUNC */
@@ -32,6 +33,7 @@ logic rst;
 taxi_axi_if #(
     .DATA_W(DATA_W),
     .ADDR_W(ADDR_W+16),
+    .STRB_W(STRB_W),
     .ID_W(ID_W)
 ) s_axi(), m_axi();
 

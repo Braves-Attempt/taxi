@@ -31,6 +31,7 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 # module parameters
 export PARAM_DATA_W := 32
 export PARAM_ADDR_W := 16
+export PARAM_STRB_W := $(shell expr $(PARAM_DATA_W) / 8 )
 export PARAM_PIPELINE_OUTPUT := 0
 
 ifeq ($(SIM), icarus)

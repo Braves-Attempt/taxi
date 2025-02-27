@@ -220,6 +220,7 @@ def test_taxi_axi_ram(request, data_w):
 
     parameters['DATA_W'] = data_w
     parameters['ADDR_W'] = 16
+    parameters['STRB_W'] = parameters['DATA_W'] // 8
     parameters['ID_W'] = 8
     parameters['PIPELINE_OUTPUT'] = 0
 
