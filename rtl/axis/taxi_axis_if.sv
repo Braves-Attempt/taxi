@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CERN-OHL-S-2.0
+// SPDX-License-Identifier: MIT
 /*
 
 Copyright (c) 2025 FPGA Ninja, LLC
