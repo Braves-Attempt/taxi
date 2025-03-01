@@ -82,15 +82,15 @@ reg  [USER_W-1:0]  m_axis_tuser_int;
 wire               m_axis_tready_int_early;
 
 // unpack interface array
-wire [S_COUNT-1:0][DATA_W-1:0]  s_axis_tdata;
-wire [S_COUNT-1:0][KEEP_W-1:0]  s_axis_tkeep;
-wire [S_COUNT-1:0][KEEP_W-1:0]  s_axis_tstrb;
-wire [S_COUNT-1:0]              s_axis_tvalid;
-wire [S_COUNT-1:0]              s_axis_tready;
-wire [S_COUNT-1:0]              s_axis_tlast;
-wire [S_COUNT-1:0][ID_W-1:0]    s_axis_tid;
-wire [S_COUNT-1:0][DEST_W-1:0]  s_axis_tdest;
-wire [S_COUNT-1:0][USER_W-1:0]  s_axis_tuser;
+wire [DATA_W-1:0]   s_axis_tdata[S_COUNT];
+wire [KEEP_W-1:0]   s_axis_tkeep[S_COUNT];
+wire [KEEP_W-1:0]   s_axis_tstrb[S_COUNT];
+wire [S_COUNT-1:0]  s_axis_tvalid;
+wire [S_COUNT-1:0]  s_axis_tready;
+wire [S_COUNT-1:0]  s_axis_tlast;
+wire [ID_W-1:0]     s_axis_tid[S_COUNT];
+wire [DEST_W-1:0]   s_axis_tdest[S_COUNT];
+wire [USER_W-1:0]   s_axis_tuser[S_COUNT];
 
 for (genvar n = 0; n < S_COUNT; n = n + 1) begin
     assign s_axis_tdata[n] = s_axis[n].tdata;
