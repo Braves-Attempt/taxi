@@ -70,6 +70,37 @@ class TB:
         dut.cfg_rx_enable.setimmediatevalue(0)
         dut.cfg_tx_prbs31_enable.setimmediatevalue(0)
         dut.cfg_rx_prbs31_enable.setimmediatevalue(0)
+        dut.cfg_mcf_rx_eth_dst_mcast.setimmediatevalue(0)
+        dut.cfg_mcf_rx_check_eth_dst_mcast.setimmediatevalue(0)
+        dut.cfg_mcf_rx_eth_dst_ucast.setimmediatevalue(0)
+        dut.cfg_mcf_rx_check_eth_dst_ucast.setimmediatevalue(0)
+        dut.cfg_mcf_rx_eth_src.setimmediatevalue(0)
+        dut.cfg_mcf_rx_check_eth_src.setimmediatevalue(0)
+        dut.cfg_mcf_rx_eth_type.setimmediatevalue(0)
+        dut.cfg_mcf_rx_opcode_lfc.setimmediatevalue(0)
+        dut.cfg_mcf_rx_check_opcode_lfc.setimmediatevalue(0)
+        dut.cfg_mcf_rx_opcode_pfc.setimmediatevalue(0)
+        dut.cfg_mcf_rx_check_opcode_pfc.setimmediatevalue(0)
+        dut.cfg_mcf_rx_forward.setimmediatevalue(0)
+        dut.cfg_mcf_rx_enable.setimmediatevalue(0)
+        dut.cfg_tx_lfc_eth_dst.setimmediatevalue(0)
+        dut.cfg_tx_lfc_eth_src.setimmediatevalue(0)
+        dut.cfg_tx_lfc_eth_type.setimmediatevalue(0)
+        dut.cfg_tx_lfc_opcode.setimmediatevalue(0)
+        dut.cfg_tx_lfc_en.setimmediatevalue(0)
+        dut.cfg_tx_lfc_quanta.setimmediatevalue(0)
+        dut.cfg_tx_lfc_refresh.setimmediatevalue(0)
+        dut.cfg_tx_pfc_eth_dst.setimmediatevalue(0)
+        dut.cfg_tx_pfc_eth_src.setimmediatevalue(0)
+        dut.cfg_tx_pfc_eth_type.setimmediatevalue(0)
+        dut.cfg_tx_pfc_opcode.setimmediatevalue(0)
+        dut.cfg_tx_pfc_en.setimmediatevalue(0)
+        dut.cfg_tx_pfc_quanta.setimmediatevalue(0)
+        dut.cfg_tx_pfc_refresh.setimmediatevalue(0)
+        dut.cfg_rx_lfc_opcode.setimmediatevalue(0)
+        dut.cfg_rx_lfc_en.setimmediatevalue(0)
+        dut.cfg_rx_pfc_opcode.setimmediatevalue(0)
+        dut.cfg_rx_pfc_en.setimmediatevalue(0)
 
     async def reset(self):
         self.dut.rx_rst.setimmediatevalue(0)
@@ -712,6 +743,12 @@ if cocotb.SIM_NAME:
 
     factory = TestFactory(run_test_rx_frame_sync)
     factory.generate_tests()
+
+    if cocotb.top.PFC_EN.value:
+        for test in [run_test_lfc, run_test_pfc]:
+            factory = TestFactory(test)
+            factory.add_option("ifg", [12])
+            factory.generate_tests()
 
 
 # cocotb-test
