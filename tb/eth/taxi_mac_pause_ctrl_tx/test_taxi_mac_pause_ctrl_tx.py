@@ -61,8 +61,8 @@ class TB:
         dut.cfg_tx_pfc_eth_type.setimmediatevalue(0)
         dut.cfg_tx_pfc_opcode.setimmediatevalue(0)
         dut.cfg_tx_pfc_en.setimmediatevalue(0)
-        dut.cfg_tx_pfc_quanta.setimmediatevalue(0)
-        dut.cfg_tx_pfc_refresh.setimmediatevalue(0)
+        dut.cfg_tx_pfc_quanta.setimmediatevalue([0]*8)
+        dut.cfg_tx_pfc_refresh.setimmediatevalue([0]*8)
         dut.cfg_quanta_step.setimmediatevalue(256)
         dut.cfg_quanta_clk_en.setimmediatevalue(1)
 
@@ -113,9 +113,6 @@ async def run_test_lfc(dut):
     dut.tx_lfc_req.value = 0
     dut.tx_lfc_resend.value = 0
 
-    dut.tx_pfc_req.value = 0x00
-    dut.tx_pfc_resend.value = 0
-
     dut.cfg_tx_lfc_eth_dst.value = 0x0180C2000001
     dut.cfg_tx_lfc_eth_src.value = 0x5A5152535455
     dut.cfg_tx_lfc_eth_type.value = 0x8808
@@ -123,13 +120,6 @@ async def run_test_lfc(dut):
     dut.cfg_tx_lfc_en.value = 1
     dut.cfg_tx_lfc_quanta.value = 0xFFFF
     dut.cfg_tx_lfc_refresh.value = 0x7F00
-    dut.cfg_tx_pfc_eth_dst.value = 0x0180C2000001
-    dut.cfg_tx_pfc_eth_src.value = 0x5A5152535455
-    dut.cfg_tx_pfc_eth_type.value = 0x8808
-    dut.cfg_tx_pfc_opcode.value = 0x0101
-    dut.cfg_tx_pfc_en.value = 0
-    dut.cfg_tx_pfc_quanta.value = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-    dut.cfg_tx_pfc_refresh.value = 0x7F007F007F007F007F007F007F007F00
     dut.cfg_quanta_step.value = int(10000*256 / (512*156.25))
     dut.cfg_quanta_clk_en.value = 1
 
@@ -193,32 +183,22 @@ async def run_test_pfc(dut):
 
     await tb.reset()
 
-    dut.tx_lfc_req.value = 0
-    dut.tx_lfc_resend.value = 0
-
     dut.tx_pfc_req.value = 0x00
     dut.tx_pfc_resend.value = 0
 
-    dut.cfg_tx_lfc_eth_dst.value = 0x0180C2000001
-    dut.cfg_tx_lfc_eth_src.value = 0x5A5152535455
-    dut.cfg_tx_lfc_eth_type.value = 0x8808
-    dut.cfg_tx_lfc_opcode.value = 0x0001
-    dut.cfg_tx_lfc_en.value = 0
-    dut.cfg_tx_lfc_quanta.value = 0xFFFF
-    dut.cfg_tx_lfc_refresh.value = 0x7F00
     dut.cfg_tx_pfc_eth_dst.value = 0x0180C2000001
     dut.cfg_tx_pfc_eth_src.value = 0x5A5152535455
     dut.cfg_tx_pfc_eth_type.value = 0x8808
     dut.cfg_tx_pfc_opcode.value = 0x0101
     dut.cfg_tx_pfc_en.value = 1
-    dut.cfg_tx_pfc_quanta.value = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-    dut.cfg_tx_pfc_refresh.value = 0x7F007F007F007F007F007F007F007F00
+    dut.cfg_tx_pfc_quanta.value = [0xFFFF]*8
+    dut.cfg_tx_pfc_refresh.value = [0x7F00]*8
     dut.cfg_quanta_step.value = int(10000*256 / (512*156.25))
     dut.cfg_quanta_clk_en.value = 1
 
     tb.log.info("Test pause")
 
-    dut.cfg_tx_pfc_refresh.value = 0x00640064006400640064006400640064
+    dut.cfg_tx_pfc_refresh.value = [0x0064]*8
 
     dut.tx_pfc_req.value = 0x01
     start_time = None
@@ -248,7 +228,7 @@ async def run_test_pfc(dut):
 
     tb.log.info("Test all channels")
 
-    dut.cfg_tx_pfc_refresh.value = 0x00640064006400640064006400640064
+    dut.cfg_tx_pfc_refresh.value = [0x0064]*8
 
     for ch in range(8):
 
@@ -280,7 +260,7 @@ async def run_test_pfc(dut):
 
     tb.log.info("Test isolation")
 
-    dut.cfg_tx_pfc_refresh.value = 0x00640064006400640064006400640064
+    dut.cfg_tx_pfc_refresh.value = [0x0064]*8
 
     dut.tx_pfc_req.value = 0x01
     start_time = None

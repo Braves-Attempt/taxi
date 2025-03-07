@@ -62,8 +62,8 @@ module taxi_mac_pause_ctrl_tx #
     input  wire logic [15:0]                   cfg_tx_pfc_eth_type = 16'h8808,
     input  wire logic [15:0]                   cfg_tx_pfc_opcode = 16'h0101,
     input  wire logic                          cfg_tx_pfc_en = 1'b0,
-    input  wire logic [7:0][15:0]              cfg_tx_pfc_quanta = '{8{16'hffff}},
-    input  wire logic [7:0][15:0]              cfg_tx_pfc_refresh = '{8{16'h7fff}},
+    input  wire logic [15:0]                   cfg_tx_pfc_quanta[8] = '{8{16'hffff}},
+    input  wire logic [15:0]                   cfg_tx_pfc_refresh[8] = '{8{16'h7fff}},
     input  wire logic [9:0]                    cfg_quanta_step,
     input  wire logic                          cfg_quanta_clk_en = 1'b1,
 

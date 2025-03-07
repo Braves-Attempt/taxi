@@ -328,11 +328,10 @@ qsfp_mac_inst (
     /*
      * PTP clock
      */
-    .tx_ptp_ts('0),
+    .tx_ptp_ts('{4{'0}}),
     .tx_ptp_ts_step('0),
-    .rx_ptp_ts('0),
+    .rx_ptp_ts('{4{'0}}),
     .rx_ptp_ts_step('0),
-
 
     /*
      * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
@@ -346,11 +345,11 @@ qsfp_mac_inst (
     /*
      * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
      */
-    .tx_pfc_req('0),
+    .tx_pfc_req('{4{'0}}),
     .tx_pfc_resend('0),
-    .rx_pfc_en('0),
+    .rx_pfc_en('{4{'0}}),
     .rx_pfc_req(),
-    .rx_pfc_ack('0),
+    .rx_pfc_ack('{4{'0}}),
 
     /*
      * Pause interface

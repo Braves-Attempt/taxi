@@ -45,153 +45,153 @@ module taxi_eth_mac_25g_us #
     parameter COUNT_125US = 125000/6.4
 )
 (
-    input  wire logic                          xcvr_ctrl_clk,
-    input  wire logic                          xcvr_ctrl_rst,
+    input  wire logic                 xcvr_ctrl_clk,
+    input  wire logic                 xcvr_ctrl_rst,
 
     /*
      * Common
      */
-    output wire logic                          xcvr_gtpowergood_out,
-    input  wire logic                          xcvr_gtrefclk00_in,
-    output wire logic                          xcvr_qpll0lock_out,
-    output wire logic                          xcvr_qpll0clk_out,
-    output wire logic                          xcvr_qpll0refclk_out,
+    output wire logic                 xcvr_gtpowergood_out,
+    input  wire logic                 xcvr_gtrefclk00_in,
+    output wire logic                 xcvr_qpll0lock_out,
+    output wire logic                 xcvr_qpll0clk_out,
+    output wire logic                 xcvr_qpll0refclk_out,
 
     /*
      * Serial data
      */
-    output wire logic [CNT-1:0]                xcvr_txp,
-    output wire logic [CNT-1:0]                xcvr_txn,
-    input  wire logic [CNT-1:0]                xcvr_rxp,
-    input  wire logic [CNT-1:0]                xcvr_rxn,
+    output wire logic [CNT-1:0]       xcvr_txp,
+    output wire logic [CNT-1:0]       xcvr_txn,
+    input  wire logic [CNT-1:0]       xcvr_rxp,
+    input  wire logic [CNT-1:0]       xcvr_rxn,
 
     /*
      * MAC clocks
      */
-    output wire logic [CNT-1:0]                rx_clk,
-    input  wire logic [CNT-1:0]                rx_rst_in,
-    output wire logic [CNT-1:0]                rx_rst_out,
-    output wire logic [CNT-1:0]                tx_clk,
-    input  wire logic [CNT-1:0]                tx_rst_in,
-    output wire logic [CNT-1:0]                tx_rst_out,
-    input  wire logic [CNT-1:0]                ptp_sample_clk,
+    output wire logic [CNT-1:0]       rx_clk,
+    input  wire logic [CNT-1:0]       rx_rst_in,
+    output wire logic [CNT-1:0]       rx_rst_out,
+    output wire logic [CNT-1:0]       tx_clk,
+    input  wire logic [CNT-1:0]       tx_rst_in,
+    output wire logic [CNT-1:0]       tx_rst_out,
+    input  wire logic [CNT-1:0]       ptp_sample_clk,
 
     /*
      * Transmit interface (AXI stream)
      */
-    taxi_axis_if.snk                           s_axis_tx[CNT-1:0],
-    taxi_axis_if.src                           m_axis_tx_cpl[CNT-1:0],
+    taxi_axis_if.snk                  s_axis_tx[CNT],
+    taxi_axis_if.src                  m_axis_tx_cpl[CNT],
 
     /*
      * Receive interface (AXI stream)
      */
-    taxi_axis_if.src                           m_axis_rx[CNT-1:0],
+    taxi_axis_if.src                  m_axis_rx[CNT],
 
     /*
      * PTP clock
      */
-    input  wire logic [CNT-1:0][PTP_TS_W-1:0]  tx_ptp_ts = '0,
-    input  wire logic [CNT-1:0]                tx_ptp_ts_step = '0,
-    input  wire logic [CNT-1:0][PTP_TS_W-1:0]  rx_ptp_ts = '0,
-    input  wire logic [CNT-1:0]                rx_ptp_ts_step = '0,
+    input  wire logic [PTP_TS_W-1:0]  tx_ptp_ts[CNT] = '{CNT{'0}},
+    input  wire logic [CNT-1:0]       tx_ptp_ts_step = '0,
+    input  wire logic [PTP_TS_W-1:0]  rx_ptp_ts[CNT] = '{CNT{'0}},
+    input  wire logic [CNT-1:0]       rx_ptp_ts_step = '0,
 
     /*
      * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
      */
-    input  wire logic [CNT-1:0]                tx_lfc_req = '0,
-    input  wire logic [CNT-1:0]                tx_lfc_resend = '0,
-    input  wire logic [CNT-1:0]                rx_lfc_en = '0,
-    output wire logic [CNT-1:0]                rx_lfc_req,
-    input  wire logic [CNT-1:0]                rx_lfc_ack = '0,
+    input  wire logic [CNT-1:0]       tx_lfc_req = '0,
+    input  wire logic [CNT-1:0]       tx_lfc_resend = '0,
+    input  wire logic [CNT-1:0]       rx_lfc_en = '0,
+    output wire logic [CNT-1:0]       rx_lfc_req,
+    input  wire logic [CNT-1:0]       rx_lfc_ack = '0,
 
     /*
      * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
      */
-    input  wire logic [CNT-1:0][7:0]           tx_pfc_req = '0,
-    input  wire logic [CNT-1:0]                tx_pfc_resend = '0,
-    input  wire logic [CNT-1:0][7:0]           rx_pfc_en = '0,
-    output wire logic [CNT-1:0][7:0]           rx_pfc_req,
-    input  wire logic [CNT-1:0][7:0]           rx_pfc_ack = '0,
+    input  wire logic [7:0]           tx_pfc_req[CNT] = '{CNT{'0}},
+    input  wire logic [CNT-1:0]       tx_pfc_resend = '0,
+    input  wire logic [7:0]           rx_pfc_en[CNT] = '{CNT{'0}},
+    output wire logic [7:0]           rx_pfc_req[CNT],
+    input  wire logic [7:0]           rx_pfc_ack[CNT] = '{CNT{'0}},
 
     /*
      * Pause interface
      */
-    input  wire logic [CNT-1:0]                tx_lfc_pause_en = '0,
-    input  wire logic [CNT-1:0]                tx_pause_req = '0,
-    output wire logic [CNT-1:0]                tx_pause_ack,
+    input  wire logic [CNT-1:0]       tx_lfc_pause_en = '0,
+    input  wire logic [CNT-1:0]       tx_pause_req = '0,
+    output wire logic [CNT-1:0]       tx_pause_ack,
 
     /*
      * Status
      */
-    output wire logic [CNT-1:0][1:0]           tx_start_packet,
-    output wire logic [CNT-1:0]                tx_error_underflow,
-    output wire logic [CNT-1:0][1:0]           rx_start_packet,
-    output wire logic [CNT-1:0][6:0]           rx_error_count,
-    output wire logic [CNT-1:0]                rx_error_bad_frame,
-    output wire logic [CNT-1:0]                rx_error_bad_fcs,
-    output wire logic [CNT-1:0]                rx_bad_block,
-    output wire logic [CNT-1:0]                rx_sequence_error,
-    output wire logic [CNT-1:0]                rx_block_lock,
-    output wire logic [CNT-1:0]                rx_high_ber,
-    output wire logic [CNT-1:0]                rx_status,
-    output wire logic [CNT-1:0]                stat_tx_mcf,
-    output wire logic [CNT-1:0]                stat_rx_mcf,
-    output wire logic [CNT-1:0]                stat_tx_lfc_pkt,
-    output wire logic [CNT-1:0]                stat_tx_lfc_xon,
-    output wire logic [CNT-1:0]                stat_tx_lfc_xoff,
-    output wire logic [CNT-1:0]                stat_tx_lfc_paused,
-    output wire logic [CNT-1:0]                stat_tx_pfc_pkt,
-    output wire logic [CNT-1:0][7:0]           stat_tx_pfc_xon,
-    output wire logic [CNT-1:0][7:0]           stat_tx_pfc_xoff,
-    output wire logic [CNT-1:0][7:0]           stat_tx_pfc_paused,
-    output wire logic [CNT-1:0]                stat_rx_lfc_pkt,
-    output wire logic [CNT-1:0]                stat_rx_lfc_xon,
-    output wire logic [CNT-1:0]                stat_rx_lfc_xoff,
-    output wire logic [CNT-1:0]                stat_rx_lfc_paused,
-    output wire logic [CNT-1:0]                stat_rx_pfc_pkt,
-    output wire logic [CNT-1:0][7:0]           stat_rx_pfc_xon,
-    output wire logic [CNT-1:0][7:0]           stat_rx_pfc_xoff,
-    output wire logic [CNT-1:0][7:0]           stat_rx_pfc_paused,
+    output wire logic [1:0]           tx_start_packet[CNT],
+    output wire logic [CNT-1:0]       tx_error_underflow,
+    output wire logic [1:0]           rx_start_packet[CNT],
+    output wire logic [6:0]           rx_error_count[CNT],
+    output wire logic [CNT-1:0]       rx_error_bad_frame,
+    output wire logic [CNT-1:0]       rx_error_bad_fcs,
+    output wire logic [CNT-1:0]       rx_bad_block,
+    output wire logic [CNT-1:0]       rx_sequence_error,
+    output wire logic [CNT-1:0]       rx_block_lock,
+    output wire logic [CNT-1:0]       rx_high_ber,
+    output wire logic [CNT-1:0]       rx_status,
+    output wire logic [CNT-1:0]       stat_tx_mcf,
+    output wire logic [CNT-1:0]       stat_rx_mcf,
+    output wire logic [CNT-1:0]       stat_tx_lfc_pkt,
+    output wire logic [CNT-1:0]       stat_tx_lfc_xon,
+    output wire logic [CNT-1:0]       stat_tx_lfc_xoff,
+    output wire logic [CNT-1:0]       stat_tx_lfc_paused,
+    output wire logic [CNT-1:0]       stat_tx_pfc_pkt,
+    output wire logic [7:0]           stat_tx_pfc_xon[CNT],
+    output wire logic [7:0]           stat_tx_pfc_xoff[CNT],
+    output wire logic [7:0]           stat_tx_pfc_paused[CNT],
+    output wire logic [CNT-1:0]       stat_rx_lfc_pkt,
+    output wire logic [CNT-1:0]       stat_rx_lfc_xon,
+    output wire logic [CNT-1:0]       stat_rx_lfc_xoff,
+    output wire logic [CNT-1:0]       stat_rx_lfc_paused,
+    output wire logic [CNT-1:0]       stat_rx_pfc_pkt,
+    output wire logic [7:0]           stat_rx_pfc_xon[CNT],
+    output wire logic [7:0]           stat_rx_pfc_xoff[CNT],
+    output wire logic [7:0]           stat_rx_pfc_paused[CNT],
 
     /*
      * Configuration
      */
-    input  wire logic [CNT-1:0][7:0]           cfg_ifg = '{CNT{8'd12}},
-    input  wire logic [CNT-1:0]                cfg_tx_enable = '1,
-    input  wire logic [CNT-1:0]                cfg_rx_enable = '1,
-    input  wire logic [CNT-1:0]                cfg_tx_prbs31_enable = '0,
-    input  wire logic [CNT-1:0]                cfg_rx_prbs31_enable = '0,
-    input  wire logic [CNT-1:0][47:0]          cfg_mcf_rx_eth_dst_mcast = '{CNT{48'h01_80_C2_00_00_01}},
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_check_eth_dst_mcast = '1,
-    input  wire logic [CNT-1:0][47:0]          cfg_mcf_rx_eth_dst_ucast = '{CNT{48'd0}},
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_check_eth_dst_ucast = '0,
-    input  wire logic [CNT-1:0][47:0]          cfg_mcf_rx_eth_src = '{CNT{48'd0}},
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_check_eth_src = '0,
-    input  wire logic [CNT-1:0][15:0]          cfg_mcf_rx_eth_type = '{CNT{16'h8808}},
-    input  wire logic [CNT-1:0][15:0]          cfg_mcf_rx_opcode_lfc = '{CNT{16'h0001}},
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_check_opcode_lfc = '1,
-    input  wire logic [CNT-1:0][15:0]          cfg_mcf_rx_opcode_pfc = '{CNT{16'h0101}},
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_check_opcode_pfc = '1,
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_forward = '0,
-    input  wire logic [CNT-1:0]                cfg_mcf_rx_enable = '0,
-    input  wire logic [CNT-1:0][47:0]          cfg_tx_lfc_eth_dst = '{CNT{48'h01_80_C2_00_00_01}},
-    input  wire logic [CNT-1:0][47:0]          cfg_tx_lfc_eth_src = '{CNT{48'h80_23_31_43_54_4C}},
-    input  wire logic [CNT-1:0][15:0]          cfg_tx_lfc_eth_type = '{CNT{16'h8808}},
-    input  wire logic [CNT-1:0][15:0]          cfg_tx_lfc_opcode = '{CNT{16'h0001}},
-    input  wire logic [CNT-1:0]                cfg_tx_lfc_en = '0,
-    input  wire logic [CNT-1:0][15:0]          cfg_tx_lfc_quanta = '{CNT{16'hffff}},
-    input  wire logic [CNT-1:0][15:0]          cfg_tx_lfc_refresh = '{CNT{16'h7fff}},
-    input  wire logic [CNT-1:0][47:0]          cfg_tx_pfc_eth_dst = '{CNT{48'h01_80_C2_00_00_01}},
-    input  wire logic [CNT-1:0][47:0]          cfg_tx_pfc_eth_src = '{CNT{48'h80_23_31_43_54_4C}},
-    input  wire logic [CNT-1:0][15:0]          cfg_tx_pfc_eth_type = '{CNT{16'h8808}},
-    input  wire logic [CNT-1:0][15:0]          cfg_tx_pfc_opcode = '{CNT{16'h0101}},
-    input  wire logic [CNT-1:0]                cfg_tx_pfc_en = '0,
-    input  wire logic [CNT-1:0][7:0][15:0]     cfg_tx_pfc_quanta = '{CNT{'{8{16'hffff}}}},
-    input  wire logic [CNT-1:0][7:0][15:0]     cfg_tx_pfc_refresh = '{CNT{'{8{16'h7fff}}}},
-    input  wire logic [CNT-1:0][15:0]          cfg_rx_lfc_opcode = '{CNT{16'h0001}},
-    input  wire logic [CNT-1:0]                cfg_rx_lfc_en = '0,
-    input  wire logic [CNT-1:0][15:0]          cfg_rx_pfc_opcode = '{CNT{16'h0101}},
-    input  wire logic [CNT-1:0]                cfg_rx_pfc_en = '0
+    input  wire logic [7:0]           cfg_ifg[CNT] = '{CNT{8'd12}},
+    input  wire logic [CNT-1:0]       cfg_tx_enable = '1,
+    input  wire logic [CNT-1:0]       cfg_rx_enable = '1,
+    input  wire logic [CNT-1:0]       cfg_tx_prbs31_enable = '0,
+    input  wire logic [CNT-1:0]       cfg_rx_prbs31_enable = '0,
+    input  wire logic [47:0]          cfg_mcf_rx_eth_dst_mcast[CNT] = '{CNT{48'h01_80_C2_00_00_01}},
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_check_eth_dst_mcast = '1,
+    input  wire logic [47:0]          cfg_mcf_rx_eth_dst_ucast[CNT] = '{CNT{48'd0}},
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_check_eth_dst_ucast = '0,
+    input  wire logic [47:0]          cfg_mcf_rx_eth_src[CNT] = '{CNT{48'd0}},
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_check_eth_src = '0,
+    input  wire logic [15:0]          cfg_mcf_rx_eth_type[CNT] = '{CNT{16'h8808}},
+    input  wire logic [15:0]          cfg_mcf_rx_opcode_lfc[CNT] = '{CNT{16'h0001}},
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_check_opcode_lfc = '1,
+    input  wire logic [15:0]          cfg_mcf_rx_opcode_pfc[CNT] = '{CNT{16'h0101}},
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_check_opcode_pfc = '1,
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_forward = '0,
+    input  wire logic [CNT-1:0]       cfg_mcf_rx_enable = '0,
+    input  wire logic [47:0]          cfg_tx_lfc_eth_dst[CNT] = '{CNT{48'h01_80_C2_00_00_01}},
+    input  wire logic [47:0]          cfg_tx_lfc_eth_src[CNT] = '{CNT{48'h80_23_31_43_54_4C}},
+    input  wire logic [15:0]          cfg_tx_lfc_eth_type[CNT] = '{CNT{16'h8808}},
+    input  wire logic [15:0]          cfg_tx_lfc_opcode[CNT] = '{CNT{16'h0001}},
+    input  wire logic [CNT-1:0]       cfg_tx_lfc_en = '0,
+    input  wire logic [15:0]          cfg_tx_lfc_quanta[CNT] = '{CNT{16'hffff}},
+    input  wire logic [15:0]          cfg_tx_lfc_refresh[CNT] = '{CNT{16'h7fff}},
+    input  wire logic [47:0]          cfg_tx_pfc_eth_dst[CNT] = '{CNT{48'h01_80_C2_00_00_01}},
+    input  wire logic [47:0]          cfg_tx_pfc_eth_src[CNT] = '{CNT{48'h80_23_31_43_54_4C}},
+    input  wire logic [15:0]          cfg_tx_pfc_eth_type[CNT] = '{CNT{16'h8808}},
+    input  wire logic [15:0]          cfg_tx_pfc_opcode[CNT] = '{CNT{16'h0101}},
+    input  wire logic [CNT-1:0]       cfg_tx_pfc_en = '0,
+    input  wire logic [15:0]          cfg_tx_pfc_quanta[CNT][8] = '{CNT{'{8{16'hffff}}}},
+    input  wire logic [15:0]          cfg_tx_pfc_refresh[CNT][8] = '{CNT{'{8{16'h7fff}}}},
+    input  wire logic [15:0]          cfg_rx_lfc_opcode[CNT] = '{CNT{16'h0001}},
+    input  wire logic [CNT-1:0]       cfg_rx_lfc_en = '0,
+    input  wire logic [15:0]          cfg_rx_pfc_opcode[CNT] = '{CNT{16'h0101}},
+    input  wire logic [CNT-1:0]       cfg_rx_pfc_en = '0
 );
 
 for (genvar n = 0; n < CNT; n = n + 1) begin : ch

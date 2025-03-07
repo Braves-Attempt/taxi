@@ -429,11 +429,10 @@ end else begin : sfp_mac
         /*
          * PTP clock
          */
-        .tx_ptp_ts('0),
+        .tx_ptp_ts('{1{'0}}),
         .tx_ptp_ts_step('0),
-        .rx_ptp_ts('0),
+        .rx_ptp_ts('{1{'0}}),
         .rx_ptp_ts_step('0),
-
 
         /*
          * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
@@ -447,11 +446,11 @@ end else begin : sfp_mac
         /*
          * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
          */
-        .tx_pfc_req('0),
+        .tx_pfc_req('{1{'0}}),
         .tx_pfc_resend('0),
-        .rx_pfc_en('0),
+        .rx_pfc_en('{1{'0}}),
         .rx_pfc_req(),
-        .rx_pfc_ack('0),
+        .rx_pfc_ack('{1{'0}}),
 
         /*
          * Pause interface

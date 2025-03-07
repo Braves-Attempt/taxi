@@ -95,8 +95,8 @@ class TB:
         dut.cfg_tx_pfc_eth_type.setimmediatevalue(0)
         dut.cfg_tx_pfc_opcode.setimmediatevalue(0)
         dut.cfg_tx_pfc_en.setimmediatevalue(0)
-        dut.cfg_tx_pfc_quanta.setimmediatevalue(0)
-        dut.cfg_tx_pfc_refresh.setimmediatevalue(0)
+        dut.cfg_tx_pfc_quanta.setimmediatevalue([0]*8)
+        dut.cfg_tx_pfc_refresh.setimmediatevalue([0]*8)
         dut.cfg_rx_lfc_opcode.setimmediatevalue(0)
         dut.cfg_rx_lfc_en.setimmediatevalue(0)
         dut.cfg_rx_pfc_opcode.setimmediatevalue(0)
@@ -554,8 +554,8 @@ async def run_test_pfc(dut, ifg=12):
     dut.cfg_tx_pfc_eth_type.value = 0x8808
     dut.cfg_tx_pfc_opcode.value = 0x0101
     dut.cfg_tx_pfc_en.value = 1
-    dut.cfg_tx_pfc_quanta.value = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-    dut.cfg_tx_pfc_refresh.value = 0x7F007F007F007F007F007F007F007F00
+    dut.cfg_tx_pfc_quanta.value = [0xFFFF]*8
+    dut.cfg_tx_pfc_refresh.value = [0x7F00]*8
 
     dut.cfg_rx_pfc_opcode.value = 0x0101
     dut.cfg_rx_pfc_en.value = 1
