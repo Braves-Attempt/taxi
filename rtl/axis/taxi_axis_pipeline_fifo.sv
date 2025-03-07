@@ -147,17 +147,17 @@ if (LENGTH > 0) begin : fifo
     wire out_fifo_empty = out_fifo_wr_ptr_reg == out_fifo_rd_ptr_reg;
 
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [DATA_W-1:0] out_fifo_tdata[2**FIFO_AW-1:0];
+    logic [DATA_W-1:0] out_fifo_tdata[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [KEEP_W-1:0] out_fifo_tkeep[2**FIFO_AW-1:0];
+    logic [KEEP_W-1:0] out_fifo_tkeep[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic              out_fifo_tlast[2**FIFO_AW-1:0];
+    logic              out_fifo_tlast[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [ID_W-1:0]   out_fifo_tid[2**FIFO_AW-1:0];
+    logic [ID_W-1:0]   out_fifo_tid[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [DEST_W-1:0] out_fifo_tdest[2**FIFO_AW-1:0];
+    logic [DEST_W-1:0] out_fifo_tdest[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [USER_W-1:0] out_fifo_tuser[2**FIFO_AW-1:0];
+    logic [USER_W-1:0] out_fifo_tuser[2**FIFO_AW];
 
     assign m_axis_tready_int = !out_fifo_half_full_reg;
 

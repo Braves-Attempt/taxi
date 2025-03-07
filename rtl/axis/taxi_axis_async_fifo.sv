@@ -200,7 +200,7 @@ wire s_rst_sync;
 wire m_rst_sync;
 
 (* ramstyle = "no_rw_check" *)
-logic [WIDTH-1:0] mem[(2**FIFO_AW)-1:0];
+logic [WIDTH-1:0] mem[2**FIFO_AW];
 logic mem_read_data_valid_reg = 1'b0;
 
 (* shreg_extract = "no" *)
@@ -732,19 +732,19 @@ end else begin : output_fifo
     wire out_fifo_empty = out_fifo_wr_ptr_reg == out_fifo_rd_ptr_reg;
 
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [DATA_W-1:0] out_fifo_tdata[2**OUTPUT_FIFO_AW-1:0];
+    logic [DATA_W-1:0] out_fifo_tdata[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [KEEP_W-1:0] out_fifo_tkeep[2**OUTPUT_FIFO_AW-1:0];
+    logic [KEEP_W-1:0] out_fifo_tkeep[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [KEEP_W-1:0] out_fifo_tstrb[2**OUTPUT_FIFO_AW-1:0];
+    logic [KEEP_W-1:0] out_fifo_tstrb[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic              out_fifo_tlast[2**OUTPUT_FIFO_AW-1:0];
+    logic              out_fifo_tlast[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [ID_W-1:0]   out_fifo_tid[2**OUTPUT_FIFO_AW-1:0];
+    logic [ID_W-1:0]   out_fifo_tid[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [DEST_W-1:0] out_fifo_tdest[2**OUTPUT_FIFO_AW-1:0];
+    logic [DEST_W-1:0] out_fifo_tdest[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    logic [USER_W-1:0] out_fifo_tuser[2**OUTPUT_FIFO_AW-1:0];
+    logic [USER_W-1:0] out_fifo_tuser[2**OUTPUT_FIFO_AW];
 
     assign pipe_ready = !out_fifo_half_full_reg;
 

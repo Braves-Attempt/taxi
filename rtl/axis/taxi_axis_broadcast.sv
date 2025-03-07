@@ -32,7 +32,7 @@ module taxi_axis_broadcast #
     /*
      * AXI4-Stream outputs (sources)
      */
-    taxi_axis_if.src   m_axis[M_COUNT-1:0]
+    taxi_axis_if.src   m_axis[M_COUNT]
 );
 
 // extract parameters
