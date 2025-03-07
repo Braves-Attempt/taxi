@@ -400,6 +400,8 @@ assign m_axis.tkeep = 1'b1;
 assign m_axis.tstrb = m_axis.tkeep;
 assign m_axis.tvalid = m_axis_tvalid_reg;
 assign m_axis.tlast = m_axis_tlast_reg;
+assign m_axis.tid = '0;
+assign m_axis.tdest = '0;
 assign m_axis.tuser = m_axis_tuser_reg;
 
 // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
