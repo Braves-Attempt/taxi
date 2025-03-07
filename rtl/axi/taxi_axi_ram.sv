@@ -98,7 +98,7 @@ logic s_axi_rlast_pipe_reg = 1'b0;
 logic s_axi_rvalid_pipe_reg = 1'b0;
 
 // (* RAM_STYLE="BLOCK" *)
-logic [DATA_W-1:0] mem[(2**VALID_ADDR_W)-1:0];
+logic [DATA_W-1:0] mem[2**VALID_ADDR_W];
 
 wire [VALID_ADDR_W-1:0] read_addr_valid = VALID_ADDR_W'(read_addr_reg >> (ADDR_W - VALID_ADDR_W));
 wire [VALID_ADDR_W-1:0] write_addr_valid = VALID_ADDR_W'(write_addr_reg >> (ADDR_W - VALID_ADDR_W));

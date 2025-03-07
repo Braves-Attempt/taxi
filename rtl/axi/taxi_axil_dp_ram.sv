@@ -94,9 +94,9 @@ logic s_axil_b_rvalid_reg = 1'b0, s_axil_b_rvalid_next;
 logic [DATA_W-1:0] s_axil_b_rdata_pipe_reg = '0;
 logic s_axil_b_rvalid_pipe_reg = 1'b0;
 
-// (* RAM_STYLE="BLOCK" *)
 // verilator lint_off MULTIDRIVEN
-logic [DATA_W-1:0] mem[(2**VALID_ADDR_W)-1:0];
+// (* RAM_STYLE="BLOCK" *)
+logic [DATA_W-1:0] mem[2**VALID_ADDR_W];
 // verilator lint_on MULTIDRIVEN
 
 wire [VALID_ADDR_W-1:0] s_axil_a_awaddr_valid = VALID_ADDR_W'(s_axil_wr_a.awaddr >> (ADDR_W - VALID_ADDR_W));

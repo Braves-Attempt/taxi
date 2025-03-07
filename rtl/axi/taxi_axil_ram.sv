@@ -67,7 +67,7 @@ logic [DATA_W-1:0] s_axil_rdata_pipe_reg = '0;
 logic s_axil_rvalid_pipe_reg = 1'b0;
 
 // (* RAM_STYLE="BLOCK" *)
-logic [DATA_W-1:0] mem[(2**VALID_ADDR_W)-1:0];
+logic [DATA_W-1:0] mem[2**VALID_ADDR_W];
 
 wire [VALID_ADDR_W-1:0] s_axil_awaddr_valid = VALID_ADDR_W'(s_axil_wr.awaddr >> (ADDR_W - VALID_ADDR_W));
 wire [VALID_ADDR_W-1:0] s_axil_araddr_valid = VALID_ADDR_W'(s_axil_rd.araddr >> (ADDR_W - VALID_ADDR_W));
