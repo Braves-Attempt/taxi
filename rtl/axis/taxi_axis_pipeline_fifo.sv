@@ -67,6 +67,8 @@ for (genvar n = 0; n < LENGTH; n = n + 1) begin : stage
     (* shreg_extract = "no" *)
     logic [KEEP_W-1:0]  axis_tkeep_reg = 0;
     (* shreg_extract = "no" *)
+    logic [KEEP_W-1:0]  axis_tstrb_reg = 0;
+    (* shreg_extract = "no" *)
     logic               axis_tvalid_reg = 0;
     (* shreg_extract = "no" *)
     logic               axis_tready_reg = 0;
@@ -81,6 +83,7 @@ for (genvar n = 0; n < LENGTH; n = n + 1) begin : stage
 
     assign axis_pipe[n+1].tdata = axis_tdata_reg;
     assign axis_pipe[n+1].tkeep = axis_tkeep_reg;
+    assign axis_pipe[n+1].tstrb = axis_tstrb_reg;
     assign axis_pipe[n+1].tvalid = axis_tvalid_reg;
     assign axis_pipe[n+1].tlast = axis_tlast_reg;
     assign axis_pipe[n+1].tid = axis_tid_reg;
@@ -92,6 +95,7 @@ for (genvar n = 0; n < LENGTH; n = n + 1) begin : stage
     always_ff @(posedge clk) begin
         axis_tdata_reg <= axis_pipe[n].tdata;
         axis_tkeep_reg <= axis_pipe[n].tkeep;
+        axis_tstrb_reg <= axis_pipe[n].tstrb;
         axis_tvalid_reg <= axis_pipe[n].tvalid;
         axis_tlast_reg <= axis_pipe[n].tlast;
         axis_tid_reg <= axis_pipe[n].tid;
@@ -112,6 +116,7 @@ if (LENGTH > 0) begin : fifo
 
     assign axis_pipe[0].tdata = s_axis.tdata;
     assign axis_pipe[0].tkeep = s_axis.tkeep;
+    assign axis_pipe[0].tstrb = s_axis.tstrb;
     assign axis_pipe[0].tvalid = s_axis.tvalid & s_axis.tready;
     assign axis_pipe[0].tlast = s_axis.tlast;
     assign axis_pipe[0].tid = s_axis.tid;
@@ -121,6 +126,7 @@ if (LENGTH > 0) begin : fifo
 
     wire [DATA_W-1:0] m_axis_tdata_int = axis_pipe[LENGTH].tdata;
     wire [KEEP_W-1:0] m_axis_tkeep_int = axis_pipe[LENGTH].tkeep;
+    wire [KEEP_W-1:0] m_axis_tstrb_int = axis_pipe[LENGTH].tstrb;
     wire              m_axis_tvalid_int = axis_pipe[LENGTH].tvalid;
     wire              m_axis_tready_int;
     wire              m_axis_tlast_int = axis_pipe[LENGTH].tlast;
@@ -133,6 +139,7 @@ if (LENGTH > 0) begin : fifo
     // output datapath logic
     logic [DATA_W-1:0] m_axis_tdata_reg  = '0;
     logic [KEEP_W-1:0] m_axis_tkeep_reg  = '0;
+    logic [KEEP_W-1:0] m_axis_tstrb_reg  = '0;
     logic              m_axis_tvalid_reg = 1'b0;
     logic              m_axis_tlast_reg  = 1'b0;
     logic [ID_W-1:0]   m_axis_tid_reg    = '0;
@@ -151,6 +158,8 @@ if (LENGTH > 0) begin : fifo
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
     logic [KEEP_W-1:0] out_fifo_tkeep[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
+    logic [KEEP_W-1:0] out_fifo_tstrb[2**FIFO_AW];
+    (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
     logic              out_fifo_tlast[2**FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
     logic [ID_W-1:0]   out_fifo_tid[2**FIFO_AW];
@@ -163,6 +172,7 @@ if (LENGTH > 0) begin : fifo
 
     assign m_axis.tdata  = m_axis_tdata_reg;
     assign m_axis.tkeep  = KEEP_EN ? m_axis_tkeep_reg : '1;
+    assign m_axis.tstrb  = STRB_EN ? m_axis_tstrb_reg : m_axis.tkeep;
     assign m_axis.tvalid = m_axis_tvalid_reg;
     assign m_axis.tlast  = LAST_EN ? m_axis_tlast_reg : 1'b1;
     assign m_axis.tid    = ID_EN   ? m_axis_tid_reg   : '0;
@@ -177,6 +187,7 @@ if (LENGTH > 0) begin : fifo
         if (!out_fifo_full && m_axis_tvalid_int) begin
             out_fifo_tdata[out_fifo_wr_ptr_reg[FIFO_AW-1:0]] <= m_axis_tdata_int;
             out_fifo_tkeep[out_fifo_wr_ptr_reg[FIFO_AW-1:0]] <= m_axis_tkeep_int;
+            out_fifo_tstrb[out_fifo_wr_ptr_reg[FIFO_AW-1:0]] <= m_axis_tstrb_int;
             out_fifo_tlast[out_fifo_wr_ptr_reg[FIFO_AW-1:0]] <= m_axis_tlast_int;
             out_fifo_tid[out_fifo_wr_ptr_reg[FIFO_AW-1:0]] <= m_axis_tid_int;
             out_fifo_tdest[out_fifo_wr_ptr_reg[FIFO_AW-1:0]] <= m_axis_tdest_int;
@@ -187,6 +198,7 @@ if (LENGTH > 0) begin : fifo
         if (!out_fifo_empty && (!m_axis_tvalid_reg || m_axis.tready)) begin
             m_axis_tdata_reg <= out_fifo_tdata[out_fifo_rd_ptr_reg[FIFO_AW-1:0]];
             m_axis_tkeep_reg <= out_fifo_tkeep[out_fifo_rd_ptr_reg[FIFO_AW-1:0]];
+            m_axis_tstrb_reg <= out_fifo_tstrb[out_fifo_rd_ptr_reg[FIFO_AW-1:0]];
             m_axis_tvalid_reg <= 1'b1;
             m_axis_tlast_reg <= out_fifo_tlast[out_fifo_rd_ptr_reg[FIFO_AW-1:0]];
             m_axis_tid_reg <= out_fifo_tid[out_fifo_rd_ptr_reg[FIFO_AW-1:0]];
@@ -207,6 +219,7 @@ end else begin
 
     assign m_axis.tdata  = s_axis.tdata;
     assign m_axis.tkeep  = KEEP_EN ? s_axis.tkeep : '1;
+    assign m_axis.tstrb  = STRB_EN ? s_axis.tstrb : m_axis.tkeep;
     assign m_axis.tvalid = s_axis.tvalid;
     assign m_axis.tlast  = LAST_EN ? s_axis.tlast : 1'b1;
     assign m_axis.tid    = ID_EN   ? s_axis.tid   : '0;
