@@ -99,6 +99,11 @@ To facilitate the dual-license model, contributions to the project can only be a
 *  Synchronization primitives
     *  Reset synchronizer
     *  Signal synchronizer
+*  Extensible FPGA control protocol (XFCP)
+    *  XFCP UART interface
+    *  XFCP AXI module
+    *  XFCP AXI lite module
+    *  XFCP switch
 
 ## Example designs
 
