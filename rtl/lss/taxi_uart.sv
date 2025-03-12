@@ -51,6 +51,24 @@ module taxi_uart
 
 );
 
+wire baud_clk;
+
+taxi_uart_brg
+uart_brg_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * Baud rate pulse out
+     */
+    .baud_clk(baud_clk),
+
+    /*
+     * Configuration
+     */
+    .prescale(prescale)
+);
+
 taxi_uart_tx
 uart_tx_inst (
     .clk(clk),
@@ -72,9 +90,9 @@ uart_tx_inst (
     .busy(tx_busy),
 
     /*
-     * Configuration
+     * Baud rate pulse in
      */
-    .prescale(prescale)
+    .baud_clk(baud_clk)
 );
 
 taxi_uart_rx
@@ -100,9 +118,9 @@ uart_rx_inst (
     .frame_error(rx_frame_error),
 
     /*
-     * Configuration
+     * Baud rate pulse in
      */
-    .prescale(prescale)
+    .baud_clk(baud_clk)
 );
 
 endmodule
