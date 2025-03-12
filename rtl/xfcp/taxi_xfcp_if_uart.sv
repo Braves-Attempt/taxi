@@ -16,35 +16,38 @@ Authors:
  * XFCP Interface (UART)
  */
 module taxi_xfcp_if_uart #(
+    parameter PRE_W = 16,
     parameter TX_FIFO_DEPTH = 512,
     parameter RX_FIFO_DEPTH = 512
 )
 (
-    input  wire logic         clk,
-    input  wire logic         rst,
+    input  wire logic              clk,
+    input  wire logic              rst,
 
     /*
      * UART interface
      */
-    input  wire logic         uart_rxd,
-    output wire logic         uart_txd,
+    input  wire logic              uart_rxd,
+    output wire logic              uart_txd,
 
     /*
      * XFCP downstream port
      */
-    taxi_axis_if.src          xfcp_dsp_ds,
-    taxi_axis_if.snk          xfcp_dsp_us,
+    taxi_axis_if.src               xfcp_dsp_ds,
+    taxi_axis_if.snk               xfcp_dsp_us,
 
     /*
      * Configuration
      */
-    input  wire logic [15:0]  prescale
+    input  wire logic [PRE_W-1:0]  prescale
 );
 
 taxi_axis_if #(.DATA_W(8), .LAST_EN(0)) uart_tx(), uart_rx();
 taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) fifo_tx(), fifo_rx();
 
-taxi_uart
+taxi_uart #(
+    .PRE_W(PRE_W)
+)
 uart_inst (
     .clk(clk),
     .rst(rst),

@@ -28,7 +28,8 @@ uniq_base = $(if $1,$(call uniq_base,$(foreach f,$1,$(if $(filter-out $(notdir $
 VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
-export PARAM_DATA_W ?= 8
+export PARAM_PRE_W := 16
+export PARAM_DATA_W := 8
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

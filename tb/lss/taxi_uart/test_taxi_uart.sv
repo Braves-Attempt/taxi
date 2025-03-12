@@ -18,6 +18,7 @@ Authors:
 module test_taxi_uart #
 (
     /* verilator lint_off WIDTHTRUNC */
+    parameter PRE_W = 16,
     parameter DATA_W = 8
     /* verilator lint_on WIDTHTRUNC */
 )
@@ -37,9 +38,11 @@ logic rx_busy;
 logic rx_overrun_error;
 logic rx_frame_error;
 
-logic [15:0] prescale;
+logic [PRE_W-1:0] prescale;
 
-taxi_uart
+taxi_uart #(
+    .PRE_W(PRE_W)
+)
 uut (
     .clk(clk),
     .rst(rst),

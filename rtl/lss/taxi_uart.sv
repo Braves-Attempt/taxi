@@ -15,45 +15,49 @@ Authors:
 /*
  * AXI4-Stream UART
  */
-module taxi_uart
+module taxi_uart #(
+    parameter PRE_W = 16
+)
 (
-    input  wire logic         clk,
-    input  wire logic         rst,
+    input  wire logic              clk,
+    input  wire logic              rst,
 
     /*
      * AXI4-Stream input (sink)
      */
-    taxi_axis_if.snk          s_axis_tx,
+    taxi_axis_if.snk               s_axis_tx,
 
     /*
      * AXI4-Stream output (source)
      */
-    taxi_axis_if.src          m_axis_rx,
+    taxi_axis_if.src               m_axis_rx,
 
     /*
      * UART interface
      */
-    input  wire logic         rxd,
-    output wire logic         txd,
+    input  wire logic              rxd,
+    output wire logic              txd,
 
     /*
      * Status
      */
-    output wire logic         tx_busy,
-    output wire logic         rx_busy,
-    output wire logic         rx_overrun_error,
-    output wire logic         rx_frame_error,
+    output wire logic              tx_busy,
+    output wire logic              rx_busy,
+    output wire logic              rx_overrun_error,
+    output wire logic              rx_frame_error,
 
     /*
      * Configuration
      */
-    input  wire logic [15:0]  prescale
+    input  wire logic [PRE_W-1:0]  prescale
 
 );
 
 wire baud_clk;
 
-taxi_uart_brg
+taxi_uart_brg #(
+    .PRE_W(PRE_W)
+)
 uart_brg_inst (
     .clk(clk),
     .rst(rst),

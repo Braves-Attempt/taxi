@@ -39,7 +39,7 @@ class TB:
         self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.clk, dut.rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.clk, dut.rst)
 
-        dut.prescale.setimmediatevalue(int(1/8e-9/baud/8))
+        dut.prescale.setimmediatevalue(int(1/8e-9/baud))
 
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)
@@ -168,6 +168,7 @@ def test_taxi_uart(request):
 
     parameters = {}
 
+    parameters['PRE_W'] = 16
     parameters['DATA_W'] = 8
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}

@@ -81,7 +81,7 @@ assign phy_reset_n = !rst;
 taxi_axis_if #(.DATA_W(8)) axis_uart();
 
 taxi_uart
-uut (
+uart_inst (
     .clk(clk),
     .rst(rst),
 
@@ -112,7 +112,7 @@ uut (
     /*
      * Configuration
      */
-    .prescale(16'(125000000/115200/8))
+    .prescale(16'(125000000/115200))
 );
 
 taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_eth();

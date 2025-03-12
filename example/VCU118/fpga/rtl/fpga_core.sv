@@ -111,7 +111,7 @@ assign uart_rts = 0;
 taxi_axis_if #(.DATA_W(8)) axis_uart();
 
 taxi_uart
-uut (
+uart_inst (
     .clk(clk_125mhz),
     .rst(rst_125mhz),
 
@@ -142,7 +142,7 @@ uut (
     /*
      * Configuration
      */
-    .prescale(16'(125000000/115200/8))
+    .prescale(16'(125000000/115200))
 );
 
 // BASE-T PHY

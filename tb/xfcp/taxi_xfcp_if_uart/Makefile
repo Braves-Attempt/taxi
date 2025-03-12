@@ -28,6 +28,7 @@ uniq_base = $(if $1,$(call uniq_base,$(foreach f,$1,$(if $(filter-out $(notdir $
 VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
+export PARAM_PRE_W := 16
 export PARAM_TX_FIFO_DEPTH := 512
 export PARAM_RX_FIFO_DEPTH := 512
 

@@ -50,7 +50,7 @@ class TB(object):
         self.dsp_source = AxiStreamSource(AxiStreamBus.from_entity(dut.xfcp_dsp_us), dut.clk, dut.rst)
         self.dsp_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.xfcp_dsp_ds), dut.clk, dut.rst)
 
-        dut.prescale.setimmediatevalue(int(1/8e-9/baud/8))
+        dut.prescale.setimmediatevalue(int(1/8e-9/baud))
 
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)
@@ -181,6 +181,7 @@ def test_taxi_xfcp_if_uart(request):
 
     parameters = {}
 
+    parameters['PRE_W'] = 16
     parameters['TX_FIFO_DEPTH'] = 512
     parameters['RX_FIFO_DEPTH'] = 512
 

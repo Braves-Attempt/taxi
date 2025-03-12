@@ -18,6 +18,7 @@ Authors:
 module test_taxi_xfcp_if_uart #
 (
     /* verilator lint_off WIDTHTRUNC */
+    parameter PRE_W = 16,
     parameter TX_FIFO_DEPTH = 512,
     parameter RX_FIFO_DEPTH = 512
     /* verilator lint_on WIDTHTRUNC */
@@ -32,9 +33,10 @@ logic uart_txd;
 
 taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) xfcp_dsp_ds(), xfcp_dsp_us();
 
-logic [15:0] prescale;
+logic [PRE_W-1:0] prescale;
 
 taxi_xfcp_if_uart #(
+    .PRE_W(PRE_W),
     .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
     .RX_FIFO_DEPTH(RX_FIFO_DEPTH)
 )
