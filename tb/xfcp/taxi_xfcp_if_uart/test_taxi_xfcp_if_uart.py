@@ -47,8 +47,8 @@ class TB(object):
         self.uart_source = UartSource(dut.uart_rxd, baud=baud, bits=8, stop_bits=1)
         self.uart_sink = UartSink(dut.uart_txd, baud=baud, bits=8, stop_bits=1)
 
-        self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.dn_xfcp_in), dut.clk, dut.rst)
-        self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.dn_xfcp_out), dut.clk, dut.rst)
+        self.dsp_source = AxiStreamSource(AxiStreamBus.from_entity(dut.xfcp_dsp_us), dut.clk, dut.rst)
+        self.dsp_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.xfcp_dsp_ds), dut.clk, dut.rst)
 
         dut.prescale.setimmediatevalue(int(1/8e-9/baud/8))
 
@@ -78,7 +78,7 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None):
         pkt.ptype = 1
         pkt.payload = test_data
 
-        await tb.axis_source.write(pkt.build())
+        await tb.dsp_source.write(pkt.build())
 
         rx_data = bytearray()
         while True:
@@ -114,13 +114,13 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None):
 
         await tb.uart_source.write(pkt.build_cobs())
 
-        rx_frame = await tb.axis_sink.recv()
+        rx_frame = await tb.dsp_sink.recv()
         rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
         print(rx_pkt)
         assert rx_pkt == pkt
 
-        assert tb.axis_sink.empty()
+        assert tb.dsp_sink.empty()
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)

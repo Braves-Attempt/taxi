@@ -28,14 +28,14 @@ module taxi_xfcp_switch #
     /*
      * XFCP upstream port
      */
-    taxi_axis_if.snk   up_xfcp_in,
-    taxi_axis_if.src   up_xfcp_out,
+    taxi_axis_if.snk   xfcp_usp_ds,
+    taxi_axis_if.src   xfcp_usp_us,
 
     /*
      * XFCP downstream ports
      */
-    taxi_axis_if.snk   dn_xfcp_in[PORTS],
-    taxi_axis_if.src   dn_xfcp_out[PORTS]
+    taxi_axis_if.src   xfcp_dsp_ds[PORTS],
+    taxi_axis_if.snk   xfcp_dsp_us[PORTS]
 );
 
 parameter CL_PORTS = PORTS > 1 ? $clog2(PORTS) : 1;
@@ -130,27 +130,27 @@ reg dn_enable_reg = 1'b0, dn_enable_next;
 reg [CL_PORTS_P1-1:0] up_select_reg = '0, up_select_next;
 reg up_frame_reg = 1'b0, up_frame_next;
 
-reg up_xfcp_in_tready_reg = 1'b0, up_xfcp_in_tready_next;
+reg xfcp_usp_ds_tready_reg = 1'b0, xfcp_usp_ds_tready_next;
 
-reg [PORTS-1:0] dn_xfcp_in_tready_reg = '0, dn_xfcp_in_tready_next;
+reg [PORTS-1:0] xfcp_dsp_us_tready_reg = '0, xfcp_dsp_us_tready_next;
 
-wire [PORTS-1:0] dn_xfcp_out_tready;
-wire [PORTS-1:0] dn_xfcp_out_tvalid;
+wire [PORTS-1:0] xfcp_dsp_ds_tready;
+wire [PORTS-1:0] xfcp_dsp_ds_tvalid;
 
 // internal datapath
-reg [7:0] up_xfcp_out_tdata_int;
-reg       up_xfcp_out_tvalid_int;
-reg       up_xfcp_out_tready_int_reg = 1'b0;
-reg       up_xfcp_out_tlast_int;
-reg       up_xfcp_out_tuser_int;
-wire      up_xfcp_out_tready_int_early;
+reg [7:0] xfcp_usp_us_tdata_int;
+reg       xfcp_usp_us_tvalid_int;
+reg       xfcp_usp_us_tready_int_reg = 1'b0;
+reg       xfcp_usp_us_tlast_int;
+reg       xfcp_usp_us_tuser_int;
+wire      xfcp_usp_us_tready_int_early;
 
-reg [7:0]       dn_xfcp_out_tdata_int;
-reg [PORTS-1:0] dn_xfcp_out_tvalid_int;
-reg             dn_xfcp_out_tready_int_reg = 1'b0;
-reg             dn_xfcp_out_tlast_int;
-reg             dn_xfcp_out_tuser_int;
-wire            dn_xfcp_out_tready_int_early;
+reg [7:0]       xfcp_dsp_ds_tdata_int;
+reg [PORTS-1:0] xfcp_dsp_ds_tvalid_int;
+reg             xfcp_dsp_ds_tready_int_reg = 1'b0;
+reg             xfcp_dsp_ds_tlast_int;
+reg             xfcp_dsp_ds_tuser_int;
+wire            xfcp_dsp_ds_tready_int_early;
 
 reg [7:0] int_loop_tdata_reg = 8'd0, int_loop_tdata_next;
 reg       int_loop_tvalid_reg = 1'b0, int_loop_tvalid_next;
@@ -159,42 +159,42 @@ reg       int_loop_tready_early;
 reg       int_loop_tlast_reg = 1'b0, int_loop_tlast_next;
 reg       int_loop_tuser_reg = 1'b0, int_loop_tuser_next;
 
-assign up_xfcp_in.tready = up_xfcp_in_tready_reg;
+assign xfcp_usp_ds.tready = xfcp_usp_ds_tready_reg;
 
 // unpack interface array
-wire [PORTS+1-1:0]  dn_xfcp_in_tready;
-wire [7:0]          dn_xfcp_in_tdata[PORTS+1];
-wire [PORTS+1-1:0]  dn_xfcp_in_tvalid;
-wire [PORTS+1-1:0]  dn_xfcp_in_tlast;
-wire                dn_xfcp_in_tuser[PORTS+1];
+wire [PORTS+1-1:0]  xfcp_dsp_us_tready;
+wire [7:0]          xfcp_dsp_us_tdata[PORTS+1];
+wire [PORTS+1-1:0]  xfcp_dsp_us_tvalid;
+wire [PORTS+1-1:0]  xfcp_dsp_us_tlast;
+wire                xfcp_dsp_us_tuser[PORTS+1];
 
 for (genvar n = 0; n < PORTS; n = n + 1) begin
-    assign dn_xfcp_in_tdata[n] = dn_xfcp_in[n].tdata;
-    assign dn_xfcp_in_tvalid[n] = dn_xfcp_in[n].tvalid;
-    assign dn_xfcp_in[n].tready = dn_xfcp_in_tready_reg[n];
-    assign dn_xfcp_in_tlast[n] = dn_xfcp_in[n].tlast;
-    assign dn_xfcp_in_tuser[n] = dn_xfcp_in[n].tuser;
+    assign xfcp_dsp_us_tdata[n] = xfcp_dsp_us[n].tdata;
+    assign xfcp_dsp_us_tvalid[n] = xfcp_dsp_us[n].tvalid;
+    assign xfcp_dsp_us[n].tready = xfcp_dsp_us_tready_reg[n];
+    assign xfcp_dsp_us_tlast[n] = xfcp_dsp_us[n].tlast;
+    assign xfcp_dsp_us_tuser[n] = xfcp_dsp_us[n].tuser;
 
-    assign dn_xfcp_in_tready[n] = dn_xfcp_in[n].tready;
+    assign xfcp_dsp_us_tready[n] = xfcp_dsp_us[n].tready;
 end
 
-assign dn_xfcp_in_tdata[PORTS] = int_loop_tdata_reg;
-assign dn_xfcp_in_tvalid[PORTS] = int_loop_tvalid_reg;
-assign dn_xfcp_in_tlast[PORTS] = int_loop_tlast_reg;
-assign dn_xfcp_in_tuser[PORTS] = int_loop_tuser_reg;
+assign xfcp_dsp_us_tdata[PORTS] = int_loop_tdata_reg;
+assign xfcp_dsp_us_tvalid[PORTS] = int_loop_tvalid_reg;
+assign xfcp_dsp_us_tlast[PORTS] = int_loop_tlast_reg;
+assign xfcp_dsp_us_tuser[PORTS] = int_loop_tuser_reg;
 
-assign dn_xfcp_in_tready[PORTS] = int_loop_tready;
+assign xfcp_dsp_us_tready[PORTS] = int_loop_tready;
 
 // mux for downstream output control signals
-wire current_output_tvalid = dn_xfcp_out_tvalid[dn_select_reg];
-wire current_output_tready = dn_xfcp_out_tready[dn_select_reg];
+wire current_output_tvalid = xfcp_dsp_ds_tvalid[dn_select_reg];
+wire current_output_tready = xfcp_dsp_ds_tready[dn_select_reg];
 
 // mux for incoming downstream packet
-wire [7:0] current_input_tdata  = dn_xfcp_in_tdata[up_select_reg];
-wire       current_input_tvalid = dn_xfcp_in_tvalid[up_select_reg];
-wire       current_input_tready = dn_xfcp_in_tready[up_select_reg];
-wire       current_input_tlast  = dn_xfcp_in_tlast[up_select_reg];
-wire       current_input_tuser  = dn_xfcp_in_tuser[up_select_reg];
+wire [7:0] current_input_tdata  = xfcp_dsp_us_tdata[up_select_reg];
+wire       current_input_tvalid = xfcp_dsp_us_tvalid[up_select_reg];
+wire       current_input_tready = xfcp_dsp_us_tready[up_select_reg];
+wire       current_input_tlast  = xfcp_dsp_us_tlast[up_select_reg];
+wire       current_input_tuser  = xfcp_dsp_us_tuser[up_select_reg];
 
 // downstream control logic
 always_comb begin
@@ -206,21 +206,21 @@ always_comb begin
 
     id_ptr_next = id_ptr_reg;
 
-    up_xfcp_in_tready_next = 1'b0;
+    xfcp_usp_ds_tready_next = 1'b0;
 
-    dn_xfcp_out_tdata_int = up_xfcp_in.tdata;
-    dn_xfcp_out_tvalid_int = PORTS'(up_xfcp_in.tvalid && up_xfcp_in.tready && dn_enable_reg) << dn_select_reg;
-    dn_xfcp_out_tlast_int = up_xfcp_in.tlast;
-    dn_xfcp_out_tuser_int = up_xfcp_in.tuser;
+    xfcp_dsp_ds_tdata_int = xfcp_usp_ds.tdata;
+    xfcp_dsp_ds_tvalid_int = PORTS'(xfcp_usp_ds.tvalid && xfcp_usp_ds.tready && dn_enable_reg) << dn_select_reg;
+    xfcp_dsp_ds_tlast_int = xfcp_usp_ds.tlast;
+    xfcp_dsp_ds_tuser_int = xfcp_usp_ds.tuser;
 
     int_loop_tdata_next = int_loop_tdata_reg;
     int_loop_tvalid_next = int_loop_tvalid_reg && !int_loop_tready;
     int_loop_tlast_next = int_loop_tlast_reg;
     int_loop_tuser_next = int_loop_tuser_reg;
 
-    if (up_xfcp_in.tready & up_xfcp_in.tvalid) begin
+    if (xfcp_usp_ds.tready & xfcp_usp_ds.tvalid) begin
         // end of frame detection
-        if (up_xfcp_in.tlast) begin
+        if (xfcp_usp_ds.tlast) begin
             dn_frame_next = 1'b0;
             dn_enable_next = 1'b0;
         end
@@ -229,23 +229,23 @@ always_comb begin
     case (dn_state_reg)
         DN_STATE_IDLE: begin
             // wait for incoming upstream packet
-            up_xfcp_in_tready_next = 1'b1;
+            xfcp_usp_ds_tready_next = 1'b1;
             id_ptr_next = '0;
 
-            if (!dn_frame_reg && up_xfcp_in.tready && up_xfcp_in.tvalid) begin
+            if (!dn_frame_reg && xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 // start of frame
                 dn_frame_next = 1'b1;
-                if (up_xfcp_in.tdata == RPATH_TAG || up_xfcp_in.tdata == START_TAG) begin
+                if (xfcp_usp_ds.tdata == RPATH_TAG || xfcp_usp_ds.tdata == START_TAG) begin
                     // packet for us
 
-                    int_loop_tdata_next = up_xfcp_in.tdata;
-                    int_loop_tvalid_next = up_xfcp_in.tvalid;
-                    int_loop_tlast_next = up_xfcp_in.tlast;
-                    int_loop_tuser_next = up_xfcp_in.tuser;
+                    int_loop_tdata_next = xfcp_usp_ds.tdata;
+                    int_loop_tvalid_next = xfcp_usp_ds.tvalid;
+                    int_loop_tlast_next = xfcp_usp_ds.tlast;
+                    int_loop_tuser_next = xfcp_usp_ds.tuser;
 
-                    up_xfcp_in_tready_next = int_loop_tready_early;
+                    xfcp_usp_ds_tready_next = int_loop_tready_early;
 
-                    if (up_xfcp_in.tdata == RPATH_TAG) begin
+                    if (xfcp_usp_ds.tdata == RPATH_TAG) begin
                         // has rpath
                         dn_state_next = DN_STATE_HEADER;
                     end else begin
@@ -255,10 +255,10 @@ always_comb begin
                 end else begin
                     // route packet
                     dn_enable_next = 1'b1;
-                    dn_select_next = CL_PORTS'(up_xfcp_in.tdata);
-                    up_xfcp_in_tready_next = dn_xfcp_out_tready_int_early;
+                    dn_select_next = CL_PORTS'(xfcp_usp_ds.tdata);
+                    xfcp_usp_ds_tready_next = xfcp_dsp_ds_tready_int_early;
                     dn_state_next = DN_STATE_TRANSFER;
-                    if (up_xfcp_in.tdata >= 8'(PORTS)) begin
+                    if (xfcp_usp_ds.tdata >= 8'(PORTS)) begin
                         // out of range
                         dn_enable_next = 1'b0;
                     end
@@ -269,9 +269,9 @@ always_comb begin
         end
         DN_STATE_TRANSFER: begin
             // transfer upstream packet through proper downstream port
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 // end of frame detection
-                if (up_xfcp_in.tlast) begin
+                if (xfcp_usp_ds.tlast) begin
                     dn_frame_next = 1'b0;
                     dn_enable_next = 1'b0;
                     dn_state_next = DN_STATE_IDLE;
@@ -281,21 +281,21 @@ always_comb begin
             end else begin
                 dn_state_next = DN_STATE_TRANSFER;
             end
-            up_xfcp_in_tready_next = dn_xfcp_out_tready_int_early && dn_frame_next;
+            xfcp_usp_ds_tready_next = xfcp_dsp_ds_tready_int_early && dn_frame_next;
         end
         DN_STATE_HEADER: begin
             // loop back header
 
-            up_xfcp_in_tready_next = int_loop_tready_early;
+            xfcp_usp_ds_tready_next = int_loop_tready_early;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
-                int_loop_tdata_next = up_xfcp_in.tdata;
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
+                int_loop_tdata_next = xfcp_usp_ds.tdata;
                 int_loop_tvalid_next = 1'b1;
-                int_loop_tlast_next = up_xfcp_in.tlast;
-                int_loop_tuser_next = up_xfcp_in.tuser;
+                int_loop_tlast_next = xfcp_usp_ds.tlast;
+                int_loop_tuser_next = xfcp_usp_ds.tuser;
 
                 // end of header detection
-                if (up_xfcp_in.tdata == START_TAG) begin
+                if (xfcp_usp_ds.tdata == START_TAG) begin
                     dn_state_next = DN_STATE_PKT;
                 end else begin
                     dn_state_next = DN_STATE_HEADER;
@@ -307,15 +307,15 @@ always_comb begin
         DN_STATE_PKT: begin
             // packet type
 
-            up_xfcp_in_tready_next = int_loop_tready_early;
+            xfcp_usp_ds_tready_next = int_loop_tready_early;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
-                int_loop_tdata_next = up_xfcp_in.tdata;
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
+                int_loop_tdata_next = xfcp_usp_ds.tdata;
                 int_loop_tvalid_next = 1'b1;
-                int_loop_tlast_next = up_xfcp_in.tlast;
-                int_loop_tuser_next = up_xfcp_in.tuser;
+                int_loop_tlast_next = xfcp_usp_ds.tlast;
+                int_loop_tuser_next = xfcp_usp_ds.tuser;
 
-                if (up_xfcp_in.tdata == ID_REQ) begin
+                if (xfcp_usp_ds.tdata == ID_REQ) begin
                     // ID packet
                     int_loop_tdata_next = ID_RESP;
                     int_loop_tlast_next = 1'b0;
@@ -333,7 +333,7 @@ always_comb begin
         DN_STATE_ID: begin
             // send ID
 
-            up_xfcp_in_tready_next = dn_frame_next;
+            xfcp_usp_ds_tready_next = dn_frame_next;
 
             if (int_loop_tready) begin
                 int_loop_tdata_next = id_rom[id_ptr_reg];
@@ -383,8 +383,8 @@ arb_inst (
     .grant_index(grant_index)
 );
 
-assign req = dn_xfcp_in_tvalid & ~grant;
-assign ack = grant & dn_xfcp_in_tvalid & dn_xfcp_in_tready & dn_xfcp_in_tlast;
+assign req = xfcp_dsp_us_tvalid & ~grant;
+assign ack = grant & xfcp_dsp_us_tvalid & xfcp_dsp_us_tready & xfcp_dsp_us_tlast;
 
 always_comb begin
     up_state_next = UP_STATE_IDLE;
@@ -393,10 +393,10 @@ always_comb begin
     up_frame_next = up_frame_reg;
 
 
-    up_xfcp_out_tdata_int = current_input_tdata;
-    up_xfcp_out_tvalid_int = current_input_tvalid && current_input_tready && up_frame_reg;
-    up_xfcp_out_tlast_int = current_input_tlast;
-    up_xfcp_out_tuser_int = current_input_tuser;
+    xfcp_usp_us_tdata_int = current_input_tdata;
+    xfcp_usp_us_tvalid_int = current_input_tvalid && current_input_tready && up_frame_reg;
+    xfcp_usp_us_tlast_int = current_input_tlast;
+    xfcp_usp_us_tuser_int = current_input_tuser;
 
     if (current_input_tready && current_input_tvalid) begin
         if (current_input_tlast) begin
@@ -408,7 +408,7 @@ always_comb begin
     case (up_state_reg)
         UP_STATE_IDLE: begin
             // wait for incoming downstream packet
-            if (grant_valid && up_xfcp_out_tready_int_reg) begin
+            if (grant_valid && xfcp_usp_us_tready_int_reg) begin
                 up_frame_next = 1'b1;
                 up_select_next = grant_index;
                 up_state_next = UP_STATE_TRANSFER;
@@ -417,10 +417,10 @@ always_comb begin
                     // internal loop; don't add port
                 end else begin
                     // prepend port to packet
-                    up_xfcp_out_tdata_int = 8'(grant_index);
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b0;
-                    up_xfcp_out_tuser_int = 1'b0;
+                    xfcp_usp_us_tdata_int = 8'(grant_index);
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b0;
+                    xfcp_usp_us_tuser_int = 1'b0;
                 end
             end else begin
                 up_state_next = UP_STATE_IDLE;
@@ -443,24 +443,24 @@ always_comb begin
 end
 
 always_comb begin
-    dn_xfcp_in_tready_next = '0;
+    xfcp_dsp_us_tready_next = '0;
 
     // int_loop_tready_early = 1'b0;
 
     // generate ready signal on selected port
     if (up_select_next == CL_PORTS_P1'(PORTS)) begin
-        // int_loop_tready_early = up_xfcp_out_tready_int_early && up_frame_next;
+        // int_loop_tready_early = xfcp_usp_us_tready_int_early && up_frame_next;
     end else begin
-        dn_xfcp_in_tready_next = PORTS'(up_xfcp_out_tready_int_early && up_frame_next) << up_select_next;
+        xfcp_dsp_us_tready_next = PORTS'(xfcp_usp_us_tready_int_early && up_frame_next) << up_select_next;
     end
 end
 
 always_comb begin
-    int_loop_tready_early = up_xfcp_out_tready_int_early && up_frame_next;
+    int_loop_tready_early = xfcp_usp_us_tready_int_early && up_frame_next;
 end
 
 always_comb begin
-    int_loop_tready = up_xfcp_out_tready_int_reg && up_frame_reg;
+    int_loop_tready = xfcp_usp_us_tready_int_reg && up_frame_reg;
 end
 
 always_ff @(posedge clk) begin
@@ -476,8 +476,8 @@ always_ff @(posedge clk) begin
     up_select_reg <= up_select_next;
     up_frame_reg <= up_frame_next;
 
-    up_xfcp_in_tready_reg <= up_xfcp_in_tready_next;
-    dn_xfcp_in_tready_reg <= dn_xfcp_in_tready_next;
+    xfcp_usp_ds_tready_reg <= xfcp_usp_ds_tready_next;
+    xfcp_dsp_us_tready_reg <= xfcp_dsp_us_tready_next;
 
     int_loop_tdata_reg <= int_loop_tdata_next;
     int_loop_tvalid_reg <= int_loop_tvalid_next;
@@ -492,185 +492,185 @@ always_ff @(posedge clk) begin
         dn_enable_reg <= 1'b0;
         up_select_reg <= '0;
         up_frame_reg <= 1'b0;
-        up_xfcp_in_tready_reg <= 1'b0;
-        dn_xfcp_in_tready_reg <= '0;
+        xfcp_usp_ds_tready_reg <= 1'b0;
+        xfcp_dsp_us_tready_reg <= '0;
         int_loop_tvalid_reg <= 1'b0;
     end
 end
 
 // upstream output datapath logic
-reg [7:0]  up_xfcp_out_tdata_reg = 8'd0;
-reg        up_xfcp_out_tvalid_reg = 1'b0, up_xfcp_out_tvalid_next;
-reg        up_xfcp_out_tlast_reg = 1'b0;
-reg        up_xfcp_out_tuser_reg = 1'b0;
+reg [7:0]  xfcp_usp_us_tdata_reg = 8'd0;
+reg        xfcp_usp_us_tvalid_reg = 1'b0, xfcp_usp_us_tvalid_next;
+reg        xfcp_usp_us_tlast_reg = 1'b0;
+reg        xfcp_usp_us_tuser_reg = 1'b0;
 
-reg [7:0]  temp_up_xfcp_tdata_reg = 8'd0;
-reg        temp_up_xfcp_tvalid_reg = 1'b0, temp_up_xfcp_tvalid_next;
-reg        temp_up_xfcp_tlast_reg = 1'b0;
-reg        temp_up_xfcp_tuser_reg = 1'b0;
+reg [7:0]  temp_xfcp_usp_us_tdata_reg = 8'd0;
+reg        temp_xfcp_usp_us_tvalid_reg = 1'b0, temp_xfcp_usp_us_tvalid_next;
+reg        temp_xfcp_usp_us_tlast_reg = 1'b0;
+reg        temp_xfcp_usp_us_tuser_reg = 1'b0;
 
 // datapath control
-reg store_up_xfcp_int_to_output;
-reg store_up_xfcp_int_to_temp;
-reg store_up_xfcp_temp_to_output;
+reg store_xfcp_usp_us_int_to_output;
+reg store_xfcp_usp_us_int_to_temp;
+reg store_xfcp_usp_us_temp_to_output;
 
-assign up_xfcp_out.tdata = up_xfcp_out_tdata_reg;
-assign up_xfcp_out.tkeep = '1;
-assign up_xfcp_out.tstrb = up_xfcp_out.tkeep;
-assign up_xfcp_out.tvalid = up_xfcp_out_tvalid_reg;
-assign up_xfcp_out.tlast = up_xfcp_out_tlast_reg;
-assign up_xfcp_out.tid = '0;
-assign up_xfcp_out.tdest = '0;
-assign up_xfcp_out.tuser = up_xfcp_out_tuser_reg;
+assign xfcp_usp_us.tdata = xfcp_usp_us_tdata_reg;
+assign xfcp_usp_us.tkeep = '1;
+assign xfcp_usp_us.tstrb = xfcp_usp_us.tkeep;
+assign xfcp_usp_us.tvalid = xfcp_usp_us_tvalid_reg;
+assign xfcp_usp_us.tlast = xfcp_usp_us_tlast_reg;
+assign xfcp_usp_us.tid = '0;
+assign xfcp_usp_us.tdest = '0;
+assign xfcp_usp_us.tuser = xfcp_usp_us_tuser_reg;
 
 // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
-assign up_xfcp_out_tready_int_early = up_xfcp_out.tready || (!temp_up_xfcp_tvalid_reg && (!up_xfcp_out_tvalid_reg || !up_xfcp_out_tvalid_int));
+assign xfcp_usp_us_tready_int_early = xfcp_usp_us.tready || (!temp_xfcp_usp_us_tvalid_reg && (!xfcp_usp_us_tvalid_reg || !xfcp_usp_us_tvalid_int));
 
 always_comb begin
     // transfer sink ready state to source
-    up_xfcp_out_tvalid_next = up_xfcp_out_tvalid_reg;
-    temp_up_xfcp_tvalid_next = temp_up_xfcp_tvalid_reg;
+    xfcp_usp_us_tvalid_next = xfcp_usp_us_tvalid_reg;
+    temp_xfcp_usp_us_tvalid_next = temp_xfcp_usp_us_tvalid_reg;
 
-    store_up_xfcp_int_to_output = 1'b0;
-    store_up_xfcp_int_to_temp = 1'b0;
-    store_up_xfcp_temp_to_output = 1'b0;
+    store_xfcp_usp_us_int_to_output = 1'b0;
+    store_xfcp_usp_us_int_to_temp = 1'b0;
+    store_xfcp_usp_us_temp_to_output = 1'b0;
 
-    if (up_xfcp_out_tready_int_reg) begin
+    if (xfcp_usp_us_tready_int_reg) begin
         // input is ready
-        if (up_xfcp_out.tready || !up_xfcp_out_tvalid_reg) begin
+        if (xfcp_usp_us.tready || !xfcp_usp_us_tvalid_reg) begin
             // output is ready or currently not valid, transfer data to output
-            up_xfcp_out_tvalid_next = up_xfcp_out_tvalid_int;
-            store_up_xfcp_int_to_output = 1'b1;
+            xfcp_usp_us_tvalid_next = xfcp_usp_us_tvalid_int;
+            store_xfcp_usp_us_int_to_output = 1'b1;
         end else begin
             // output is not ready, store input in temp
-            temp_up_xfcp_tvalid_next = up_xfcp_out_tvalid_int;
-            store_up_xfcp_int_to_temp = 1'b1;
+            temp_xfcp_usp_us_tvalid_next = xfcp_usp_us_tvalid_int;
+            store_xfcp_usp_us_int_to_temp = 1'b1;
         end
-    end else if (up_xfcp_out.tready) begin
+    end else if (xfcp_usp_us.tready) begin
         // input is not ready, but output is ready
-        up_xfcp_out_tvalid_next = temp_up_xfcp_tvalid_reg;
-        temp_up_xfcp_tvalid_next = 1'b0;
-        store_up_xfcp_temp_to_output = 1'b1;
+        xfcp_usp_us_tvalid_next = temp_xfcp_usp_us_tvalid_reg;
+        temp_xfcp_usp_us_tvalid_next = 1'b0;
+        store_xfcp_usp_us_temp_to_output = 1'b1;
     end
 end
 
 always_ff @(posedge clk) begin
     if (rst) begin
-        up_xfcp_out_tvalid_reg <= 1'b0;
-        up_xfcp_out_tready_int_reg <= 1'b0;
-        temp_up_xfcp_tvalid_reg <= 1'b0;
+        xfcp_usp_us_tvalid_reg <= 1'b0;
+        xfcp_usp_us_tready_int_reg <= 1'b0;
+        temp_xfcp_usp_us_tvalid_reg <= 1'b0;
     end else begin
-        up_xfcp_out_tvalid_reg <= up_xfcp_out_tvalid_next;
-        up_xfcp_out_tready_int_reg <= up_xfcp_out_tready_int_early;
-        temp_up_xfcp_tvalid_reg <= temp_up_xfcp_tvalid_next;
+        xfcp_usp_us_tvalid_reg <= xfcp_usp_us_tvalid_next;
+        xfcp_usp_us_tready_int_reg <= xfcp_usp_us_tready_int_early;
+        temp_xfcp_usp_us_tvalid_reg <= temp_xfcp_usp_us_tvalid_next;
     end
 
     // datapath
-    if (store_up_xfcp_int_to_output) begin
-        up_xfcp_out_tdata_reg <= up_xfcp_out_tdata_int;
-        up_xfcp_out_tlast_reg <= up_xfcp_out_tlast_int;
-        up_xfcp_out_tuser_reg <= up_xfcp_out_tuser_int;
-    end else if (store_up_xfcp_temp_to_output) begin
-        up_xfcp_out_tdata_reg <= temp_up_xfcp_tdata_reg;
-        up_xfcp_out_tlast_reg <= temp_up_xfcp_tlast_reg;
-        up_xfcp_out_tuser_reg <= temp_up_xfcp_tuser_reg;
+    if (store_xfcp_usp_us_int_to_output) begin
+        xfcp_usp_us_tdata_reg <= xfcp_usp_us_tdata_int;
+        xfcp_usp_us_tlast_reg <= xfcp_usp_us_tlast_int;
+        xfcp_usp_us_tuser_reg <= xfcp_usp_us_tuser_int;
+    end else if (store_xfcp_usp_us_temp_to_output) begin
+        xfcp_usp_us_tdata_reg <= temp_xfcp_usp_us_tdata_reg;
+        xfcp_usp_us_tlast_reg <= temp_xfcp_usp_us_tlast_reg;
+        xfcp_usp_us_tuser_reg <= temp_xfcp_usp_us_tuser_reg;
     end
 
-    if (store_up_xfcp_int_to_temp) begin
-        temp_up_xfcp_tdata_reg <= up_xfcp_out_tdata_int;
-        temp_up_xfcp_tlast_reg <= up_xfcp_out_tlast_int;
-        temp_up_xfcp_tuser_reg <= up_xfcp_out_tuser_int;
+    if (store_xfcp_usp_us_int_to_temp) begin
+        temp_xfcp_usp_us_tdata_reg <= xfcp_usp_us_tdata_int;
+        temp_xfcp_usp_us_tlast_reg <= xfcp_usp_us_tlast_int;
+        temp_xfcp_usp_us_tuser_reg <= xfcp_usp_us_tuser_int;
     end
 end
 
 // downstream output datapath logic
-reg [7:0]       dn_xfcp_out_tdata_reg = 8'd0;
-reg [PORTS-1:0] dn_xfcp_out_tvalid_reg = '0, dn_xfcp_out_tvalid_next;
-reg             dn_xfcp_out_tlast_reg = 1'b0;
-reg             dn_xfcp_out_tuser_reg = 1'b0;
+reg [7:0]       xfcp_dsp_ds_tdata_reg = 8'd0;
+reg [PORTS-1:0] xfcp_dsp_ds_tvalid_reg = '0, xfcp_dsp_ds_tvalid_next;
+reg             xfcp_dsp_ds_tlast_reg = 1'b0;
+reg             xfcp_dsp_ds_tuser_reg = 1'b0;
 
-reg [7:0]       temp_dn_xfcp_out_tdata_reg = 8'd0;
-reg [PORTS-1:0] temp_dn_xfcp_out_tvalid_reg = '0, temp_dn_xfcp_out_tvalid_next;
-reg             temp_dn_xfcp_out_tlast_reg = 1'b0;
-reg             temp_dn_xfcp_out_tuser_reg = 1'b0;
+reg [7:0]       temp_xfcp_dsp_ds_tdata_reg = 8'd0;
+reg [PORTS-1:0] temp_xfcp_dsp_ds_tvalid_reg = '0, temp_xfcp_dsp_ds_tvalid_next;
+reg             temp_xfcp_dsp_ds_tlast_reg = 1'b0;
+reg             temp_xfcp_dsp_ds_tuser_reg = 1'b0;
 
 // datapath control
-reg store_dn_xfcp_int_to_output;
-reg store_dn_xfcp_int_to_temp;
-reg store_dn_xfcp_temp_to_output;
+reg store_xfcp_dsp_ds_to_output;
+reg store_xfcp_dsp_ds_to_temp;
+reg store_xfcp_dsp_ds_temp_to_output;
 
-assign dn_xfcp_out_tvalid = dn_xfcp_out_tvalid_reg;
+assign xfcp_dsp_ds_tvalid = xfcp_dsp_ds_tvalid_reg;
 
 for (genvar k = 0; k < PORTS; k = k + 1) begin
-    assign dn_xfcp_out[k].tdata  = dn_xfcp_out_tdata_reg;
-    assign dn_xfcp_out[k].tkeep  = '1;
-    assign dn_xfcp_out[k].tstrb  = dn_xfcp_out[k].tkeep;
-    assign dn_xfcp_out[k].tvalid = dn_xfcp_out_tvalid_reg[k];
-    assign dn_xfcp_out[k].tlast  = dn_xfcp_out_tlast_reg;
-    assign dn_xfcp_out[k].tid    = '0;
-    assign dn_xfcp_out[k].tdest  = '0;
-    assign dn_xfcp_out[k].tuser  = dn_xfcp_out_tuser_reg;
+    assign xfcp_dsp_ds[k].tdata  = xfcp_dsp_ds_tdata_reg;
+    assign xfcp_dsp_ds[k].tkeep  = '1;
+    assign xfcp_dsp_ds[k].tstrb  = xfcp_dsp_ds[k].tkeep;
+    assign xfcp_dsp_ds[k].tvalid = xfcp_dsp_ds_tvalid_reg[k];
+    assign xfcp_dsp_ds[k].tlast  = xfcp_dsp_ds_tlast_reg;
+    assign xfcp_dsp_ds[k].tid    = '0;
+    assign xfcp_dsp_ds[k].tdest  = '0;
+    assign xfcp_dsp_ds[k].tuser  = xfcp_dsp_ds_tuser_reg;
 
-    assign dn_xfcp_out_tready[k] = dn_xfcp_out[k].tready;
+    assign xfcp_dsp_ds_tready[k] = xfcp_dsp_ds[k].tready;
 end
 
 // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
-assign dn_xfcp_out_tready_int_early = ((dn_xfcp_out_tready & dn_xfcp_out_tvalid) != 0) || ((temp_dn_xfcp_out_tvalid_reg == 0) && ((dn_xfcp_out_tvalid == 0) || (dn_xfcp_out_tvalid_int == 0)));
+assign xfcp_dsp_ds_tready_int_early = ((xfcp_dsp_ds_tready & xfcp_dsp_ds_tvalid) != 0) || ((temp_xfcp_dsp_ds_tvalid_reg == 0) && ((xfcp_dsp_ds_tvalid == 0) || (xfcp_dsp_ds_tvalid_int == 0)));
 
 always_comb begin
     // transfer sink ready state to source
-    dn_xfcp_out_tvalid_next = dn_xfcp_out_tvalid_reg;
-    temp_dn_xfcp_out_tvalid_next = temp_dn_xfcp_out_tvalid_reg;
+    xfcp_dsp_ds_tvalid_next = xfcp_dsp_ds_tvalid_reg;
+    temp_xfcp_dsp_ds_tvalid_next = temp_xfcp_dsp_ds_tvalid_reg;
 
-    store_dn_xfcp_int_to_output = 1'b0;
-    store_dn_xfcp_int_to_temp = 1'b0;
-    store_dn_xfcp_temp_to_output = 1'b0;
+    store_xfcp_dsp_ds_to_output = 1'b0;
+    store_xfcp_dsp_ds_to_temp = 1'b0;
+    store_xfcp_dsp_ds_temp_to_output = 1'b0;
 
-    if (dn_xfcp_out_tready_int_reg) begin
+    if (xfcp_dsp_ds_tready_int_reg) begin
         // input is ready
-        if (((dn_xfcp_out_tready & dn_xfcp_out_tvalid) != 0) || (dn_xfcp_out_tvalid == 0)) begin
+        if (((xfcp_dsp_ds_tready & xfcp_dsp_ds_tvalid) != 0) || (xfcp_dsp_ds_tvalid == 0)) begin
             // output is ready or currently not valid, transfer data to output
-            dn_xfcp_out_tvalid_next = dn_xfcp_out_tvalid_int;
-            store_dn_xfcp_int_to_output = 1'b1;
+            xfcp_dsp_ds_tvalid_next = xfcp_dsp_ds_tvalid_int;
+            store_xfcp_dsp_ds_to_output = 1'b1;
         end else begin
             // output is not ready, store input in temp
-            temp_dn_xfcp_out_tvalid_next = dn_xfcp_out_tvalid_int;
-            store_dn_xfcp_int_to_temp = 1'b1;
+            temp_xfcp_dsp_ds_tvalid_next = xfcp_dsp_ds_tvalid_int;
+            store_xfcp_dsp_ds_to_temp = 1'b1;
         end
-    end else if ((dn_xfcp_out_tready & dn_xfcp_out_tvalid) != 0) begin
+    end else if ((xfcp_dsp_ds_tready & xfcp_dsp_ds_tvalid) != 0) begin
         // input is not ready, but output is ready
-        dn_xfcp_out_tvalid_next = temp_dn_xfcp_out_tvalid_reg;
-        temp_dn_xfcp_out_tvalid_next = '0;
-        store_dn_xfcp_temp_to_output = 1'b1;
+        xfcp_dsp_ds_tvalid_next = temp_xfcp_dsp_ds_tvalid_reg;
+        temp_xfcp_dsp_ds_tvalid_next = '0;
+        store_xfcp_dsp_ds_temp_to_output = 1'b1;
     end
 end
 
 always_ff @(posedge clk) begin
     if (rst) begin
-        dn_xfcp_out_tvalid_reg <= '0;
-        dn_xfcp_out_tready_int_reg <= 1'b0;
-        temp_dn_xfcp_out_tvalid_reg <= '0;
+        xfcp_dsp_ds_tvalid_reg <= '0;
+        xfcp_dsp_ds_tready_int_reg <= 1'b0;
+        temp_xfcp_dsp_ds_tvalid_reg <= '0;
     end else begin
-        dn_xfcp_out_tvalid_reg <= dn_xfcp_out_tvalid_next;
-        dn_xfcp_out_tready_int_reg <= dn_xfcp_out_tready_int_early;
-        temp_dn_xfcp_out_tvalid_reg <= temp_dn_xfcp_out_tvalid_next;
+        xfcp_dsp_ds_tvalid_reg <= xfcp_dsp_ds_tvalid_next;
+        xfcp_dsp_ds_tready_int_reg <= xfcp_dsp_ds_tready_int_early;
+        temp_xfcp_dsp_ds_tvalid_reg <= temp_xfcp_dsp_ds_tvalid_next;
     end
 
     // datapath
-    if (store_dn_xfcp_int_to_output) begin
-        dn_xfcp_out_tdata_reg <= dn_xfcp_out_tdata_int;
-        dn_xfcp_out_tlast_reg <= dn_xfcp_out_tlast_int;
-        dn_xfcp_out_tuser_reg <= dn_xfcp_out_tuser_int;
-    end else if (store_dn_xfcp_temp_to_output) begin
-        dn_xfcp_out_tdata_reg <= temp_dn_xfcp_out_tdata_reg;
-        dn_xfcp_out_tlast_reg <= temp_dn_xfcp_out_tlast_reg;
-        dn_xfcp_out_tuser_reg <= temp_dn_xfcp_out_tuser_reg;
+    if (store_xfcp_dsp_ds_to_output) begin
+        xfcp_dsp_ds_tdata_reg <= xfcp_dsp_ds_tdata_int;
+        xfcp_dsp_ds_tlast_reg <= xfcp_dsp_ds_tlast_int;
+        xfcp_dsp_ds_tuser_reg <= xfcp_dsp_ds_tuser_int;
+    end else if (store_xfcp_dsp_ds_temp_to_output) begin
+        xfcp_dsp_ds_tdata_reg <= temp_xfcp_dsp_ds_tdata_reg;
+        xfcp_dsp_ds_tlast_reg <= temp_xfcp_dsp_ds_tlast_reg;
+        xfcp_dsp_ds_tuser_reg <= temp_xfcp_dsp_ds_tuser_reg;
     end
 
-    if (store_dn_xfcp_int_to_temp) begin
-        temp_dn_xfcp_out_tdata_reg <= dn_xfcp_out_tdata_int;
-        temp_dn_xfcp_out_tlast_reg <= dn_xfcp_out_tlast_int;
-        temp_dn_xfcp_out_tuser_reg <= dn_xfcp_out_tuser_int;
+    if (store_xfcp_dsp_ds_to_temp) begin
+        temp_xfcp_dsp_ds_tdata_reg <= xfcp_dsp_ds_tdata_int;
+        temp_xfcp_dsp_ds_tlast_reg <= xfcp_dsp_ds_tlast_int;
+        temp_xfcp_dsp_ds_tuser_reg <= xfcp_dsp_ds_tuser_int;
     end
 end
 

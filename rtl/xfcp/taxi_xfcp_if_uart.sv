@@ -32,8 +32,8 @@ module taxi_xfcp_if_uart #(
     /*
      * XFCP downstream port
      */
-    taxi_axis_if.snk          dn_xfcp_in,
-    taxi_axis_if.src          dn_xfcp_out,
+    taxi_axis_if.src          xfcp_dsp_ds,
+    taxi_axis_if.snk          xfcp_dsp_us,
 
     /*
      * Configuration
@@ -126,7 +126,7 @@ tx_fifo_inst (
     /*
      * AXI4-Stream input (sink)
      */
-    .s_axis(dn_xfcp_in),
+    .s_axis(xfcp_dsp_us),
 
     /*
      * AXI4-Stream output (source)
@@ -167,7 +167,7 @@ rx_fifo_inst (
     /*
      * AXI4-Stream output (source)
      */
-    .m_axis(dn_xfcp_out),
+    .m_axis(xfcp_dsp_ds),
 
     /*
      * Pause

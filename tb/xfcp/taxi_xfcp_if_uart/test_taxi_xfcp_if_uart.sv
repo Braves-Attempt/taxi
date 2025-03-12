@@ -30,7 +30,7 @@ logic rst;
 logic uart_rxd;
 logic uart_txd;
 
-taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) dn_xfcp_in(), dn_xfcp_out();
+taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) xfcp_dsp_ds(), xfcp_dsp_us();
 
 logic [15:0] prescale;
 
@@ -51,8 +51,8 @@ uut (
     /*
      * XFCP downstream port
      */
-    .dn_xfcp_in(dn_xfcp_in),
-    .dn_xfcp_out(dn_xfcp_out),
+    .xfcp_dsp_ds(xfcp_dsp_ds),
+    .xfcp_dsp_us(xfcp_dsp_us),
 
     /*
      * Configuration

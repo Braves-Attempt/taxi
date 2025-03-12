@@ -45,22 +45,22 @@ class TB(object):
 
         cocotb.start_soon(Clock(dut.clk, 8, units="ns").start())
 
-        self.up_source = AxiStreamSource(AxiStreamBus.from_entity(dut.up_xfcp_in), dut.clk, dut.rst)
-        self.up_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.up_xfcp_out), dut.clk, dut.rst)
+        self.usp_source = AxiStreamSource(AxiStreamBus.from_entity(dut.xfcp_usp_ds), dut.clk, dut.rst)
+        self.usp_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.xfcp_usp_us), dut.clk, dut.rst)
 
-        self.dn_sources = [AxiStreamSource(AxiStreamBus.from_entity(bus), dut.clk, dut.rst) for bus in dut.dn_xfcp_in]
-        self.dn_sinks = [AxiStreamSink(AxiStreamBus.from_entity(bus), dut.clk, dut.rst) for bus in dut.dn_xfcp_out]
+        self.dsp_sources = [AxiStreamSource(AxiStreamBus.from_entity(bus), dut.clk, dut.rst) for bus in dut.xfcp_dsp_us]
+        self.dsp_sinks = [AxiStreamSink(AxiStreamBus.from_entity(bus), dut.clk, dut.rst) for bus in dut.xfcp_dsp_ds]
 
     def set_idle_generator(self, generator=None):
         if generator:
-            self.up_source.set_pause_generator(generator())
-            for src in self.dn_sources:
+            self.usp_source.set_pause_generator(generator())
+            for src in self.dsp_sources:
                 src.set_pause_generator(generator())
 
     def set_backpressure_generator(self, generator=None):
         if generator:
-            self.up_sink.set_pause_generator(generator())
-            for snk in self.dn_sinks:
+            self.usp_sink.set_pause_generator(generator())
+            for snk in self.dsp_sinks:
                 snk.set_pause_generator(generator())
 
     async def reset(self):
@@ -91,9 +91,9 @@ async def run_test_downstream(dut, idle_inserter=None, backpressure_inserter=Non
 
     tb.log.debug("TX packet: %s", pkt)
 
-    await tb.up_source.send(pkt.build())
+    await tb.usp_source.send(pkt.build())
 
-    rx_frame = await tb.dn_sinks[port].recv()
+    rx_frame = await tb.dsp_sinks[port].recv()
     rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
     tb.log.debug("RX packet: %s", rx_pkt)
@@ -121,9 +121,9 @@ async def run_test_upstream(dut, idle_inserter=None, backpressure_inserter=None,
 
     tb.log.debug("TX packet: %s", pkt)
 
-    await tb.dn_sources[port].send(pkt.build())
+    await tb.dsp_sources[port].send(pkt.build())
 
-    rx_frame = await tb.up_sink.recv()
+    rx_frame = await tb.usp_sink.recv()
     rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
     tb.log.debug("RX packet: %s", rx_pkt)
@@ -151,9 +151,9 @@ async def run_test_id(dut, idle_inserter=None, backpressure_inserter=None):
 
     tb.log.debug("TX packet: %s", pkt)
 
-    await tb.up_source.send(pkt.build())
+    await tb.usp_source.send(pkt.build())
 
-    rx_frame = await tb.up_sink.recv()
+    rx_frame = await tb.usp_sink.recv()
     rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
     tb.log.debug("RX packet: %s", rx_pkt)
@@ -170,7 +170,7 @@ def cycle_pause():
 
 if cocotb.SIM_NAME:
 
-    ports = len(cocotb.top.dn_xfcp_out)
+    ports = len(cocotb.top.xfcp_dsp_us)
 
     for test in [run_test_downstream, run_test_upstream]:
 

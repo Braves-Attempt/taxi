@@ -29,7 +29,7 @@ module test_taxi_xfcp_mod_axi #
 logic clk;
 logic rst;
 
-taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) up_xfcp_in(), up_xfcp_out();
+taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) xfcp_usp_ds(), xfcp_usp_us();
 
 taxi_axi_if #(
     .DATA_W(AXI_DATA_W),
@@ -47,8 +47,8 @@ uut (
     /*
      * XFCP upstream port
      */
-    .up_xfcp_in(up_xfcp_in),
-    .up_xfcp_out(up_xfcp_out),
+    .xfcp_usp_ds(xfcp_usp_ds),
+    .xfcp_usp_us(xfcp_usp_us),
 
     /*
      * AXI master interface

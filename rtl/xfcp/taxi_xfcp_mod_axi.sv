@@ -30,8 +30,8 @@ module taxi_xfcp_mod_axi #
     /*
      * XFCP upstream port
      */
-    taxi_axis_if.snk    up_xfcp_in,
-    taxi_axis_if.src    up_xfcp_out,
+    taxi_axis_if.snk    xfcp_usp_ds,
+    taxi_axis_if.src    xfcp_usp_us,
 
     /*
      * AXI master interface
@@ -107,8 +107,8 @@ xfcp_mod_axil_inst (
     /*
      * XFCP upstream port
      */
-    .up_xfcp_in(up_xfcp_in),
-    .up_xfcp_out(up_xfcp_out),
+    .xfcp_usp_ds(xfcp_usp_ds),
+    .xfcp_usp_us(xfcp_usp_us),
 
     /*
      * AXI lite master interface

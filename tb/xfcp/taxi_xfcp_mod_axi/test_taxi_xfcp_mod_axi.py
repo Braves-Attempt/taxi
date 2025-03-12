@@ -46,20 +46,20 @@ class TB(object):
 
         cocotb.start_soon(Clock(dut.clk, 8, units="ns").start())
 
-        self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.up_xfcp_in), dut.clk, dut.rst)
-        self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.up_xfcp_out), dut.clk, dut.rst)
+        self.usp_source = AxiStreamSource(AxiStreamBus.from_entity(dut.xfcp_usp_ds), dut.clk, dut.rst)
+        self.usp_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.xfcp_usp_us), dut.clk, dut.rst)
 
         self.axi_ram = AxiRam(AxiBus.from_entity(dut.m_axi), dut.clk, dut.rst, size=2**16)
 
     def set_idle_generator(self, generator=None):
         if generator:
-            self.axis_source.set_pause_generator(generator())
+            self.usp_source.set_pause_generator(generator())
             self.axi_ram.write_if.b_channel.set_pause_generator(generator())
             self.axi_ram.read_if.r_channel.set_pause_generator(generator())
 
     def set_backpressure_generator(self, generator=None):
         if generator:
-            self.axis_sink.set_pause_generator(generator())
+            self.usp_sink.set_pause_generator(generator())
             self.axi_ram.write_if.aw_channel.set_pause_generator(generator())
             self.axi_ram.write_if.w_channel.set_pause_generator(generator())
             self.axi_ram.read_if.ar_channel.set_pause_generator(generator())
@@ -101,9 +101,9 @@ async def run_test_write(dut, idle_inserter=None, backpressure_inserter=None):
 
             tb.log.debug("TX packet: %s", pkt)
 
-            await tb.axis_source.send(pkt.build())
+            await tb.usp_source.send(pkt.build())
 
-            rx_frame = await tb.axis_sink.recv()
+            rx_frame = await tb.usp_sink.recv()
             rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
             tb.log.debug("RX packet: %s", rx_pkt)
@@ -146,9 +146,9 @@ async def run_test_read(dut, idle_inserter=None, backpressure_inserter=None):
 
             tb.log.debug("TX packet: %s", pkt)
 
-            await tb.axis_source.send(pkt.build())
+            await tb.usp_source.send(pkt.build())
 
-            rx_frame = await tb.axis_sink.recv()
+            rx_frame = await tb.usp_sink.recv()
             rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
             tb.log.debug("RX packet: %s", rx_pkt)
@@ -174,9 +174,9 @@ async def run_test_id(dut, idle_inserter=None, backpressure_inserter=None):
 
     tb.log.debug("TX packet: %s", pkt)
 
-    await tb.axis_source.send(pkt.build())
+    await tb.usp_source.send(pkt.build())
 
-    rx_frame = await tb.axis_sink.recv()
+    rx_frame = await tb.usp_sink.recv()
     rx_pkt = XfcpFrame.parse(rx_frame.tdata)
 
     tb.log.debug("RX packet: %s", rx_pkt)

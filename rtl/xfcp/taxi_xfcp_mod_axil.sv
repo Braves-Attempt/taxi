@@ -30,8 +30,8 @@ module taxi_xfcp_mod_axil #
     /*
      * XFCP upstream port
      */
-    taxi_axis_if.snk     up_xfcp_in,
-    taxi_axis_if.src     up_xfcp_out,
+    taxi_axis_if.snk     xfcp_usp_ds,
+    taxi_axis_if.src     xfcp_usp_us,
 
     /*
      * AXI lite master interface
@@ -166,7 +166,7 @@ logic write_reg = 1'b0, write_next;
 logic [ADDR_W_ADJ-1:0] addr_reg = '0, addr_next;
 logic [DATA_W-1:0] data_reg = '0, data_next;
 
-logic up_xfcp_in_tready_reg = 1'b0, up_xfcp_in_tready_next;
+logic xfcp_usp_ds_tready_reg = 1'b0, xfcp_usp_ds_tready_next;
 
 logic m_axil_awvalid_reg = 1'b0, m_axil_awvalid_next;
 logic [STRB_W-1:0] m_axil_wstrb_reg = '0, m_axil_wstrb_next;
@@ -176,14 +176,14 @@ logic m_axil_arvalid_reg = 1'b0, m_axil_arvalid_next;
 logic m_axil_rready_reg = 1'b0, m_axil_rready_next;
 
 // internal datapath
-logic [7:0]  up_xfcp_out_tdata_int;
-logic        up_xfcp_out_tvalid_int;
-logic        up_xfcp_out_tready_int_reg = 1'b0;
-logic        up_xfcp_out_tlast_int;
-logic        up_xfcp_out_tuser_int;
-wire         up_xfcp_out_tready_int_early;
+logic [7:0]  xfcp_usp_us_tdata_int;
+logic        xfcp_usp_us_tvalid_int;
+logic        xfcp_usp_us_tready_int_reg = 1'b0;
+logic        xfcp_usp_us_tlast_int;
+logic        xfcp_usp_us_tuser_int;
+wire         xfcp_usp_us_tready_int_early;
 
-assign up_xfcp_in.tready = up_xfcp_in_tready_reg;
+assign xfcp_usp_ds.tready = xfcp_usp_ds_tready_reg;
 
 assign m_axil_wr.awaddr = addr_reg;
 assign m_axil_wr.awprot = 3'b010;
@@ -210,12 +210,12 @@ always_comb begin
 
     id_ptr_next = id_ptr_reg;
 
-    up_xfcp_in_tready_next = 1'b0;
+    xfcp_usp_ds_tready_next = 1'b0;
 
-    up_xfcp_out_tdata_int = '0;
-    up_xfcp_out_tvalid_int = 1'b0;
-    up_xfcp_out_tlast_int = 1'b0;
-    up_xfcp_out_tuser_int = 1'b0;
+    xfcp_usp_us_tdata_int = '0;
+    xfcp_usp_us_tvalid_int = 1'b0;
+    xfcp_usp_us_tlast_int = 1'b0;
+    xfcp_usp_us_tuser_int = 1'b0;
 
     addr_next = addr_reg;
     data_next = data_reg;
@@ -230,26 +230,26 @@ always_comb begin
     case (state_reg)
         STATE_IDLE: begin
             // idle, wait for start of packet
-            up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+            xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
             id_ptr_next = '0;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
-                if (up_xfcp_in.tlast) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
+                if (xfcp_usp_ds.tlast) begin
                     // last asserted, ignore cycle
                     state_next = STATE_IDLE;
-                end else if (up_xfcp_in.tdata == RPATH_TAG) begin
+                end else if (xfcp_usp_ds.tdata == RPATH_TAG) begin
                     // need to pass through rpath
-                    up_xfcp_out_tdata_int = up_xfcp_in.tdata;
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b0;
-                    up_xfcp_out_tuser_int = 1'b0;
+                    xfcp_usp_us_tdata_int = xfcp_usp_ds.tdata;
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b0;
+                    xfcp_usp_us_tuser_int = 1'b0;
                     state_next = STATE_HEADER_1;
-                end else if (up_xfcp_in.tdata == START_TAG) begin
+                end else if (xfcp_usp_ds.tdata == START_TAG) begin
                     // process header
-                    up_xfcp_out_tdata_int = up_xfcp_in.tdata;
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b0;
-                    up_xfcp_out_tuser_int = 1'b0;
+                    xfcp_usp_us_tdata_int = xfcp_usp_ds.tdata;
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b0;
+                    xfcp_usp_us_tuser_int = 1'b0;
                     state_next = STATE_HEADER_2;
                 end else begin
                     // bad start byte, drop packet
@@ -261,20 +261,20 @@ always_comb begin
         end
         STATE_HEADER_1: begin
             // transfer through header
-            up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+            xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 // transfer through
-                up_xfcp_out_tdata_int = up_xfcp_in.tdata;
-                up_xfcp_out_tvalid_int = 1'b1;
-                up_xfcp_out_tlast_int = 1'b0;
-                up_xfcp_out_tuser_int = 1'b0;
+                xfcp_usp_us_tdata_int = xfcp_usp_ds.tdata;
+                xfcp_usp_us_tvalid_int = 1'b1;
+                xfcp_usp_us_tlast_int = 1'b0;
+                xfcp_usp_us_tuser_int = 1'b0;
 
-                if (up_xfcp_in.tlast) begin
+                if (xfcp_usp_ds.tlast) begin
                     // last asserted in header, mark as such and drop
-                    up_xfcp_out_tuser_int = 1'b1;
+                    xfcp_usp_us_tuser_int = 1'b1;
                     state_next = STATE_IDLE;
-                end else if (up_xfcp_in.tdata == START_TAG) begin
+                end else if (xfcp_usp_ds.tdata == START_TAG) begin
                     // process header
                     state_next = STATE_HEADER_2;
                 end else begin
@@ -286,40 +286,40 @@ always_comb begin
         end
         STATE_HEADER_2: begin
             // read packet type
-            up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+            xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
-                if (up_xfcp_in.tdata == READ_REQ && !up_xfcp_in.tlast) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
+                if (xfcp_usp_ds.tdata == READ_REQ && !xfcp_usp_ds.tlast) begin
                     // start of read
-                    up_xfcp_out_tdata_int = READ_RESP;
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b0;
-                    up_xfcp_out_tuser_int = 1'b0;
+                    xfcp_usp_us_tdata_int = READ_RESP;
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b0;
+                    xfcp_usp_us_tuser_int = 1'b0;
                     write_next = 1'b0;
                     count_next = 8'(COUNT_BYTE_LANES+ADDR_BYTE_LANES-1);
                     state_next = STATE_HEADER_3;
-                end else if (up_xfcp_in.tdata == WRITE_REQ && !up_xfcp_in.tlast) begin
+                end else if (xfcp_usp_ds.tdata == WRITE_REQ && !xfcp_usp_ds.tlast) begin
                     // start of write
-                    up_xfcp_out_tdata_int = WRITE_RESP;
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b0;
-                    up_xfcp_out_tuser_int = 1'b0;
+                    xfcp_usp_us_tdata_int = WRITE_RESP;
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b0;
+                    xfcp_usp_us_tuser_int = 1'b0;
                     write_next = 1'b1;
                     count_next = 8'(COUNT_BYTE_LANES+ADDR_BYTE_LANES-1);
                     state_next = STATE_HEADER_3;
-                end else if (up_xfcp_in.tdata == ID_REQ) begin
+                end else if (xfcp_usp_ds.tdata == ID_REQ) begin
                     // identify
-                    up_xfcp_out_tdata_int = ID_RESP;
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b0;
-                    up_xfcp_out_tuser_int = 1'b0;
+                    xfcp_usp_us_tdata_int = ID_RESP;
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b0;
+                    xfcp_usp_us_tuser_int = 1'b0;
                     state_next = STATE_ID;
                 end else begin
                     // invalid start of packet
-                    up_xfcp_out_tvalid_int = 1'b1;
-                    up_xfcp_out_tlast_int = 1'b1;
-                    up_xfcp_out_tuser_int = 1'b1;
-                    if (up_xfcp_in.tlast) begin
+                    xfcp_usp_us_tvalid_int = 1'b1;
+                    xfcp_usp_us_tlast_int = 1'b1;
+                    xfcp_usp_us_tuser_int = 1'b1;
+                    if (xfcp_usp_ds.tlast) begin
                         state_next = STATE_IDLE;
                     end else begin
                         state_next = STATE_WAIT_LAST;
@@ -331,19 +331,19 @@ always_comb begin
         end
         STATE_HEADER_3: begin
             // store address and length
-            up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+            xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 // pass through
-                up_xfcp_out_tdata_int = up_xfcp_in.tdata;
-                up_xfcp_out_tvalid_int = 1'b1;
-                up_xfcp_out_tlast_int = 1'b0;
-                up_xfcp_out_tuser_int = 1'b0;
+                xfcp_usp_us_tdata_int = xfcp_usp_ds.tdata;
+                xfcp_usp_us_tvalid_int = 1'b1;
+                xfcp_usp_us_tlast_int = 1'b0;
+                xfcp_usp_us_tuser_int = 1'b0;
                 // store pointers
                 if (count_reg < COUNT_BYTE_LANES) begin
-                    ptr_next[8*(COUNT_BYTE_LANES-count_reg-1) +: 8] = up_xfcp_in.tdata;
+                    ptr_next[8*(COUNT_BYTE_LANES-count_reg-1) +: 8] = xfcp_usp_ds.tdata;
                 end else begin
-                    addr_next[8*(ADDR_BYTE_LANES-(count_reg-COUNT_BYTE_LANES)-1) +: 8] = up_xfcp_in.tdata;
+                    addr_next[8*(ADDR_BYTE_LANES-(count_reg-COUNT_BYTE_LANES)-1) +: 8] = xfcp_usp_ds.tdata;
                 end
                 count_next = count_reg - 1;
                 if (count_reg == 0) begin
@@ -354,27 +354,27 @@ always_comb begin
                     data_next = '0;
                     if (write_reg) begin
                         // start writing
-                        if (up_xfcp_in.tlast) begin
+                        if (xfcp_usp_ds.tlast) begin
                             // end of frame in header
-                            up_xfcp_out_tlast_int = 1'b1;
-                            up_xfcp_out_tuser_int = 1'b1;
+                            xfcp_usp_us_tlast_int = 1'b1;
+                            xfcp_usp_us_tuser_int = 1'b1;
                             state_next = STATE_IDLE;
                         end else begin
-                            up_xfcp_out_tlast_int = 1'b1;
+                            xfcp_usp_us_tlast_int = 1'b1;
                             state_next = STATE_WRITE_1;
                         end
                     end else begin
                         // start reading
-                        up_xfcp_in_tready_next = !(last_cycle_reg || (up_xfcp_in.tvalid && up_xfcp_in.tlast));
+                        xfcp_usp_ds_tready_next = !(last_cycle_reg || (xfcp_usp_ds.tvalid && xfcp_usp_ds.tlast));
                         m_axil_arvalid_next = 1'b1;
                         m_axil_rready_next = 1'b1;
                         state_next = STATE_READ_1;
                     end
                 end else begin
-                    if (up_xfcp_in.tlast) begin
+                    if (xfcp_usp_ds.tlast) begin
                         // end of frame in header
-                        up_xfcp_out_tlast_int = 1'b1;
-                        up_xfcp_out_tuser_int = 1'b1;
+                        xfcp_usp_us_tlast_int = 1'b1;
+                        xfcp_usp_us_tuser_int = 1'b1;
                         state_next = STATE_IDLE;
                     end else begin
                         state_next = STATE_HEADER_3;
@@ -389,7 +389,7 @@ always_comb begin
             m_axil_rready_next = 1'b1;
 
             // drop padding
-            up_xfcp_in_tready_next = !(last_cycle_reg || (up_xfcp_in.tvalid && up_xfcp_in.tlast));
+            xfcp_usp_ds_tready_next = !(last_cycle_reg || (xfcp_usp_ds.tvalid && xfcp_usp_ds.tlast));
 
             if (m_axil_rd.rready && m_axil_rd.rvalid) begin
                 // read cycle complete, store result
@@ -405,23 +405,23 @@ always_comb begin
             // send data
 
             // drop padding
-            up_xfcp_in_tready_next = !(last_cycle_reg || (up_xfcp_in.tvalid && up_xfcp_in.tlast));
+            xfcp_usp_ds_tready_next = !(last_cycle_reg || (xfcp_usp_ds.tvalid && xfcp_usp_ds.tlast));
 
-            if (up_xfcp_out_tready_int_reg) begin
+            if (xfcp_usp_us_tready_int_reg) begin
                 // transfer word and update pointers
-                up_xfcp_out_tdata_int = data_reg[8*count_reg +: 8];
-                up_xfcp_out_tvalid_int = 1'b1;
-                up_xfcp_out_tlast_int = 1'b0;
-                up_xfcp_out_tuser_int = 1'b0;
+                xfcp_usp_us_tdata_int = data_reg[8*count_reg +: 8];
+                xfcp_usp_us_tvalid_int = 1'b1;
+                xfcp_usp_us_tlast_int = 1'b0;
+                xfcp_usp_us_tuser_int = 1'b0;
                 count_next = count_reg + 1;
                 ptr_next = ptr_reg - 1;
                 if (ptr_reg == 1) begin
                     // last word of read
-                    up_xfcp_out_tlast_int = 1'b1;
-                    if (!(last_cycle_reg || (up_xfcp_in.tvalid && up_xfcp_in.tlast))) begin
+                    xfcp_usp_us_tlast_int = 1'b1;
+                    if (!(last_cycle_reg || (xfcp_usp_ds.tvalid && xfcp_usp_ds.tlast))) begin
                         state_next = STATE_WAIT_LAST;
                     end else begin
-                        up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+                        xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
                         state_next = STATE_IDLE;
                     end
                 end else if (count_reg == (STRB_W*BYTE_W/8)-1) begin
@@ -439,27 +439,27 @@ always_comb begin
         end
         STATE_WRITE_1: begin
             // write data
-            up_xfcp_in_tready_next = 1'b1;
+            xfcp_usp_ds_tready_next = 1'b1;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 // store word
-                data_next[8*count_reg +: 8] = up_xfcp_in.tdata;
+                data_next[8*count_reg +: 8] = xfcp_usp_ds.tdata;
                 count_next = count_reg + 1;
                 ptr_next = ptr_reg - 1;
                 m_axil_wstrb_next[count_reg >> ((BYTE_W/8)-1)] = 1'b1;
                 if (count_reg == (STRB_W*BYTE_W/8)-1 || ptr_reg == 1) begin
                     // have full word or at end of block, start write operation
                     count_next = 0;
-                    up_xfcp_in_tready_next = 1'b0;
+                    xfcp_usp_ds_tready_next = 1'b0;
                     m_axil_awvalid_next = 1'b1;
                     m_axil_wvalid_next = 1'b1;
                     m_axil_bready_next = 1'b1;
                     state_next = STATE_WRITE_2;
-                    if (up_xfcp_in.tlast) begin
+                    if (xfcp_usp_ds.tlast) begin
                         // last asserted, nothing further to write
                         ptr_next = 0;
                     end
-                end else if (up_xfcp_in.tlast) begin
+                end else if (xfcp_usp_ds.tlast) begin
                     // last asserted, return to idle
                     state_next = STATE_IDLE;
                 end else begin
@@ -482,10 +482,10 @@ always_comb begin
                 if (ptr_reg == 0) begin
                     // done writing
                     if (!last_cycle_reg) begin
-                        up_xfcp_in_tready_next = 1'b1;
+                        xfcp_usp_ds_tready_next = 1'b1;
                         state_next = STATE_WAIT_LAST;
                     end else begin
-                        up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+                        xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
                         state_next = STATE_IDLE;
                     end
                 end else begin
@@ -500,23 +500,23 @@ always_comb begin
             // send ID
 
             // drop padding
-            up_xfcp_in_tready_next = !(last_cycle_reg || (up_xfcp_in.tvalid && up_xfcp_in.tlast));
+            xfcp_usp_ds_tready_next = !(last_cycle_reg || (xfcp_usp_ds.tvalid && xfcp_usp_ds.tlast));
 
-            up_xfcp_out_tdata_int = id_rom[id_ptr_reg];
-            up_xfcp_out_tvalid_int = 1'b1;
-            up_xfcp_out_tlast_int = 1'b0;
-            up_xfcp_out_tuser_int = 1'b0;
+            xfcp_usp_us_tdata_int = id_rom[id_ptr_reg];
+            xfcp_usp_us_tvalid_int = 1'b1;
+            xfcp_usp_us_tlast_int = 1'b0;
+            xfcp_usp_us_tuser_int = 1'b0;
 
-            if (up_xfcp_out_tready_int_reg) begin
+            if (xfcp_usp_us_tready_int_reg) begin
                 // increment pointer
                 id_ptr_next = id_ptr_reg + 1;
                 if (id_ptr_reg == ID_PTR_W'(ID_ROM_SIZE-1)) begin
                     // read out whole ID
-                    up_xfcp_out_tlast_int = 1'b1;
-                    if (!(last_cycle_reg || (up_xfcp_in.tvalid && up_xfcp_in.tlast))) begin
+                    xfcp_usp_us_tlast_int = 1'b1;
+                    if (!(last_cycle_reg || (xfcp_usp_ds.tvalid && xfcp_usp_ds.tlast))) begin
                         state_next = STATE_WAIT_LAST;
                     end else begin
-                        up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+                        xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
                         state_next = STATE_IDLE;
                     end
                 end else begin
@@ -528,12 +528,12 @@ always_comb begin
         end
         STATE_WAIT_LAST: begin
             // wait for end of frame
-            up_xfcp_in_tready_next = 1'b1;
+            xfcp_usp_ds_tready_next = 1'b1;
 
-            if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
+            if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 // wait for tlast
-                if (up_xfcp_in.tlast) begin
-                    up_xfcp_in_tready_next = up_xfcp_out_tready_int_early;
+                if (xfcp_usp_ds.tlast) begin
+                    xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
                     state_next = STATE_IDLE;
                 end else begin
                     state_next = STATE_WAIT_LAST;
@@ -558,14 +558,14 @@ always_ff @(posedge clk) begin
     count_reg <= count_next;
     write_reg <= write_next;
 
-    if (up_xfcp_in.tready && up_xfcp_in.tvalid) begin
-        last_cycle_reg <= up_xfcp_in.tlast;
+    if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
+        last_cycle_reg <= xfcp_usp_ds.tlast;
     end
 
     addr_reg <= addr_next;
     data_reg <= data_next;
 
-    up_xfcp_in_tready_reg <= up_xfcp_in_tready_next;
+    xfcp_usp_ds_tready_reg <= xfcp_usp_ds_tready_next;
 
     m_axil_awvalid_reg <= m_axil_awvalid_next;
     m_axil_wstrb_reg <= m_axil_wstrb_next;
@@ -576,7 +576,7 @@ always_ff @(posedge clk) begin
 
     if (rst) begin
         state_reg <= STATE_IDLE;
-        up_xfcp_in_tready_reg <= 1'b0;
+        xfcp_usp_ds_tready_reg <= 1'b0;
         m_axil_awvalid_reg <= 1'b0;
         m_axil_wvalid_reg <= 1'b0;
         m_axil_bready_reg <= 1'b0;
@@ -586,87 +586,87 @@ always_ff @(posedge clk) begin
 end
 
 // output datapath logic
-logic [7:0]  up_xfcp_out_tdata_reg = '0;
-logic        up_xfcp_out_tvalid_reg = 1'b0, up_xfcp_out_tvalid_next;
-logic        up_xfcp_out_tlast_reg = 1'b0;
-logic        up_xfcp_out_tuser_reg = 1'b0;
+logic [7:0]  xfcp_usp_us_tdata_reg = '0;
+logic        xfcp_usp_us_tvalid_reg = 1'b0, xfcp_usp_us_tvalid_next;
+logic        xfcp_usp_us_tlast_reg = 1'b0;
+logic        xfcp_usp_us_tuser_reg = 1'b0;
 
-logic [7:0]  temp_up_xfcp_tdata_reg = '0;
-logic        temp_up_xfcp_tvalid_reg = 1'b0, temp_up_xfcp_tvalid_next;
-logic        temp_up_xfcp_tlast_reg = 1'b0;
-logic        temp_up_xfcp_tuser_reg = 1'b0;
+logic [7:0]  temp_xfcp_usp_us_tdata_reg = '0;
+logic        temp_xfcp_usp_us_tvalid_reg = 1'b0, temp_xfcp_usp_us_tvalid_next;
+logic        temp_xfcp_usp_us_tlast_reg = 1'b0;
+logic        temp_xfcp_usp_us_tuser_reg = 1'b0;
 
 // datapath control
-reg store_up_xfcp_int_to_output;
-reg store_up_xfcp_int_to_temp;
-reg store_up_xfcp_temp_to_output;
+reg store_xfcp_usp_us_int_to_output;
+reg store_xfcp_usp_us_int_to_temp;
+reg store_xfcp_usp_us_temp_to_output;
 
-assign up_xfcp_out.tdata = up_xfcp_out_tdata_reg;
-assign up_xfcp_out.tkeep = '1;
-assign up_xfcp_out.tstrb = up_xfcp_out.tkeep;
-assign up_xfcp_out.tvalid = up_xfcp_out_tvalid_reg;
-assign up_xfcp_out.tlast = up_xfcp_out_tlast_reg;
-assign up_xfcp_out.tid = '0;
-assign up_xfcp_out.tdest = '0;
-assign up_xfcp_out.tuser = up_xfcp_out_tuser_reg;
+assign xfcp_usp_us.tdata = xfcp_usp_us_tdata_reg;
+assign xfcp_usp_us.tkeep = '1;
+assign xfcp_usp_us.tstrb = xfcp_usp_us.tkeep;
+assign xfcp_usp_us.tvalid = xfcp_usp_us_tvalid_reg;
+assign xfcp_usp_us.tlast = xfcp_usp_us_tlast_reg;
+assign xfcp_usp_us.tid = '0;
+assign xfcp_usp_us.tdest = '0;
+assign xfcp_usp_us.tuser = xfcp_usp_us_tuser_reg;
 
 // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
-assign up_xfcp_out_tready_int_early = up_xfcp_out.tready || (!temp_up_xfcp_tvalid_reg && (!up_xfcp_out_tvalid_reg || !up_xfcp_out_tvalid_int));
+assign xfcp_usp_us_tready_int_early = xfcp_usp_us.tready || (!temp_xfcp_usp_us_tvalid_reg && (!xfcp_usp_us_tvalid_reg || !xfcp_usp_us_tvalid_int));
 
 always_comb begin
     // transfer sink ready state to source
-    up_xfcp_out_tvalid_next = up_xfcp_out_tvalid_reg;
-    temp_up_xfcp_tvalid_next = temp_up_xfcp_tvalid_reg;
+    xfcp_usp_us_tvalid_next = xfcp_usp_us_tvalid_reg;
+    temp_xfcp_usp_us_tvalid_next = temp_xfcp_usp_us_tvalid_reg;
 
-    store_up_xfcp_int_to_output = 1'b0;
-    store_up_xfcp_int_to_temp = 1'b0;
-    store_up_xfcp_temp_to_output = 1'b0;
+    store_xfcp_usp_us_int_to_output = 1'b0;
+    store_xfcp_usp_us_int_to_temp = 1'b0;
+    store_xfcp_usp_us_temp_to_output = 1'b0;
     
-    if (up_xfcp_out_tready_int_reg) begin
+    if (xfcp_usp_us_tready_int_reg) begin
         // input is ready
-        if (up_xfcp_out.tready || !up_xfcp_out_tvalid_reg) begin
+        if (xfcp_usp_us.tready || !xfcp_usp_us_tvalid_reg) begin
             // output is ready or currently not valid, transfer data to output
-            up_xfcp_out_tvalid_next = up_xfcp_out_tvalid_int;
-            store_up_xfcp_int_to_output = 1'b1;
+            xfcp_usp_us_tvalid_next = xfcp_usp_us_tvalid_int;
+            store_xfcp_usp_us_int_to_output = 1'b1;
         end else begin
             // output is not ready, store input in temp
-            temp_up_xfcp_tvalid_next = up_xfcp_out_tvalid_int;
-            store_up_xfcp_int_to_temp = 1'b1;
+            temp_xfcp_usp_us_tvalid_next = xfcp_usp_us_tvalid_int;
+            store_xfcp_usp_us_int_to_temp = 1'b1;
         end
-    end else if (up_xfcp_out.tready) begin
+    end else if (xfcp_usp_us.tready) begin
         // input is not ready, but output is ready
-        up_xfcp_out_tvalid_next = temp_up_xfcp_tvalid_reg;
-        temp_up_xfcp_tvalid_next = 1'b0;
-        store_up_xfcp_temp_to_output = 1'b1;
+        xfcp_usp_us_tvalid_next = temp_xfcp_usp_us_tvalid_reg;
+        temp_xfcp_usp_us_tvalid_next = 1'b0;
+        store_xfcp_usp_us_temp_to_output = 1'b1;
     end
 end
 
 always_ff @(posedge clk) begin
-    up_xfcp_out_tvalid_reg <= up_xfcp_out_tvalid_next;
-    up_xfcp_out_tready_int_reg <= up_xfcp_out_tready_int_early;
-    temp_up_xfcp_tvalid_reg <= temp_up_xfcp_tvalid_next;
+    xfcp_usp_us_tvalid_reg <= xfcp_usp_us_tvalid_next;
+    xfcp_usp_us_tready_int_reg <= xfcp_usp_us_tready_int_early;
+    temp_xfcp_usp_us_tvalid_reg <= temp_xfcp_usp_us_tvalid_next;
 
     // datapath
-    if (store_up_xfcp_int_to_output) begin
-        up_xfcp_out_tdata_reg <= up_xfcp_out_tdata_int;
-        up_xfcp_out_tlast_reg <= up_xfcp_out_tlast_int;
-        up_xfcp_out_tuser_reg <= up_xfcp_out_tuser_int;
-    end else if (store_up_xfcp_temp_to_output) begin
-        up_xfcp_out_tdata_reg <= temp_up_xfcp_tdata_reg;
-        up_xfcp_out_tlast_reg <= temp_up_xfcp_tlast_reg;
-        up_xfcp_out_tuser_reg <= temp_up_xfcp_tuser_reg;
+    if (store_xfcp_usp_us_int_to_output) begin
+        xfcp_usp_us_tdata_reg <= xfcp_usp_us_tdata_int;
+        xfcp_usp_us_tlast_reg <= xfcp_usp_us_tlast_int;
+        xfcp_usp_us_tuser_reg <= xfcp_usp_us_tuser_int;
+    end else if (store_xfcp_usp_us_temp_to_output) begin
+        xfcp_usp_us_tdata_reg <= temp_xfcp_usp_us_tdata_reg;
+        xfcp_usp_us_tlast_reg <= temp_xfcp_usp_us_tlast_reg;
+        xfcp_usp_us_tuser_reg <= temp_xfcp_usp_us_tuser_reg;
     end
 
-    if (store_up_xfcp_int_to_temp) begin
-        temp_up_xfcp_tdata_reg <= up_xfcp_out_tdata_int;
-        temp_up_xfcp_tlast_reg <= up_xfcp_out_tlast_int;
-        temp_up_xfcp_tuser_reg <= up_xfcp_out_tuser_int;
+    if (store_xfcp_usp_us_int_to_temp) begin
+        temp_xfcp_usp_us_tdata_reg <= xfcp_usp_us_tdata_int;
+        temp_xfcp_usp_us_tlast_reg <= xfcp_usp_us_tlast_int;
+        temp_xfcp_usp_us_tuser_reg <= xfcp_usp_us_tuser_int;
     end
 
     if (rst) begin
-        up_xfcp_out_tvalid_reg <= 1'b0;
-        up_xfcp_out_tready_int_reg <= 1'b0;
-        temp_up_xfcp_tvalid_reg <= 1'b0;
+        xfcp_usp_us_tvalid_reg <= 1'b0;
+        xfcp_usp_us_tready_int_reg <= 1'b0;
+        temp_xfcp_usp_us_tvalid_reg <= 1'b0;
     end 
 end
 

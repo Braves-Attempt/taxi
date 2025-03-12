@@ -26,8 +26,8 @@ module test_taxi_xfcp_switch #
 logic clk;
 logic rst;
 
-taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) up_xfcp_in(), up_xfcp_out();
-taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) dn_xfcp_in[PORTS](), dn_xfcp_out[PORTS]();
+taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) xfcp_usp_ds(), xfcp_usp_us();
+taxi_axis_if #(.DATA_W(8), .LAST_EN(1), .USER_EN(1), .USER_W(1)) xfcp_dsp_ds[PORTS](), xfcp_dsp_us[PORTS]();
 
 taxi_xfcp_switch #(
     .PORTS(PORTS)
@@ -39,14 +39,14 @@ uut (
     /*
      * XFCP upstream port
      */
-    .up_xfcp_in(up_xfcp_in),
-    .up_xfcp_out(up_xfcp_out),
+    .xfcp_usp_ds(xfcp_usp_ds),
+    .xfcp_usp_us(xfcp_usp_us),
 
     /*
      * XFCP downstream ports
      */
-    .dn_xfcp_in(dn_xfcp_in),
-    .dn_xfcp_out(dn_xfcp_out)
+    .xfcp_dsp_ds(xfcp_dsp_ds),
+    .xfcp_dsp_us(xfcp_dsp_us)
 );
 
 endmodule
