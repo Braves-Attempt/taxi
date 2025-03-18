@@ -39,6 +39,11 @@ localparam DIR = OFFSET_NUM >= 0;
 localparam NUM_1 = (DIR ? OFFSET_NUM : -OFFSET_NUM)*56*MMCM_OUTPUT_DIV;
 localparam DENOM_1 = OFFSET_DENOM;
 
+localparam MMCM_MIN_PSCLK_CYCLES = 12;
+
+if (DENOM_1 / NUM_1 < MMCM_MIN_PSCLK_CYCLES)
+    $fatal(0, "Error: requested offset is too large for MMCM dynamic phase shifter");
+
 localparam CNT_W = $clog2(DENOM_1)+1;
 
 logic [CNT_W-1:0] cnt_reg = '0;
