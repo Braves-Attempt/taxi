@@ -21,6 +21,8 @@ module taxi_mmcm_frac #(
     parameter MMCM_INPUT_DIV = 1,
     parameter MMCM_MULT = 8,
     parameter MMCM_OUTPUT_DIV = MMCM_MULT,
+    parameter logic PSCLK_EN = 1'b0,
+    parameter PSCLK_DIV = MMCM_OUTPUT_DIV,
     parameter logic EXTRA_MMCM = 1'b1,
     parameter MMCM2_CASC_DIV = MMCM_OUTPUT_DIV,
     parameter MMCM2_INPUT_DIV = 1,
@@ -41,12 +43,14 @@ module taxi_mmcm_frac #(
 localparam MMCM_OUTPUT_CLK_PERIOD = MMCM_INPUT_CLK_PERIOD*MMCM_INPUT_DIV/MMCM_MULT*MMCM_OUTPUT_DIV;
 localparam MMCM2_INPUT_CLK_PERIOD = MMCM_INPUT_CLK_PERIOD*MMCM_INPUT_DIV/MMCM_MULT*MMCM2_CASC_DIV;
 
+localparam PSCLK_DIV_INT = PSCLK_EN ? PSCLK_DIV : MMCM_OUTPUT_DIV;
+
 // 1 phase shifter tap is 1/56th of the VCO period
 // To shift the frequency by OFFSET_NUM/OFFSET_DENOM, we need to shift the VCO output
 // by OFFSET_NUM VCO periods (56*OFFSET_NUM taps) every OFFSET_DENOM VCO periods.
 // Since the PSCLK is divided with respect to the VCO, rescale numerator by division factor
 localparam DIR = OFFSET_NUM >= 0;
-localparam NUM_1 = (DIR ? OFFSET_NUM : -OFFSET_NUM)*56*MMCM_OUTPUT_DIV;
+localparam NUM_1 = (DIR ? OFFSET_NUM : -OFFSET_NUM)*56*PSCLK_DIV_INT;
 localparam DENOM_1 = OFFSET_DENOM;
 
 localparam MMCM_MIN_PSCLK_CYCLES = 12;
@@ -64,6 +68,8 @@ wire mmcm_clk_out;
 wire mmcm_clk_bufg;
 wire mmcm_offset_clk_out;
 wire mmcm_offset_clk_bufg;
+wire mmcm_ps_clk_out;
+wire mmcm_ps_clk_bufg;
 
 wire mmcm2_clkfb;
 wire mmcm2_offset_clk_out;
@@ -74,11 +80,13 @@ assign locked = mmcm_locked && mmcm2_locked;
 assign output_clk = mmcm_clk_bufg;
 assign output_offset_clk = EXTRA_MMCM ? mmcm2_offset_clk_bufg : mmcm_offset_clk_bufg;
 
+wire ps_clk = PSCLK_EN ? mmcm_ps_clk_bufg : output_clk;
+
 logic [CNT_W-1:0] cnt_reg = '0;
 
 logic ps_en_reg = 1'b0;
 
-always_ff @(posedge output_clk) begin
+always_ff @(posedge ps_clk) begin
     ps_en_reg <= 1'b0;
 
     if (cnt_reg + NUM_1 >= DENOM_1) begin
@@ -114,8 +122,8 @@ MMCME3_ADV #(
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
     .CLKOUT1_USE_FINE_PS("TRUE"),
-    // Not used
-    .CLKOUT2_DIVIDE(1),
+    // phase shifter clock
+    .CLKOUT2_DIVIDE(PSCLK_EN ? PSCLK_DIV : 1),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT2_USE_FINE_PS("FALSE"),
@@ -167,8 +175,8 @@ clk_mmcm_inst (
     // offset output
     .CLKOUT1(mmcm_offset_clk_out),
     .CLKOUT1B(),
-    // Not used
-    .CLKOUT2(),
+    // phase shifter clock
+    .CLKOUT2(mmcm_ps_clk_out),
     .CLKOUT2B(),
     // Not used
     .CLKOUT3(),
@@ -193,7 +201,7 @@ clk_mmcm_inst (
     // dynamic phase shift
     .PSINCDEC(DIR ? 1'b0 : 1'b1),
     .PSEN(ps_en_reg),
-    .PSCLK(output_clk),
+    .PSCLK(ps_clk),
     .PSDONE(),
     // locked output
     .LOCKED(mmcm_locked),
@@ -215,6 +223,12 @@ BUFG
 mmcm_offset_clk_bufg_inst (
     .I(mmcm_offset_clk_out),
     .O(mmcm_offset_clk_bufg)
+);
+
+BUFG
+mmcm_ps_clk_bufg_inst (
+    .I(mmcm_ps_clk_out),
+    .O(mmcm_ps_clk_bufg)
 );
 
 if (EXTRA_MMCM) begin : extra_mmcm
