@@ -85,6 +85,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  LFSR self-synchronizing descrambler
 *  Low-speed serial
     *  I2C master
+    *  I2C single register
     *  MDIO master
     *  UART
 *  Primitives
