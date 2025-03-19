@@ -105,6 +105,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  XFCP UART interface
     *  XFCP AXI module
     *  XFCP AXI lite module
+    *  XFCP I2C master module
     *  XFCP switch
 
 ## Example designs
