@@ -44,8 +44,12 @@ class TB:
         self.data_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_data), dut.clk, dut.rst)
         self.data_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_data), dut.clk, dut.rst)
 
-        self.i2c_memory = I2cMemory(sda=dut.sda_o, sda_o=dut.sda_i,
-            scl=dut.scl_o, scl_o=dut.scl_i, addr=0x50, size=1024)
+        self.i2c_mem = []
+
+        self.i2c_mem.append(I2cMemory(sda=dut.sda_o, sda_o=dut.sda_i,
+            scl=dut.scl_o, scl_o=dut.scl_i, addr=0x50, size=1024))
+        self.i2c_mem.append(I2cMemory(sda=dut.sda_o, sda_o=dut.sda_i,
+            scl=dut.scl_o, scl_o=dut.scl_i, addr=0x51, size=1024))
 
         dut.prescale.setimmediatevalue(2)
         dut.stop_on_idle.setimmediatevalue(0)
@@ -91,39 +95,61 @@ class TB:
             await FallingEdge(self.dut.bus_active)
 
 
-async def run_test(dut, payload_lengths=None, payload_data=None):
+async def run_test_write(dut):
 
     tb = TB(dut)
 
     await tb.reset()
 
-    tb.log.info("Test write")
+    test_data = b'\x11\x22\x33\x44'
+
+    for mem in tb.i2c_mem:
+
+        await tb.i2c_write_data(mem.addr, b'\x00\x04'+test_data, stop=1)
+        await tb.i2c_wait_bus_idle()
+
+        data = mem.read_mem(4, 4)
+
+        tb.log.info("Read data: %s", data)
+
+        assert data == test_data
+
+        # assert not missed ack
+
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
+async def run_test_read(dut):
+
+    tb = TB(dut)
+
+    await tb.reset()
 
     test_data = b'\x11\x22\x33\x44'
 
-    await tb.i2c_write_data(0x50, b'\x00\x04'+test_data, stop=1)
-    await tb.i2c_wait_bus_idle()
+    for mem in tb.i2c_mem:
 
-    data = tb.i2c_memory.read_mem(4, 4)
+        mem.write_mem(4, test_data)
 
-    tb.log.info("Read data: %s", data)
+        await tb.i2c_write_data(mem.addr, b'\x00\x04')
+        read_data = await tb.i2c_read_data(mem.addr, 4, start=1, stop=1)
 
-    assert data == test_data
+        tb.log.info("Read data: %s", read_data)
 
-    # assert not missed ack
+        assert read_data == test_data
 
-    tb.log.info("Test read")
+        # assert not missed ack
 
-    await tb.i2c_write_data(0x50, b'\x00\x04')
-    read_data = await tb.i2c_read_data(0x50, 4, start=1, stop=1)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
 
-    tb.log.info("Read data: %s", read_data)
 
-    assert read_data == test_data
+async def run_test_nack(dut):
 
-    # assert not missed ack
+    tb = TB(dut)
 
-    tb.log.info("Test write to nonexistent device")
+    await tb.reset()
 
     await tb.i2c_write_data(0x55, b'\x00\x04'+b'\xde\xad\xbe\xef', stop=1)
     await tb.i2c_wait_bus_idle()
@@ -136,8 +162,14 @@ async def run_test(dut, payload_lengths=None, payload_data=None):
 
 if cocotb.SIM_NAME:
 
-    factory = TestFactory(run_test)
-    factory.generate_tests()
+    for test in [
+                run_test_write,
+                run_test_read,
+                run_test_nack,
+            ]:
+
+        factory = TestFactory(test)
+        factory.generate_tests()
 
 
 # cocotb-test

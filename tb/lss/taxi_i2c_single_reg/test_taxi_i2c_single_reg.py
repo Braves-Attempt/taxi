@@ -49,27 +49,47 @@ class TB:
         await RisingEdge(self.dut.clk)
 
 
-async def run_test(dut, payload_lengths=None, payload_data=None):
+async def run_test_write(dut):
 
     tb = TB(dut)
 
     await tb.reset()
-
-    tb.log.info("Test write")
 
     await tb.i2c_master.write(0x70, b'\x11\xAA')
     await tb.i2c_master.send_stop()
 
     assert dut.data_out.value.integer == 0xAA
 
-    tb.log.info("Test zero-length write")
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
+async def run_test_null_write(dut):
+
+    tb = TB(dut)
+
+    await tb.reset()
+
+    await RisingEdge(dut.clk)
+    dut.data_in.value = 0xAA
+    dut.data_latch.value = 1
+    await RisingEdge(dut.clk)
+    dut.data_latch.value = 0
 
     await tb.i2c_master.write(0x70, b'')
     await tb.i2c_master.send_stop()
 
     assert dut.data_out.value.integer == 0xAA
 
-    tb.log.info("Test read")
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
+async def run_test_read(dut):
+
+    tb = TB(dut)
+
+    await tb.reset()
 
     await RisingEdge(dut.clk)
     dut.data_in.value = 0x55
@@ -84,10 +104,26 @@ async def run_test(dut, payload_lengths=None, payload_data=None):
 
     assert data == b'\x55'*4
 
-    tb.log.info("Test write to nonexistent device")
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
+async def run_test_nack(dut):
+
+    tb = TB(dut)
+
+    await tb.reset()
+
+    await RisingEdge(dut.clk)
+    dut.data_in.value = 0xAA
+    dut.data_latch.value = 1
+    await RisingEdge(dut.clk)
+    dut.data_latch.value = 0
 
     await tb.i2c_master.write(0x55, b'\x00\x04'+b'\xde\xad\xbe\xef')
     await tb.i2c_master.send_stop()
+
+    assert dut.data_out.value.integer == 0xAA
 
     # assert missed ack
 
@@ -97,8 +133,15 @@ async def run_test(dut, payload_lengths=None, payload_data=None):
 
 if cocotb.SIM_NAME:
 
-    factory = TestFactory(run_test)
-    factory.generate_tests()
+    for test in [
+                run_test_write,
+                run_test_null_write,
+                run_test_read,
+                run_test_nack,
+            ]:
+
+        factory = TestFactory(test)
+        factory.generate_tests()
 
 
 # cocotb-test
