@@ -84,8 +84,9 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  LFSR self-synchronizing scrambler
     *  LFSR self-synchronizing descrambler
 *  Low-speed serial
-    *  UART
+    *  I2C master
     *  MDIO master
+    *  UART
 *  Primitives
     *  Arbiter
     *  Priority encoder
