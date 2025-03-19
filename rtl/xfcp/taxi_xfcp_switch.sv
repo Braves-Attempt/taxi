@@ -38,8 +38,8 @@ module taxi_xfcp_switch #
     taxi_axis_if.snk   xfcp_dsp_us[PORTS]
 );
 
-parameter CL_PORTS = PORTS > 1 ? $clog2(PORTS) : 1;
-parameter CL_PORTS_P1 = $clog2(PORTS+1);
+localparam CL_PORTS = PORTS > 1 ? $clog2(PORTS) : 1;
+localparam CL_PORTS_P1 = $clog2(PORTS+1);
 
 // check configuration
 if (PORTS < 1 || PORTS > 256)
