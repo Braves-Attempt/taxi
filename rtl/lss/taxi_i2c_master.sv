@@ -31,10 +31,8 @@ module taxi_i2c_master (
      */
     input  wire logic         scl_i,
     output wire logic         scl_o,
-    output wire logic         scl_t,
     input  wire logic         sda_i,
     output wire logic         sda_o,
-    output wire logic         sda_t,
 
     /*
      * Status
@@ -124,22 +122,13 @@ stop_on_idle
     automatically issue stop when command input is not valid
 
 Example of interfacing with tristate pins:
-(this will work for any tristate bus)
-
-assign scl_i = scl_pin;
-assign scl_pin = scl_t ? 1'bz : scl_o;
-assign sda_i = sda_pin;
-assign sda_pin = sda_t ? 1'bz : sda_o;
-
-Equivalent code that does not use *_t connections:
-(we can get away with this because I2C is open-drain)
 
 assign scl_i = scl_pin;
 assign scl_pin = scl_o ? 1'bz : 1'b0;
 assign sda_i = sda_pin;
 assign sda_pin = sda_o ? 1'bz : 1'b0;
 
-Example of two interconnected I2C devices:
+Example of two interconnected internal I2C devices:
 
 assign scl_1_i = scl_1_o & scl_2_o;
 assign scl_2_i = scl_1_o & scl_2_o;
@@ -265,9 +254,7 @@ assign m_axis_data.tdest = '0;
 assign m_axis_data.tuser = '0;
 
 assign scl_o = scl_o_reg;
-assign scl_t = scl_o_reg;
 assign sda_o = sda_o_reg;
-assign sda_t = sda_o_reg;
 
 assign busy = busy_reg;
 assign bus_active = bus_active_reg;

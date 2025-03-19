@@ -28,10 +28,8 @@ module taxi_i2c_single_reg #(
      */
     input  wire logic        scl_i,
     output wire logic        scl_o,
-    output wire logic        scl_t,
     input  wire logic        sda_i,
     output wire logic        sda_o,
-    output wire logic        sda_t,
 
     /*
      * Data register
@@ -72,9 +70,7 @@ logic last_scl_i_reg = 1'b1;
 logic last_sda_i_reg = 1'b1;
 
 assign scl_o = 1'b1;
-assign scl_t = 1'b1;
 assign sda_o = sda_o_reg;
-assign sda_t = sda_o_reg;
 
 assign data_out = data_reg;
 

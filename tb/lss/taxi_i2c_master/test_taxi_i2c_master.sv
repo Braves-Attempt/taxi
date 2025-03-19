@@ -27,10 +27,8 @@ taxi_axis_if #(.DATA_W(8)) m_axis_data();
 
 logic scl_i;
 logic scl_o;
-logic scl_t;
 logic sda_i;
 logic sda_o;
-logic sda_t;
 
 logic busy;
 logic bus_control;
@@ -57,10 +55,8 @@ uut (
      */
     .scl_i(scl_i),
     .scl_o(scl_o),
-    .scl_t(scl_t),
     .sda_i(sda_i),
     .sda_o(sda_o),
-    .sda_t(sda_t),
 
     /*
      * Status
