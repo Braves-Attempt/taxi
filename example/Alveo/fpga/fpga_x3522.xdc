@@ -61,9 +61,9 @@ set_output_delay 0 [get_ports {dsfp_led_r[*] dsfp_led_g[*] dsfp_led_b[*]}]
 #set_false_path -to [get_ports {pps_out}]
 #set_output_delay 0 [get_ports {pps_out}]
 
-# UART
-set_property -dict {LOC AP24 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_txd]
-set_property -dict {LOC AR24 IOSTANDARD LVCMOS18} [get_ports uart_rxd]
+# UART (DMB-2 FT4232H channel CDBUS)
+set_property -dict {LOC AP24 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_txd] ;# DMB-2 U4.39 RXD CDBUS1
+set_property -dict {LOC AR24 IOSTANDARD LVCMOS18} [get_ports uart_rxd] ;# DMB-2 U4.38 TXD CDBUS0
 
 set_false_path -to [get_ports {uart_txd}]
 set_output_delay 0 [get_ports {uart_txd}]

@@ -42,6 +42,7 @@ set_false_path -to [get_ports {led0_r led0_g led0_b led1_r led1_g led1_b led2_r 
 set_output_delay 0 [get_ports {led0_r led0_g led0_b led1_r led1_g led1_b led2_r led2_g led2_b led3_r led3_g led3_b led4 led5 led6 led7}]
 
 # Reset button
+# Note: IC8.43 BDBUS4 DTR drives FPGA pin C2 (reset_n) via JP2
 set_property -dict {LOC C2   IOSTANDARD LVCMOS33} [get_ports reset_n]
 
 set_false_path -from [get_ports {reset_n}]
@@ -103,9 +104,10 @@ set_input_delay 0 [get_ports {sw[*]}]
 #set_property -dict {LOC H2   IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports {gpio_jd9}] ;# PMOD JD pin 9
 #set_property -dict {LOC G2   IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports {gpio_jd10}] ;# PMOD JD pin 10
 
-# UART
-set_property -dict {LOC D10  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 12} [get_ports uart_txd]
-set_property -dict {LOC A9   IOSTANDARD LVCMOS33} [get_ports uart_rxd]
+# UART (IC8 FT2232H BDBUS)
+# Note: IC8.43 BDBUS4 DTR drives FPGA pin C2 (reset_n) via JP2
+set_property -dict {LOC D10  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 12} [get_ports uart_txd] ;# IC8.39 BDBUS1 RXD
+set_property -dict {LOC A9   IOSTANDARD LVCMOS33} [get_ports uart_rxd] ;# IC8.38 BDBUS0 TXD
 
 set_false_path -to [get_ports {uart_txd}]
 set_output_delay 0 [get_ports {uart_txd}]

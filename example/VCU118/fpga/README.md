@@ -16,6 +16,7 @@ The design places looped-back MACs on the BASE-T and QSFP28 ports as well as a l
 ## Board details
 
 *  FPGA: xcvu9p-flga2104-2L-e
+*  USB UART: Silicon Labs CP2105 SCI
 *  1000BASE-T PHY: TI DP83867ISRGZ via SGMII
 *  25GBASE-R PHY: Soft PCS with GTY transceivers
 

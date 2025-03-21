@@ -46,8 +46,8 @@ module fpga #
      */
     input  wire logic        uart_rxd,
     output wire logic        uart_txd,
-    output wire logic        uart_rts,
-    input  wire logic        uart_cts,
+    input  wire logic        uart_rts,
+    output wire logic        uart_cts,
 
     /*
      * Ethernet: 1000BASE-T SGMII
@@ -228,7 +228,7 @@ debounce_switch_inst (
 );
 
 wire uart_rxd_int;
-wire uart_cts_int;
+wire uart_rts_int;
 
 taxi_sync_signal #(
     .WIDTH(2),
@@ -236,8 +236,8 @@ taxi_sync_signal #(
 )
 sync_signal_inst (
     .clk(clk_125mhz_int),
-    .in({uart_rxd, uart_cts}),
-    .out({uart_rxd_int, uart_cts_int})
+    .in({uart_rxd, uart_rts}),
+    .out({uart_rxd_int, uart_rts_int})
 );
 
 // SGMII interface to PHY
@@ -377,8 +377,8 @@ core_inst (
      */
     .uart_rxd(uart_rxd_int),
     .uart_txd(uart_txd),
-    .uart_rts(uart_rts),
-    .uart_cts(uart_cts_int),
+    .uart_rts(uart_rts_int),
+    .uart_cts(uart_cts),
 
     /*
      * Ethernet: 1000BASE-T SGMII

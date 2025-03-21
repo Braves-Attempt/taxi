@@ -55,8 +55,8 @@ module fpga_core #
      */
     input  wire logic        uart_rxd,
     output wire logic        uart_txd,
-    output wire logic        uart_rts,
-    input  wire logic        uart_cts,
+    input  wire logic        uart_rts,
+    output wire logic        uart_cts,
 
     /*
      * Ethernet: 1000BASE-X SFP
@@ -106,7 +106,7 @@ module fpga_core #
 assign led = sw;
 
 // UART
-assign uart_rts = 0;
+assign uart_cts = 1'b0;
 
 taxi_axis_if #(.DATA_W(8)) axis_uart();
 

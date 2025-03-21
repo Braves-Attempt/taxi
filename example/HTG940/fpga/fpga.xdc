@@ -64,12 +64,12 @@ set_property -dict {LOC BC33 IOSTANDARD LVCMOS12} [get_ports {sw[7]}]
 set_false_path -from [get_ports {sw[*]}]
 set_input_delay 0 [get_ports {sw[*]}]
 
-# UART
-set_property -dict {LOC R15  IOSTANDARD LVCMOS18} [get_ports uart_txd]
-set_property -dict {LOC P15  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_rxd]
-set_property -dict {LOC L15  IOSTANDARD LVCMOS18} [get_ports uart_rts]
-set_property -dict {LOC D14  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_cts]
-set_property -dict {LOC P16  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_rst_n]
+# UART (U53 CP2103)
+set_property -dict {LOC R15  IOSTANDARD LVCMOS18} [get_ports {uart_txd}] ;# U53.25 TXD_O
+set_property -dict {LOC P15  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_rxd}] ;# U53.24 RXD_I
+set_property -dict {LOC L15  IOSTANDARD LVCMOS18} [get_ports {uart_rts}] ;# U53.23 RTS_O_B
+set_property -dict {LOC D14  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_cts}] ;# U53.22 CTS_I_B
+set_property -dict {LOC P16  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_rst_n}] ;# U53.9 RST_B
 
 set_false_path -to [get_ports {uart_rxd uart_cts uart_rst_n}]
 set_output_delay 0 [get_ports {uart_rxd uart_cts uart_rst_n}]

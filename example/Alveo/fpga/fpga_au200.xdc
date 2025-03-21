@@ -75,9 +75,9 @@ set_property -dict {LOC AP20 IOSTANDARD LVCMOS12} [get_ports {sw[3]}]
 set_false_path -from [get_ports {sw[*]}]
 set_input_delay 0 [get_ports {sw[*]}]
 
-# UART
-set_property -dict {LOC BB20 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports uart_txd]
-set_property -dict {LOC BF18 IOSTANDARD LVCMOS12} [get_ports uart_rxd]
+# UART (U27 FT4232H channel CDBUS)
+set_property -dict {LOC BB20 IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports uart_txd] ;# U27.39 CDBUS1 RXD
+set_property -dict {LOC BF18 IOSTANDARD LVCMOS12} [get_ports uart_rxd] ;# U27.38 CDBUS0 TXD
 
 set_false_path -to [get_ports {uart_txd}]
 set_output_delay 0 [get_ports {uart_txd}]

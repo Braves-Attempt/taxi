@@ -14,6 +14,7 @@ The design places a looped-back MAC on the BASE-T port, as well as a looped-back
 ## Board details
 
 *  FPGA: xcvu9p-flgb2104-2-e
+*  USB UART: Silicon Labs CP2103
 *  1000BASE-T PHY: TI DP83867IRPAP via RGMII
 
 ## Licensing

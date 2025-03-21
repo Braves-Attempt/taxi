@@ -91,11 +91,11 @@ set_input_delay 0 [get_ports {sw[*]}]
 #set_false_path -to [get_ports {pmod1[*]}]
 #set_output_delay 0 [get_ports {pmod1[*]}]
 
-# UART
-set_property -dict {LOC AU15 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_txd]
-set_property -dict {LOC AT15 IOSTANDARD LVCMOS18} [get_ports uart_rxd]
-set_property -dict {LOC AU14 IOSTANDARD LVCMOS18} [get_ports uart_rts]
-set_property -dict {LOC AT14 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_cts]
+# USB UART (U34 FT4232H CDBUS)
+set_property -dict {LOC AU15 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_txd] ;# U34.39 CDBUS1 RXD
+set_property -dict {LOC AT15 IOSTANDARD LVCMOS18} [get_ports uart_rxd] ;# U34.38 CDBUS0 TXD
+set_property -dict {LOC AU14 IOSTANDARD LVCMOS18} [get_ports uart_rts] ;# U34.40 CDBUS2 RTS#
+set_property -dict {LOC AT14 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports uart_cts] ;# U34.41 CDBUS3 CTS#
 
 set_false_path -to [get_ports {uart_txd uart_cts}]
 set_output_delay 0 [get_ports {uart_txd uart_cts}]

@@ -6,22 +6,23 @@ This example design targets the Xilinx ZCU111 FPGA board.
 
 The design places looped-back MACs on the SFP+ ports as well as a looped-back UART on on the USB UART connection.
 
-* USB UART
-  * Looped-back UART
-* QSFP28
-  * Looped-back 10GBASE-R or 25GBASE-R MACs via GTY transceivers
+*  USB UART
+    *  Looped-back UART
+*  QSFP28
+    *  Looped-back 10GBASE-R or 25GBASE-R MACs via GTY transceivers
 
 ## Board details
 
-* FPGA: xczu28dr-ffvg1517-2-e
-* 25GBASE-R PHY: Soft PCS with GTY transceivers
+*  FPGA: xczu28dr-ffvg1517-2-e
+*  USB UART: FTDI FT4232H
+*  25GBASE-R PHY: Soft PCS with GTY transceivers
 
 ## Licensing
 
-* Toolchain
-  * Vivado Enterprise (requires license)
-* IP
-  * No licensed vendor IP or 3rd party IP
+*  Toolchain
+    *  Vivado Enterprise (requires license)
+*  IP
+    *  No licensed vendor IP or 3rd party IP
 
 ## How to build
 
@@ -33,7 +34,7 @@ For correct operation, several DIP switches need to be set correctly.
 
 DIP switch settings:
 
-* SW6: all ON (select JTAG boot)
+*  SW6: all ON (select JTAG boot)
 
 ## How to test
 

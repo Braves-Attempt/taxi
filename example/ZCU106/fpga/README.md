@@ -14,6 +14,7 @@ The design places looped-back MACs on the SFP+ ports as well as a looped-back UA
 ## Board details
 
 *  FPGA: xczu7ev-ffvc1156-2-e
+*  USB UART: Silicon Labs CP2108
 *  10GBASE-R PHY: Soft PCS with GTH transceivers
 
 ## Licensing

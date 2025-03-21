@@ -18,6 +18,7 @@ The design places looped-back MACs on both the BASE-T port as well as the SFP+ c
 ## Board details
 
 *  FPGA: XC7K325T-2FFG900C
+*  USB UART: Silicon Labs CP2103
 *  1000BASE-T PHY: Marvell 88E1111 via GMII, RGMII, or SGMII
 *  1000BASE-X PHY: Xilinx PCS/PMA core via GTX transceiver
 

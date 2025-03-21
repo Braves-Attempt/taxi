@@ -14,6 +14,7 @@ The design places a looped-back MAC on the BASE-T port, as well as a looped-back
 ## Board details
 
 *  FPGA: XC7A35TICSG324-1L
+*  USB UART: FTDI FT2232H
 *  PHY: TI DP83848J via MII
 
 ## Licensing

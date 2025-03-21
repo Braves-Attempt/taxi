@@ -44,13 +44,13 @@ set_property -dict {LOC F17 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports qs
 set_false_path -to [get_ports {qsfp_led_act qsfp_led_stat_g qsfp_led_stat_y}]
 set_output_delay 0 [get_ports {qsfp_led_act qsfp_led_stat_g qsfp_led_stat_y}]
 
-# UART
-set_property -dict {LOC BE26 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd[0]}]
-set_property -dict {LOC BF26 IOSTANDARD LVCMOS18} [get_ports {uart_rxd[0]}]
-set_property -dict {LOC A17  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd[1]}]
-set_property -dict {LOC B15  IOSTANDARD LVCMOS18} [get_ports {uart_rxd[1]}]
-set_property -dict {LOC A19  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd[2]}]
-set_property -dict {LOC A18  IOSTANDARD LVCMOS18} [get_ports {uart_rxd[2]}]
+# UART (DMB-1 FT4232H)
+set_property -dict {LOC BE26 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd[0]}] ;# DMB-1 U9.39 CDBUS1 RXD
+set_property -dict {LOC BF26 IOSTANDARD LVCMOS18} [get_ports {uart_rxd[0]}] ;# DMB-1 U9.38 CDBUS0 TXD
+set_property -dict {LOC A17  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd[1]}] ;# DMB-1 U9.52 DDBUS1 RXD
+set_property -dict {LOC B15  IOSTANDARD LVCMOS18} [get_ports {uart_rxd[1]}] ;# DMB-1 U9.48 DDBUS0 TXD
+set_property -dict {LOC A19  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd[2]}] ;# DMB-1 U18.39 CDBUS1 RXD
+set_property -dict {LOC A18  IOSTANDARD LVCMOS18} [get_ports {uart_rxd[2]}] ;# DMB-1 U18.38 CDBUS0 TXD
 
 set_false_path -to [get_ports {uart_txd[*]}]
 set_output_delay 0 [get_ports {uart_txd[*]}]
