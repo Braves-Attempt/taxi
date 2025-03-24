@@ -372,7 +372,8 @@ mdio_master_inst (
 
     .busy(),
 
-    .prescale(8'd3)
+    // The TI DP83867IS PHY chip supports an MDC frequency of 25 MHz
+    .prescale(8'(125/25/2))
 );
 
 // QSFP28
