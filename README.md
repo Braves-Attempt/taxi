@@ -98,6 +98,9 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  PTP TD leaf clock
     *  PTP TD PHC
     *  PTP TD relative-to-ToD converter
+*  Statistics collection subsystem
+    *  Statistics collector
+    *  Statistics counter
 *  Synchronization primitives
     *  Reset synchronizer
     *  Signal synchronizer
