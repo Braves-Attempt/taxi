@@ -35,7 +35,7 @@ taxi_axil_if #(
     .DATA_W(DATA_W),
     .ADDR_W(ADDR_W+16),
     .STRB_W(STRB_W)
-) s_axil_a(), m_axil_a(), s_axil_b(), m_axil_b();
+) s_axil_a(), s_axil_b();
 
 taxi_axil_dp_ram #(
     .ADDR_W(ADDR_W),

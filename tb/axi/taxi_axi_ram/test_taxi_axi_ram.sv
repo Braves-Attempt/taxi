@@ -35,7 +35,7 @@ taxi_axi_if #(
     .ADDR_W(ADDR_W+16),
     .STRB_W(STRB_W),
     .ID_W(ID_W)
-) s_axi(), m_axi();
+) s_axi();
 
 taxi_axi_ram #(
     .ADDR_W(ADDR_W),
