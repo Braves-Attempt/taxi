@@ -6,6 +6,8 @@ AXI, AXI stream, Ethernet, and PCIe components in System Verilog.
 
 GitHub repository: https://github.com/fpganinja/taxi
 
+Documentation: https://docs.taxi.fpga.ninja/
+
 ## Introduction
 
 The goal of the Taxi transport library is to provide a set of performant, easy-to-use building blocks in modern System Verilog facilitating data transport and interfacing, both internally via AXI and AXI stream, and externally via Ethernet, PCI express, UART, and I2C.  The building blocks are accompanied by testbenches and simulation models utilizing Cocotb and Verilator.
