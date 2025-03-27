@@ -253,7 +253,7 @@ async def run_test_error(dut, ifg=12):
 
 
 def size_list():
-    return list(range(60, 128)) + [512, 1514, 9214] + [60]*10
+    return list(range(60, 128)) + [512, 1514, 9214] + [60]*10 + [i for i in range(64, 73) for k in range(8)]
 
 
 def incrementing_payload(length):
