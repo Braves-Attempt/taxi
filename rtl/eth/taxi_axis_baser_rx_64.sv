@@ -429,9 +429,9 @@ always_ff @(posedge clk) begin
     if (lanes_swapped) begin
         if (delay_type_valid) begin
             input_type_d0 <= delay_type;
-        end else if (encoded_rx_hdr == SYNC_DATA) begin
+        end else if (encoded_rx_hdr[0] == SYNC_DATA[0]) begin
             input_type_d0 <= INPUT_TYPE_DATA;
-        end else if (encoded_rx_hdr == SYNC_CTRL) begin
+        end else begin
             case (encoded_rx_data[7:4])
                 BLOCK_TYPE_TERM_0[7:4]: input_type_d0 <= INPUT_TYPE_TERM_4;
                 BLOCK_TYPE_TERM_1[7:4]: input_type_d0 <= INPUT_TYPE_TERM_5;
@@ -458,13 +458,9 @@ always_ff @(posedge clk) begin
                 BLOCK_TYPE_OS_04[7:4]: input_type_d0 <= INPUT_TYPE_IDLE;
                 BLOCK_TYPE_OS_0[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
                 default: begin
-                    rx_bad_block_reg <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_ERROR;
                 end
             endcase
-        end else begin
-            rx_bad_block_reg <= 1'b1;
-            input_type_d0 <= INPUT_TYPE_ERROR;
         end
         if (delay_type_valid) begin
             // mask off trailing data
@@ -473,9 +469,9 @@ always_ff @(posedge clk) begin
             input_data_d0 <= {encoded_rx_data_masked[31:0], swap_data};
         end
     end else begin
-        if (encoded_rx_hdr == SYNC_DATA) begin
+        if (encoded_rx_hdr[0] == SYNC_DATA[0]) begin
             input_type_d0 <= INPUT_TYPE_DATA;
-        end else if (encoded_rx_hdr == SYNC_CTRL) begin
+        end else begin
             case (encoded_rx_data[7:4])
                 BLOCK_TYPE_CTRL[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
                 BLOCK_TYPE_OS_4[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
@@ -490,13 +486,9 @@ always_ff @(posedge clk) begin
                 BLOCK_TYPE_TERM_6[7:4]: input_type_d0 <= INPUT_TYPE_TERM_6;
                 BLOCK_TYPE_TERM_7[7:4]: input_type_d0 <= INPUT_TYPE_TERM_7;
                 default: begin
-                    rx_bad_block_reg <= 1'b1;
                     input_type_d0 <= INPUT_TYPE_ERROR;
                 end
             endcase
-        end else begin
-            rx_bad_block_reg <= 1'b1;
-            input_type_d0 <= INPUT_TYPE_ERROR;
         end
         input_data_d0 <= encoded_rx_data_masked;
     end
@@ -580,10 +572,12 @@ always_ff @(posedge clk) begin
             end
             default: begin
                 // invalid block type
+                frame_reg <= 1'b0;
             end
         endcase
     end else begin
         // invalid header
+        frame_reg <= 1'b0;
     end
 
     // check all block type bits to detect bad encodings
@@ -610,13 +604,11 @@ always_ff @(posedge clk) begin
             default: begin
                 // invalid block type
                 rx_bad_block_reg <= 1'b1;
-                input_type_d0 <= INPUT_TYPE_ERROR;
             end
         endcase
     end else begin
         // invalid header
         rx_bad_block_reg <= 1'b1;
-        input_type_d0 <= INPUT_TYPE_ERROR;
     end
 
     // capture timestamps
