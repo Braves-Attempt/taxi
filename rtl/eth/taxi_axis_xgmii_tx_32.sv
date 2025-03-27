@@ -50,7 +50,7 @@ module taxi_axis_xgmii_tx_32 #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg,
+    input  wire logic [7:0]           cfg_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable,
 
     /*

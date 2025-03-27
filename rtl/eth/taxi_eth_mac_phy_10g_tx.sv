@@ -61,7 +61,7 @@ module taxi_eth_mac_phy_10g_tx #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg,
+    input  wire logic [7:0]           cfg_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable,
     input  wire logic                 cfg_tx_prbs31_enable
 );
