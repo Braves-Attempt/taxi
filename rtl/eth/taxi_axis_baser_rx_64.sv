@@ -160,6 +160,10 @@ logic [DATA_W-1:0] input_data_d1 = '0;
 logic [3:0] input_type_d0 = INPUT_TYPE_IDLE;
 logic [3:0] input_type_d1 = INPUT_TYPE_IDLE;
 
+logic input_start_swap = 1'b0;
+logic input_start_d0 = 1'b0;
+logic input_start_d1 = 1'b0;
+
 logic [DATA_W-1:0] m_axis_rx_tdata_reg = '0, m_axis_rx_tdata_next;
 logic [KEEP_W-1:0] m_axis_rx_tkeep_reg = '0, m_axis_rx_tkeep_next;
 logic m_axis_rx_tvalid_reg = 1'b0, m_axis_rx_tvalid_next;
@@ -279,7 +283,7 @@ always_comb begin
             // idle state - wait for packet
             reset_crc = 1'b1;
 
-            if (input_type_d1 == INPUT_TYPE_START_0 && cfg_rx_enable) begin
+            if (input_start_d1 && cfg_rx_enable) begin
                 // start condition
                 reset_crc = 1'b0;
                 state_next = STATE_PAYLOAD;
@@ -401,6 +405,9 @@ always_ff @(posedge clk) begin
 
     swap_data <= encoded_rx_data_masked[63:32];
 
+    input_start_swap <= 1'b0;
+    input_start_d0 <= input_start_swap;
+
     if (PTP_TS_EN && PTP_TS_FMT_TOD) begin
         // ns field rollover
         ptp_ts_adj_reg[15:0] <= ptp_ts_reg[15:0];
@@ -409,21 +416,17 @@ always_ff @(posedge clk) begin
         ptp_ts_adj_reg[95:48] <= ptp_ts_reg[95:48] + 1;
     end
 
+    // start control character detection
     if (encoded_rx_hdr == SYNC_CTRL && encoded_rx_data[7:0] == BLOCK_TYPE_START_0) begin
         lanes_swapped <= 1'b0;
-        input_type_d0 <= INPUT_TYPE_START_0;
-        input_data_d0 <= encoded_rx_data_masked;
+        input_start_d0 <= 1'b1;
     end else if (encoded_rx_hdr == SYNC_CTRL && (encoded_rx_data[7:0] == BLOCK_TYPE_START_4 || encoded_rx_data[7:0] == BLOCK_TYPE_OS_START)) begin
         lanes_swapped <= 1'b1;
-        delay_type_valid <= 1'b1;
+        input_start_swap <= 1'b1;
+    end
 
-        if (delay_type_valid) begin
-            input_type_d0 <= delay_type;
-        end else begin
-            input_type_d0 <= INPUT_TYPE_IDLE;
-        end
-        input_data_d0 <= {encoded_rx_data_masked[31:0], swap_data};
-    end else if (lanes_swapped) begin
+    // lane swapping and termination character detection
+    if (lanes_swapped) begin
         if (delay_type_valid) begin
             input_type_d0 <= delay_type;
         end else if (encoded_rx_hdr == SYNC_DATA) begin
@@ -616,7 +619,8 @@ always_ff @(posedge clk) begin
         input_type_d0 <= INPUT_TYPE_ERROR;
     end
 
-    if (delay_type == INPUT_TYPE_START_0 && delay_type_valid) begin
+    // capture timestamps
+    if (input_start_swap) begin
         start_packet_reg <= 2'b10;
         if (PTP_TS_FMT_TOD) begin
             ptp_ts_reg[45:0] <= ptp_ts[45:0] + 46'(ts_inc_reg >> 1);
@@ -626,14 +630,13 @@ always_ff @(posedge clk) begin
         end
     end
 
-    if (input_type_d0 == INPUT_TYPE_START_0) begin
-        if (!lanes_swapped) begin
-            start_packet_reg <= 2'b01;
-            ptp_ts_reg <= ptp_ts;
-        end
+    if (input_start_d0 && !lanes_swapped) begin
+        start_packet_reg <= 2'b01;
+        ptp_ts_reg <= ptp_ts;
     end
 
     input_type_d1 <= input_type_d0;
+    input_start_d1 <= input_start_d0;
     input_data_d1 <= input_data_d0;
 
     if (reset_crc) begin
@@ -661,6 +664,10 @@ always_ff @(posedge clk) begin
 
         input_type_d0 <= INPUT_TYPE_IDLE;
         input_type_d1 <= INPUT_TYPE_IDLE;
+
+        input_start_swap <= 1'b0;
+        input_start_d0 <= 1'b0;
+        input_start_d1 <= 1'b0;
 
         lanes_swapped <= 1'b0;
 

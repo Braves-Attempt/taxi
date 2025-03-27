@@ -109,7 +109,7 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
 
 
 def size_list():
-    return list(range(60, 128)) + [512, 1514, 9214] + [60]*10
+    return list(range(60, 128)) + [512, 1514, 9214] + [60]*10 + [i for i in range(64, 73) for k in range(8)]
 
 
 def incrementing_payload(length):
@@ -125,7 +125,7 @@ if cocotb.SIM_NAME:
     factory = TestFactory(run_test)
     factory.add_option("payload_lengths", [size_list])
     factory.add_option("payload_data", [incrementing_payload])
-    factory.add_option("ifg", [12, 0])
+    factory.add_option("ifg", list(range(0, 13)))
     factory.generate_tests()
 
 

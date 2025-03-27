@@ -326,6 +326,19 @@ always_ff @(posedge clk) begin
         ptp_ts_adj_reg[95:48] <= ptp_ts_reg[95:48] + 1;
     end
 
+    // start control character detection
+    if (xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START) begin
+        lanes_swapped <= 1'b0;
+        xgmii_start_d0 <= 1'b1;
+
+        framing_error_reg <= xgmii_rxc[7:1] != 0;
+    end else if (xgmii_rxc[4] && xgmii_rxd[39:32] == XGMII_START) begin
+        lanes_swapped <= 1'b1;
+        xgmii_start_swap <= 1'b1;
+
+        framing_error_reg <= xgmii_rxc[7:5] != 0;
+    end
+
     // lane swapping and termination character detection
     if (lanes_swapped) begin
         xgmii_rxd_d0 <= {xgmii_rxd_masked[31:0], swap_rxd};
@@ -340,7 +353,6 @@ always_ff @(posedge clk) begin
                 term_lane_reg <= 3'(i);
                 term_present_reg <= 1'b1;
                 framing_error_reg <= ({xgmii_rxc[3:0], swap_rxc} & ({CTRL_W{1'b1}} >> (CTRL_W-i))) != 0;
-                lanes_swapped <= 1'b0;
             end
         end
     end else begin
@@ -356,28 +368,8 @@ always_ff @(posedge clk) begin
                 term_lane_reg <= 3'(i);
                 term_present_reg <= 1'b1;
                 framing_error_reg <= (xgmii_rxc & ({CTRL_W{1'b1}} >> (CTRL_W-i))) != 0;
-                lanes_swapped <= 1'b0;
             end
         end
-    end
-
-    // start control character detection
-    if (xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START) begin
-        lanes_swapped <= 1'b0;
-
-        xgmii_start_d0 <= 1'b1;
-
-        term_lane_reg <= 0;
-        term_present_reg <= 1'b0;
-        framing_error_reg <= xgmii_rxc[7:1] != 0;
-    end else if (xgmii_rxc[4] && xgmii_rxd[39:32] == XGMII_START) begin
-        lanes_swapped <= 1'b1;
-
-        xgmii_start_swap <= 1'b1;
-
-        term_lane_reg <= 0;
-        term_present_reg <= 1'b0;
-        framing_error_reg <= xgmii_rxc[7:5] != 0;
     end
 
     // capture timestamps
