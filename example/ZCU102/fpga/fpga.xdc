@@ -102,10 +102,10 @@ set_input_delay 0 [get_ports {sw[*]}]
 #set_output_delay 0 [get_ports {proto_gpio[*]}]
 
 # UART (U40 CP2108 ch 2)
-set_property -dict {LOC F13  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports uart_txd] ;# U40.15 RX_2
-set_property -dict {LOC E13  IOSTANDARD LVCMOS12} [get_ports uart_rxd] ;# U40.16 TX_2
-set_property -dict {LOC D12  IOSTANDARD LVCMOS12} [get_ports uart_rts] ;# U40.14 RTS_2
-set_property -dict {LOC E12  IOSTANDARD LVCMOS12 SLEW SLOW DRIVE 8} [get_ports uart_cts] ;# U40.13 CTS_2
+set_property -dict {LOC F13  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports uart_txd] ;# U40.15 RX_2
+set_property -dict {LOC E13  IOSTANDARD LVCMOS33} [get_ports uart_rxd] ;# U40.16 TX_2
+set_property -dict {LOC D12  IOSTANDARD LVCMOS33} [get_ports uart_rts] ;# U40.14 RTS_2
+set_property -dict {LOC E12  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 8} [get_ports uart_cts] ;# U40.13 CTS_2
 
 set_false_path -to [get_ports {uart_txd uart_cts}]
 set_output_delay 0 [get_ports {uart_txd uart_cts}]
