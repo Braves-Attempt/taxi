@@ -269,8 +269,6 @@ if (SFP_RATE == 0) begin : sfp_phy
     wire sfp0_gmii_gtrefclk;
     wire sfp0_gmii_txuserclk;
     wire sfp0_gmii_txuserclk2;
-    wire sfp0_gmii_rxuserclk;
-    wire sfp0_gmii_rxuserclk2;
     wire sfp0_gmii_resetdone;
     wire sfp0_gmii_pmareset;
     wire sfp0_gmii_mmcm_locked;
@@ -320,8 +318,8 @@ if (SFP_RATE == 0) begin : sfp_phy
         .independent_clock_bufg(clk_62mhz_int),
         .userclk_out(sfp0_gmii_txuserclk),
         .userclk2_out(sfp0_gmii_txuserclk2),
-        .rxuserclk_out(sfp0_gmii_rxuserclk),
-        .rxuserclk2_out(sfp0_gmii_rxuserclk2),
+        .rxuserclk_out(),
+        .rxuserclk2_out(),
         .gtpowergood(),
         .resetdone(sfp0_gmii_resetdone),
         .pma_reset_out(sfp0_gmii_pmareset),
@@ -377,35 +375,35 @@ if (SFP_RATE == 0) begin : sfp_phy
 
     basex_pcs_pma_1
     sfp1_pcspma (
-      .gtrefclk(sfp0_gmii_gtrefclk),
-      .txn(sfp_tx_n[1]),
-      .txp(sfp_tx_p[1]),
-      .rxn(sfp_rx_n[1]),
-      .rxp(sfp_rx_p[1]),
-      .independent_clock_bufg(clk_62mhz_int),
-      .txoutclk(),
-      .gtpowergood(),
-      .rxoutclk(),
-      .resetdone(sfp1_gmii_resetdone),
-      .cplllock(),
-      .mmcm_reset(),
-      .userclk(sfp0_gmii_txuserclk),
-      .userclk2(sfp0_gmii_txuserclk2),
-      .pma_reset(sfp0_gmii_pmareset),
-      .mmcm_locked(sfp0_gmii_mmcm_locked),
-      .rxuserclk(sfp0_gmii_txuserclk),
-      .rxuserclk2(sfp0_gmii_txuserclk2),
-      .gmii_txd(sfp1_gmii_txd_int),
-      .gmii_tx_en(sfp1_gmii_tx_en_int),
-      .gmii_tx_er(sfp1_gmii_tx_er_int),
-      .gmii_rxd(sfp1_gmii_rxd_int),
-      .gmii_rx_dv(sfp1_gmii_rx_dv_int),
-      .gmii_rx_er(sfp1_gmii_rx_er_int),
-      .gmii_isolate(),
-      .configuration_vector(sfp1_config_vect),
-      .status_vector(sfp1_status_vect),
-      .reset(rst_125mhz_int),
-      .signal_detect(1'b1)
+        .gtrefclk(sfp0_gmii_gtrefclk),
+        .txn(sfp_tx_n[1]),
+        .txp(sfp_tx_p[1]),
+        .rxn(sfp_rx_n[1]),
+        .rxp(sfp_rx_p[1]),
+        .independent_clock_bufg(clk_62mhz_int),
+        .txoutclk(),
+        .gtpowergood(),
+        .rxoutclk(),
+        .resetdone(sfp1_gmii_resetdone),
+        .cplllock(),
+        .mmcm_reset(),
+        .userclk(sfp0_gmii_txuserclk),
+        .userclk2(sfp0_gmii_txuserclk2),
+        .pma_reset(sfp0_gmii_pmareset),
+        .mmcm_locked(sfp0_gmii_mmcm_locked),
+        .rxuserclk(1'b0),
+        .rxuserclk2(1'b0),
+        .gmii_txd(sfp1_gmii_txd_int),
+        .gmii_tx_en(sfp1_gmii_tx_en_int),
+        .gmii_tx_er(sfp1_gmii_tx_er_int),
+        .gmii_rxd(sfp1_gmii_rxd_int),
+        .gmii_rx_dv(sfp1_gmii_rx_dv_int),
+        .gmii_rx_er(sfp1_gmii_rx_er_int),
+        .gmii_isolate(),
+        .configuration_vector(sfp1_config_vect),
+        .status_vector(sfp1_status_vect),
+        .reset(rst_125mhz_int),
+        .signal_detect(1'b1)
     );
 
 end else begin
