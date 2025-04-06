@@ -41,11 +41,25 @@ logic [PTP_TS_W-1:0] ptp_ts;
 logic clk_enable;
 logic mii_select;
 
+logic [15:0] cfg_rx_max_pkt_len;
 logic cfg_rx_enable;
 
-logic start_packet;
-logic error_bad_frame;
-logic error_bad_fcs;
+logic rx_start_packet;
+logic stat_rx_byte;
+logic [15:0] stat_rx_pkt_len;
+logic stat_rx_pkt_fragment;
+logic stat_rx_pkt_jabber;
+logic stat_rx_pkt_ucast;
+logic stat_rx_pkt_mcast;
+logic stat_rx_pkt_bcast;
+logic stat_rx_pkt_vlan;
+logic stat_rx_pkt_good;
+logic stat_rx_pkt_bad;
+logic stat_rx_err_oversize;
+logic stat_rx_err_bad_fcs;
+logic stat_rx_err_bad_block;
+logic stat_rx_err_framing;
+logic stat_rx_err_preamble;
 
 taxi_axis_gmii_rx #(
     .DATA_W(DATA_W),
@@ -82,14 +96,28 @@ uut (
     /*
      * Configuration
      */
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable),
 
     /*
      * Status
      */
-    .start_packet(start_packet),
-    .error_bad_frame(error_bad_frame),
-    .error_bad_fcs(error_bad_fcs)
+    .rx_start_packet(rx_start_packet),
+    .stat_rx_byte(stat_rx_byte),
+    .stat_rx_pkt_len(stat_rx_pkt_len),
+    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+    .stat_rx_pkt_good(stat_rx_pkt_good),
+    .stat_rx_pkt_bad(stat_rx_pkt_bad),
+    .stat_rx_err_oversize(stat_rx_err_oversize),
+    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+    .stat_rx_err_bad_block(stat_rx_err_bad_block),
+    .stat_rx_err_framing(stat_rx_err_framing),
+    .stat_rx_err_preamble(stat_rx_err_preamble)
 );
 
 endmodule

@@ -45,6 +45,7 @@ class TB:
 
         dut.clk_enable.setimmediatevalue(1)
         dut.mii_select.setimmediatevalue(0)
+        dut.cfg_rx_max_pkt_len.setimmediatevalue(0)
         dut.cfg_rx_enable.setimmediatevalue(0)
 
     async def reset(self):
@@ -83,6 +84,7 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12, enable_
 
     tb.source.ifg = ifg
     tb.dut.mii_select.value = mii_sel
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
 
     if enable_gen is not None:
@@ -121,6 +123,44 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12, enable_
     await RisingEdge(dut.clk)
 
 
+async def run_test_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
+
+    tb = TB(dut)
+
+    tb.source.ifg = ifg
+    tb.dut.cfg_rx_max_pkt_len.value = 1518
+    tb.dut.cfg_rx_enable.value = 1
+
+    if enable_gen is not None:
+        tb.set_enable_generator(enable_gen())
+
+    await tb.reset()
+
+    test_data = bytes(x for x in range(60))
+
+    for k in range(3):
+        test_frame = GmiiFrame.from_payload(test_data)
+        if k == 1:
+            test_frame = GmiiFrame.from_payload(bytes(x % 256 for x in range(1515)))
+        await tb.source.send(test_frame)
+
+    for k in range(3):
+        rx_frame = await tb.sink.recv()
+
+        if k == 1:
+            frame_error = rx_frame.tuser[-1] & 1
+            assert frame_error
+        else:
+            frame_error = rx_frame.tuser & 1
+            assert rx_frame.tdata == test_data
+            assert frame_error == 0
+
+    assert tb.sink.empty()
+
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
 def size_list():
     return list(range(60, 128)) + [512, 1514] + [60]*10
 
@@ -138,6 +178,12 @@ if cocotb.SIM_NAME:
     factory = TestFactory(run_test)
     factory.add_option("payload_lengths", [size_list])
     factory.add_option("payload_data", [incrementing_payload])
+    factory.add_option("ifg", [12, 0])
+    factory.add_option("enable_gen", [None, cycle_en])
+    factory.add_option("mii_sel", [False, True])
+    factory.generate_tests()
+
+    factory = TestFactory(run_test_oversize)
     factory.add_option("ifg", [12, 0])
     factory.add_option("enable_gen", [None, cycle_en])
     factory.add_option("mii_sel", [False, True])
