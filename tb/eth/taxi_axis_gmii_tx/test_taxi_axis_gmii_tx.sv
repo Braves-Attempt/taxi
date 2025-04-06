@@ -46,11 +46,22 @@ logic [PTP_TS_W-1:0] ptp_ts;
 logic clk_enable;
 logic mii_select;
 
-logic [7:0] cfg_ifg;
+logic [15:0] cfg_tx_max_pkt_len;
+logic [7:0] cfg_tx_ifg;
 logic cfg_tx_enable;
 
-logic start_packet;
-logic error_underflow;
+logic tx_start_packet;
+logic stat_tx_byte;
+logic [15:0] stat_tx_pkt_len;
+logic stat_tx_pkt_ucast;
+logic stat_tx_pkt_mcast;
+logic stat_tx_pkt_bcast;
+logic stat_tx_pkt_vlan;
+logic stat_tx_pkt_good;
+logic stat_tx_pkt_bad;
+logic stat_tx_err_oversize;
+logic stat_tx_err_user;
+logic stat_tx_err_underflow;
 
 taxi_axis_gmii_tx #(
     .DATA_W(DATA_W),
@@ -91,14 +102,25 @@ uut (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
 
     /*
      * Status
      */
-    .start_packet(start_packet),
-    .error_underflow(error_underflow)
+    .tx_start_packet(tx_start_packet),
+    .stat_tx_byte(stat_tx_byte),
+    .stat_tx_pkt_len(stat_tx_pkt_len),
+    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+    .stat_tx_pkt_good(stat_tx_pkt_good),
+    .stat_tx_pkt_bad(stat_tx_pkt_bad),
+    .stat_tx_err_oversize(stat_tx_err_oversize),
+    .stat_tx_err_user(stat_tx_err_user),
+    .stat_tx_err_underflow(stat_tx_err_underflow)
 );
 
 endmodule

@@ -46,7 +46,8 @@ class TB:
 
         dut.clk_enable.setimmediatevalue(1)
         dut.mii_select.setimmediatevalue(0)
-        dut.cfg_ifg.setimmediatevalue(0)
+        dut.cfg_tx_max_pkt_len.setimmediatevalue(0)
+        dut.cfg_tx_ifg.setimmediatevalue(0)
         dut.cfg_tx_enable.setimmediatevalue(0)
 
     async def reset(self):
@@ -83,7 +84,8 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12, enable_
 
     tb = TB(dut)
 
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
     tb.dut.mii_select.value = mii_sel
 
@@ -124,7 +126,8 @@ async def run_test_underrun(dut, ifg=12, enable_gen=None, mii_sel=False):
 
     tb = TB(dut)
 
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
     tb.dut.mii_select.value = mii_sel
 
@@ -175,7 +178,8 @@ async def run_test_error(dut, ifg=12, enable_gen=None, mii_sel=False):
 
     tb = TB(dut)
 
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
     tb.dut.mii_select.value = mii_sel
 
@@ -190,6 +194,44 @@ async def run_test_error(dut, ifg=12, enable_gen=None, mii_sel=False):
         test_frame = AxiStreamFrame(test_data)
         if k == 1:
             test_frame.tuser = 1
+        await tb.source.send(test_frame)
+
+    for k in range(3):
+        rx_frame = await tb.sink.recv()
+
+        if k == 1:
+            assert rx_frame.error[-1] == 1
+        else:
+            assert rx_frame.get_payload() == test_data
+            assert rx_frame.check_fcs()
+            assert rx_frame.error is None
+
+    assert tb.sink.empty()
+
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
+async def run_test_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
+
+    tb = TB(dut)
+
+    tb.dut.cfg_tx_max_pkt_len.value = 1518
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_tx_enable.value = 1
+    tb.dut.mii_select.value = mii_sel
+
+    if enable_gen is not None:
+        tb.set_enable_generator(enable_gen())
+
+    await tb.reset()
+
+    test_data = bytes(x for x in range(60))
+
+    for k in range(3):
+        test_frame = AxiStreamFrame(test_data)
+        if k == 1:
+            test_frame = AxiStreamFrame(bytes(x % 256 for x in range(1515)))
         await tb.source.send(test_frame)
 
     for k in range(3):
@@ -230,7 +272,11 @@ if cocotb.SIM_NAME:
     factory.add_option("mii_sel", [False, True])
     factory.generate_tests()
 
-    for test in [run_test_underrun, run_test_error]:
+    for test in [
+                run_test_underrun,
+                run_test_error,
+                run_test_oversize,
+            ]:
 
         factory = TestFactory(test)
         factory.add_option("ifg", [12])

@@ -251,14 +251,25 @@ axis_gmii_tx_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(16'd9218),
+    .cfg_tx_ifg(cfg_ifg),
     .cfg_tx_enable(cfg_tx_enable),
 
     /*
      * Status
      */
-    .start_packet(tx_start_packet),
-    .error_underflow(tx_error_underflow)
+    .tx_start_packet(tx_start_packet),
+    .stat_tx_byte(),
+    .stat_tx_pkt_len(),
+    .stat_tx_pkt_ucast(),
+    .stat_tx_pkt_mcast(),
+    .stat_tx_pkt_bcast(),
+    .stat_tx_pkt_vlan(),
+    .stat_tx_pkt_good(),
+    .stat_tx_pkt_bad(),
+    .stat_tx_err_oversize(),
+    .stat_tx_err_user(),
+    .stat_tx_err_underflow(tx_error_underflow)
 );
 
 generate
