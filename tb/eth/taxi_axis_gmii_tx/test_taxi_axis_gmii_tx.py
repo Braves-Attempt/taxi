@@ -50,6 +50,22 @@ class TB:
         dut.cfg_tx_ifg.setimmediatevalue(0)
         dut.cfg_tx_enable.setimmediatevalue(0)
 
+        self.stats = {}
+        self.stats["tx_start_packet"] = 0
+        self.stats["stat_tx_byte"] = 0
+        self.stats["stat_tx_pkt_len"] = 0
+        self.stats["stat_tx_pkt_ucast"] = 0
+        self.stats["stat_tx_pkt_mcast"] = 0
+        self.stats["stat_tx_pkt_bcast"] = 0
+        self.stats["stat_tx_pkt_vlan"] = 0
+        self.stats["stat_tx_pkt_good"] = 0
+        self.stats["stat_tx_pkt_bad"] = 0
+        self.stats["stat_tx_err_oversize"] = 0
+        self.stats["stat_tx_err_user"] = 0
+        self.stats["stat_tx_err_underflow"] = 0
+
+        cocotb.start_soon(self._run_stats_counters())
+
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)
         await RisingEdge(self.dut.clk)
@@ -60,6 +76,15 @@ class TB:
         self.dut.rst.value = 0
         await RisingEdge(self.dut.clk)
         await RisingEdge(self.dut.clk)
+
+        for stat in self.stats:
+            self.stats[stat] = 0
+
+    async def _run_stats_counters(self):
+        while True:
+            await RisingEdge(self.dut.clk)
+            for stat in self.stats:
+                self.stats[stat] += int(getattr(self.dut, stat).value)
 
     def set_enable_generator(self, generator=None):
         if self._enable_cr is not None:
@@ -96,8 +121,13 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12, enable_
 
     test_frames = [payload_data(x) for x in payload_lengths()]
 
+    total_bytes = 0
+    total_pkts = 0
+
     for test_data in test_frames:
         await tb.source.send(AxiStreamFrame(test_data, tid=0, tuser=0))
+        total_bytes += max(len(test_data), 60)+4
+        total_pkts += 1
 
     for test_data in test_frames:
         rx_frame = await tb.sink.recv()
@@ -117,6 +147,22 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12, enable_
         assert abs(rx_frame_sfd_ns - ptp_ts_ns - (32 if enable_gen else 8)) < 0.01
 
     assert tb.sink.empty()
+
+    for stat, val in tb.stats.items():
+        tb.log.info("%s: %d", stat, val)
+
+    assert tb.stats["tx_start_packet"] == total_pkts
+    assert tb.stats["stat_tx_byte"] == total_bytes
+    assert tb.stats["stat_tx_pkt_len"] == total_bytes
+    assert tb.stats["stat_tx_pkt_ucast"] == total_pkts
+    assert tb.stats["stat_tx_pkt_mcast"] == 0
+    assert tb.stats["stat_tx_pkt_bcast"] == 0
+    assert tb.stats["stat_tx_pkt_vlan"] == 0
+    assert tb.stats["stat_tx_pkt_good"] == total_pkts
+    assert tb.stats["stat_tx_pkt_bad"] == 0
+    assert tb.stats["stat_tx_err_oversize"] == 0
+    assert tb.stats["stat_tx_err_user"] == 0
+    assert tb.stats["stat_tx_err_underflow"] == 0
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -170,6 +216,22 @@ async def run_test_underrun(dut, ifg=12, enable_gen=None, mii_sel=False):
 
     assert tb.sink.empty()
 
+    for stat, val in tb.stats.items():
+        tb.log.info("%s: %d", stat, val)
+
+    assert tb.stats["tx_start_packet"] == 3
+    assert tb.stats["stat_tx_byte"] == 64*3
+    assert tb.stats["stat_tx_pkt_len"] == 64*3
+    assert tb.stats["stat_tx_pkt_ucast"] == 3
+    assert tb.stats["stat_tx_pkt_mcast"] == 0
+    assert tb.stats["stat_tx_pkt_bcast"] == 0
+    assert tb.stats["stat_tx_pkt_vlan"] == 0
+    assert tb.stats["stat_tx_pkt_good"] == 2
+    assert tb.stats["stat_tx_pkt_bad"] == 1
+    assert tb.stats["stat_tx_err_oversize"] == 0
+    assert tb.stats["stat_tx_err_user"] == 0
+    assert tb.stats["stat_tx_err_underflow"] == 1
+
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
 
@@ -208,6 +270,22 @@ async def run_test_error(dut, ifg=12, enable_gen=None, mii_sel=False):
 
     assert tb.sink.empty()
 
+    for stat, val in tb.stats.items():
+        tb.log.info("%s: %d", stat, val)
+
+    assert tb.stats["tx_start_packet"] == 3
+    assert tb.stats["stat_tx_byte"] == 64*3
+    assert tb.stats["stat_tx_pkt_len"] == 64*3
+    assert tb.stats["stat_tx_pkt_ucast"] == 3
+    assert tb.stats["stat_tx_pkt_mcast"] == 0
+    assert tb.stats["stat_tx_pkt_bcast"] == 0
+    assert tb.stats["stat_tx_pkt_vlan"] == 0
+    assert tb.stats["stat_tx_pkt_good"] == 2
+    assert tb.stats["stat_tx_pkt_bad"] == 1
+    assert tb.stats["stat_tx_err_oversize"] == 0
+    assert tb.stats["stat_tx_err_user"] == 1
+    assert tb.stats["stat_tx_err_underflow"] == 0
+
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
 
@@ -245,6 +323,22 @@ async def run_test_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
             assert rx_frame.error is None
 
     assert tb.sink.empty()
+
+    for stat, val in tb.stats.items():
+        tb.log.info("%s: %d", stat, val)
+
+    assert tb.stats["tx_start_packet"] == 3
+    assert tb.stats["stat_tx_byte"] == 64*2+1519
+    assert tb.stats["stat_tx_pkt_len"] == 64*2+1519
+    assert tb.stats["stat_tx_pkt_ucast"] == 3
+    assert tb.stats["stat_tx_pkt_mcast"] == 0
+    assert tb.stats["stat_tx_pkt_bcast"] == 0
+    assert tb.stats["stat_tx_pkt_vlan"] == 0
+    assert tb.stats["stat_tx_pkt_good"] == 2
+    assert tb.stats["stat_tx_pkt_bad"] == 1
+    assert tb.stats["stat_tx_err_oversize"] == 1
+    assert tb.stats["stat_tx_err_user"] == 0
+    assert tb.stats["stat_tx_err_underflow"] == 0
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
