@@ -312,6 +312,7 @@ always_comb begin
                         // start
                         in_pre_next = 1'b0;
                         if (in_pre_reg && cfg_rx_enable) begin
+                            stat_rx_byte_next = 1'b1;
                             state_next = STATE_PIPE;
                         end
                     end else begin
@@ -332,13 +333,14 @@ always_comb begin
                 is_bcast_next = 1'b0;
                 is_8021q_next = 1'b0;
 
+                stat_rx_byte_next = gmii_rx_dv;
+
                 if (gmii_rx_dv && gmii_rx_er) begin
                     frame_error_next = 1'b1;
                     stat_rx_err_bad_block_next = 1'b1;
                 end
 
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
-                    stat_rx_byte_next = 1'b1;
                     state_next = STATE_PAYLOAD;
                 end else begin
                     state_next = STATE_PIPE;
