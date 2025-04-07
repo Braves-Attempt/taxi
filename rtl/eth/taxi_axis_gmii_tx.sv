@@ -376,7 +376,6 @@ always_comb begin
                     state_next = STATE_PREAMBLE;
                 end else if (pre_cnt_reg == 0) begin
                     // end of preamble; start payload
-                    stat_tx_byte_next = 1'b1;
                     if (s_axis_tx_tready_reg) begin
                         s_axis_tx_tready_next = 1'b1;
                         s_tdata_next = s_axis_tx.tdata;
