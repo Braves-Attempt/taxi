@@ -57,17 +57,29 @@ module taxi_eth_mac_phy_10g_rx #
      */
     output wire logic [1:0]           rx_start_packet,
     output wire logic [6:0]           rx_error_count,
-    output wire logic                 rx_error_bad_frame,
-    output wire logic                 rx_error_bad_fcs,
-    output wire logic                 rx_bad_block,
-    output wire logic                 rx_sequence_error,
     output wire logic                 rx_block_lock,
     output wire logic                 rx_high_ber,
     output wire logic                 rx_status,
+    output wire logic [3:0]           stat_rx_byte,
+    output wire logic [15:0]          stat_rx_pkt_len,
+    output wire logic                 stat_rx_pkt_fragment,
+    output wire logic                 stat_rx_pkt_jabber,
+    output wire logic                 stat_rx_pkt_ucast,
+    output wire logic                 stat_rx_pkt_mcast,
+    output wire logic                 stat_rx_pkt_bcast,
+    output wire logic                 stat_rx_pkt_vlan,
+    output wire logic                 stat_rx_pkt_good,
+    output wire logic                 stat_rx_pkt_bad,
+    output wire logic                 stat_rx_err_oversize,
+    output wire logic                 stat_rx_err_bad_fcs,
+    output wire logic                 stat_rx_err_bad_block,
+    output wire logic                 stat_rx_err_framing,
+    output wire logic                 stat_rx_err_preamble,
 
     /*
      * Configuration
      */
+    input  wire logic [15:0]          cfg_rx_max_pkt_len = 16'd1518,
     input  wire logic                 cfg_rx_enable,
     input  wire logic                 cfg_rx_prbs31_enable
 );
@@ -107,8 +119,8 @@ eth_phy_10g_rx_if_inst (
     /*
      * Status
      */
-    .rx_bad_block(rx_bad_block),
-    .rx_sequence_error(rx_sequence_error),
+    .rx_bad_block(stat_rx_err_bad_block),
+    .rx_sequence_error(stat_rx_err_framing),
     .rx_error_count(rx_error_count),
     .rx_block_lock(rx_block_lock),
     .rx_high_ber(rx_high_ber),
@@ -150,16 +162,28 @@ axis_baser_rx_inst (
     /*
      * Configuration
      */
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable), 
 
     /*
      * Status
      */
-    .start_packet(rx_start_packet),
-    .error_bad_frame(rx_error_bad_frame),
-    .error_bad_fcs(rx_error_bad_fcs),
-    .rx_bad_block(rx_bad_block),
-    .rx_sequence_error(rx_sequence_error)
+    .rx_start_packet(rx_start_packet),
+    .stat_rx_byte(stat_rx_byte),
+    .stat_rx_pkt_len(stat_rx_pkt_len),
+    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+    .stat_rx_pkt_good(stat_rx_pkt_good),
+    .stat_rx_pkt_bad(stat_rx_pkt_bad),
+    .stat_rx_err_oversize(stat_rx_err_oversize),
+    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+    .stat_rx_err_bad_block(stat_rx_err_bad_block),
+    .stat_rx_err_framing(stat_rx_err_framing),
+    .stat_rx_err_preamble(stat_rx_err_preamble)
 );
 
 endmodule
