@@ -305,7 +305,7 @@ always_comb begin
                         // error in preamble
                         in_pre_next = 1'b0;
                         pre_ok_next = 1'b0;
-                        stat_rx_err_bad_block_next = 1'b1;
+                        stat_rx_err_framing_next = 1'b1;
                     end else if (gmii_rxd_d0 == ETH_PRE) begin
                         // normal preamble
                     end else if (gmii_rxd_d0 == ETH_SFD) begin
@@ -337,7 +337,7 @@ always_comb begin
 
                 if (gmii_rx_dv && gmii_rx_er) begin
                     frame_error_next = 1'b1;
-                    stat_rx_err_bad_block_next = 1'b1;
+                    stat_rx_err_framing_next = 1'b1;
                 end
 
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
@@ -357,7 +357,7 @@ always_comb begin
 
                 if (gmii_rx_dv && gmii_rx_er) begin
                     frame_error_next = 1'b1;
-                    stat_rx_err_bad_block_next = 1'b1;
+                    stat_rx_err_framing_next = 1'b1;
                 end
 
                 if (!gmii_rx_dv) begin
