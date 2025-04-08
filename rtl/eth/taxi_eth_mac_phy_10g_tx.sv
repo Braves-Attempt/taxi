@@ -56,12 +56,23 @@ module taxi_eth_mac_phy_10g_tx #
      * Status
      */
     output wire logic [1:0]           tx_start_packet,
-    output wire logic                 tx_error_underflow,
+    output wire logic [3:0]           stat_tx_byte,
+    output wire logic [15:0]          stat_tx_pkt_len,
+    output wire logic                 stat_tx_pkt_ucast,
+    output wire logic                 stat_tx_pkt_mcast,
+    output wire logic                 stat_tx_pkt_bcast,
+    output wire logic                 stat_tx_pkt_vlan,
+    output wire logic                 stat_tx_pkt_good,
+    output wire logic                 stat_tx_pkt_bad,
+    output wire logic                 stat_tx_err_oversize,
+    output wire logic                 stat_tx_err_user,
+    output wire logic                 stat_tx_err_underflow,
 
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg = 8'd12,
+    input  wire logic [15:0]          cfg_tx_max_pkt_len = 16'd1518,
+    input  wire logic [7:0]           cfg_tx_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable,
     input  wire logic                 cfg_tx_prbs31_enable
 );
@@ -104,14 +115,25 @@ axis_baser_tx_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
 
     /*
      * Status
      */
-    .start_packet(tx_start_packet),
-    .error_underflow(tx_error_underflow)
+    .tx_start_packet(tx_start_packet),
+    .stat_tx_byte(stat_tx_byte),
+    .stat_tx_pkt_len(stat_tx_pkt_len),
+    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+    .stat_tx_pkt_good(stat_tx_pkt_good),
+    .stat_tx_pkt_bad(stat_tx_pkt_bad),
+    .stat_tx_err_oversize(stat_tx_err_oversize),
+    .stat_tx_err_user(stat_tx_err_user),
+    .stat_tx_err_underflow(stat_tx_err_underflow)
 );
 
 taxi_eth_phy_10g_tx_if #(

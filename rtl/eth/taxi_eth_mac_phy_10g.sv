@@ -275,12 +275,23 @@ eth_mac_phy_10g_tx_inst (
      * Status
      */
     .tx_start_packet(tx_start_packet),
-    .tx_error_underflow(tx_error_underflow),
+    .stat_tx_byte(),
+    .stat_tx_pkt_len(),
+    .stat_tx_pkt_ucast(),
+    .stat_tx_pkt_mcast(),
+    .stat_tx_pkt_bcast(),
+    .stat_tx_pkt_vlan(),
+    .stat_tx_pkt_good(),
+    .stat_tx_pkt_bad(),
+    .stat_tx_err_oversize(),
+    .stat_tx_err_user(),
+    .stat_tx_err_underflow(tx_error_underflow),
 
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(16'd9218),
+    .cfg_tx_ifg(cfg_ifg),
     .cfg_tx_enable(cfg_tx_enable),
     .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable)
 );
