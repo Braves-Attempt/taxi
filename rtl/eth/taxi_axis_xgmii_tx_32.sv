@@ -50,14 +50,25 @@ module taxi_axis_xgmii_tx_32 #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg = 8'd12,
+    input  wire logic [15:0]          cfg_tx_max_pkt_len = 16'd1518,
+    input  wire logic [7:0]           cfg_tx_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable,
 
     /*
      * Status
      */
-    output wire logic                 start_packet,
-    output wire logic                 error_underflow
+    output wire logic                 tx_start_packet,
+    output wire logic [2:0]           stat_tx_byte,
+    output wire logic [15:0]          stat_tx_pkt_len,
+    output wire logic                 stat_tx_pkt_ucast,
+    output wire logic                 stat_tx_pkt_mcast,
+    output wire logic                 stat_tx_pkt_bcast,
+    output wire logic                 stat_tx_pkt_vlan,
+    output wire logic                 stat_tx_pkt_good,
+    output wire logic                 stat_tx_pkt_bad,
+    output wire logic                 stat_tx_err_oversize,
+    output wire logic                 stat_tx_err_user,
+    output wire logic                 stat_tx_err_underflow
 );
 
 // extract parameters
@@ -122,7 +133,15 @@ logic extra_cycle;
 
 logic frame_reg = 1'b0, frame_next;
 logic frame_error_reg = 1'b0, frame_error_next;
+logic frame_oversize_reg = 1'b0, frame_oversize_next;
 logic [MIN_LEN_W-1:0] frame_min_count_reg = '0, frame_min_count_next;
+logic [1:0] hdr_ptr_reg = '0, hdr_ptr_next;
+logic is_mcast_reg = 1'b0, is_mcast_next;
+logic is_bcast_reg = 1'b0, is_bcast_next;
+logic is_8021q_reg = 1'b0, is_8021q_next;
+logic [15:0] frame_len_reg = '0, frame_len_next;
+logic [15:0] frame_len_lim_reg = '0, frame_len_lim_next;
+logic [7:0] ifg_cnt_reg = '0, ifg_cnt_next;
 
 logic [7:0] ifg_count_reg = 8'd0, ifg_count_next;
 logic [1:0] deficit_idle_count_reg = 2'd0, deficit_idle_count_next;
@@ -140,7 +159,18 @@ logic [DATA_W-1:0] xgmii_txd_reg = {CTRL_W{XGMII_IDLE}}, xgmii_txd_next;
 logic [CTRL_W-1:0] xgmii_txc_reg = {CTRL_W{1'b1}}, xgmii_txc_next;
 
 logic start_packet_reg = 1'b0, start_packet_next;
-logic error_underflow_reg = 1'b0, error_underflow_next;
+
+logic [2:0] stat_tx_byte_reg = '0, stat_tx_byte_next;
+logic [15:0] stat_tx_pkt_len_reg = '0, stat_tx_pkt_len_next;
+logic stat_tx_pkt_ucast_reg = 1'b0, stat_tx_pkt_ucast_next;
+logic stat_tx_pkt_mcast_reg = 1'b0, stat_tx_pkt_mcast_next;
+logic stat_tx_pkt_bcast_reg = 1'b0, stat_tx_pkt_bcast_next;
+logic stat_tx_pkt_vlan_reg = 1'b0, stat_tx_pkt_vlan_next;
+logic stat_tx_pkt_good_reg = 1'b0, stat_tx_pkt_good_next;
+logic stat_tx_pkt_bad_reg = 1'b0, stat_tx_pkt_bad_next;
+logic stat_tx_err_oversize_reg = 1'b0, stat_tx_err_oversize_next;
+logic stat_tx_err_user_reg = 1'b0, stat_tx_err_user_next;
+logic stat_tx_err_underflow_reg = 1'b0, stat_tx_err_underflow_next;
 
 assign s_axis_tx.tready = s_axis_tx_tready_reg;
 
@@ -156,8 +186,19 @@ assign m_axis_tx_cpl.tid = m_axis_tx_cpl_tag_reg;
 assign m_axis_tx_cpl.tdest = '0;
 assign m_axis_tx_cpl.tuser = '0;
 
-assign start_packet = start_packet_reg;
-assign error_underflow = error_underflow_reg;
+assign tx_start_packet = start_packet_reg;
+
+assign stat_tx_byte = stat_tx_byte_reg;
+assign stat_tx_pkt_len = stat_tx_pkt_len_reg;
+assign stat_tx_pkt_ucast = stat_tx_pkt_ucast_reg;
+assign stat_tx_pkt_mcast = stat_tx_pkt_mcast_reg;
+assign stat_tx_pkt_bcast = stat_tx_pkt_bcast_reg;
+assign stat_tx_pkt_vlan = stat_tx_pkt_vlan_reg;
+assign stat_tx_pkt_good = stat_tx_pkt_good_reg;
+assign stat_tx_pkt_bad = stat_tx_pkt_bad_reg;
+assign stat_tx_err_oversize = stat_tx_err_oversize_reg;
+assign stat_tx_err_user = stat_tx_err_user_reg;
+assign stat_tx_err_underflow = stat_tx_err_underflow_reg;
 
 for (genvar n = 0; n < 4; n = n + 1) begin : crc
 
@@ -241,7 +282,15 @@ always_comb begin
 
     frame_next = frame_reg;
     frame_error_next = frame_error_reg;
+    frame_oversize_next = frame_oversize_reg;
     frame_min_count_next = frame_min_count_reg;
+    hdr_ptr_next = hdr_ptr_reg;
+    is_mcast_next = is_mcast_reg;
+    is_bcast_next = is_bcast_reg;
+    is_8021q_next = is_8021q_reg;
+    frame_len_next = frame_len_reg;
+    frame_len_lim_next = frame_len_lim_reg;
+    ifg_cnt_next = ifg_cnt_reg;
 
     ifg_count_next = ifg_count_reg;
     deficit_idle_count_next = deficit_idle_count_reg;
@@ -272,10 +321,65 @@ always_comb begin
     xgmii_txc_next = {CTRL_W{1'b1}};
 
     start_packet_next = 1'b0;
-    error_underflow_next = 1'b0;
+
+    stat_tx_byte_next = '0;
+    stat_tx_pkt_len_next = '0;
+    stat_tx_pkt_ucast_next = 1'b0;
+    stat_tx_pkt_mcast_next = 1'b0;
+    stat_tx_pkt_bcast_next = 1'b0;
+    stat_tx_pkt_vlan_next = 1'b0;
+    stat_tx_pkt_good_next = 1'b0;
+    stat_tx_pkt_bad_next = 1'b0;
+    stat_tx_err_oversize_next = 1'b0;
+    stat_tx_err_user_next = 1'b0;
+    stat_tx_err_underflow_next = 1'b0;
 
     if (s_axis_tx.tvalid && s_axis_tx.tready) begin
         frame_next = !s_axis_tx.tlast;
+    end
+
+    // counter for min frame length enforcement
+    if (frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
+        frame_min_count_next = MIN_LEN_W'(frame_min_count_reg - CTRL_W);
+    end else begin
+        frame_min_count_next = 0;
+    end
+
+    // counter to measure frame length
+    if (&frame_len_reg[15:2] == 0) begin
+        frame_len_next = frame_len_reg + 16'(CTRL_W);
+    end else begin
+        frame_len_next = '1;
+    end
+
+    // counter for max frame length enforcement
+    if (frame_len_lim_reg[15:2] != 0) begin
+        frame_len_lim_next = frame_len_lim_reg - 16'(CTRL_W);
+    end else begin
+        frame_len_lim_next = '0;
+    end
+
+    // address and ethertype checks
+    if (&hdr_ptr_reg == 0) begin
+        hdr_ptr_next = hdr_ptr_reg + 1;
+    end
+
+    case (hdr_ptr_reg)
+        2'd0: begin
+            is_mcast_next = s_tdata_reg[0];
+            is_bcast_next = &s_tdata_reg;
+        end
+        2'd1: is_bcast_next = is_bcast_reg && &s_tdata_reg[15:0];
+        2'd3: is_8021q_next = {s_tdata_reg[7:0], s_tdata_reg[15:8]} == 16'h8100;
+        default: begin
+            // do nothing
+        end
+    endcase
+
+    if (ifg_cnt_reg[7:2] != 0) begin
+        ifg_cnt_next = ifg_cnt_reg - 8'(CTRL_W);
+    end else begin
+        ifg_cnt_next = '0;
     end
 
     case (state_reg)
@@ -283,6 +387,9 @@ always_comb begin
             // idle state - wait for data
             frame_error_next = 1'b0;
             frame_min_count_next = MIN_LEN_W'(MIN_FRAME_LEN-4-CTRL_W);
+            hdr_ptr_next = 0;
+            frame_len_next = 0;
+            frame_len_lim_next = cfg_tx_max_pkt_len;
             reset_crc = 1'b1;
 
             // XGMII idle
@@ -308,6 +415,10 @@ always_comb begin
             // send preamble
             reset_crc = 1'b1;
 
+            hdr_ptr_next = 0;
+            frame_len_next = 0;
+            frame_len_lim_next = cfg_tx_max_pkt_len;
+
             s_tdata_next = s_axis_tx_tdata_masked;
             s_empty_next = keep2empty(s_axis_tx.tkeep);
 
@@ -323,22 +434,25 @@ always_comb begin
             update_crc = 1'b1;
             s_axis_tx_tready_next = 1'b1;
 
-            if (frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
-                frame_min_count_next = MIN_LEN_W'(frame_min_count_reg - CTRL_W);
-            end else begin
-                frame_min_count_next = 0;
-            end
-
             xgmii_txd_next = s_tdata_reg;
             xgmii_txc_next = {CTRL_W{1'b0}};
 
             s_tdata_next = s_axis_tx_tdata_masked;
             s_empty_next = keep2empty(s_axis_tx.tkeep);
 
-            if (!s_axis_tx.tvalid || s_axis_tx.tlast) begin
+            stat_tx_byte_next = 3'(CTRL_W);
+
+            if (s_axis_tx.tvalid && s_axis_tx.tlast) begin
+                frame_oversize_next = frame_len_lim_reg < 16'(4+4+4-keep2empty(s_axis_tx.tkeep));
+            end else begin
+                frame_oversize_next = frame_len_lim_reg < 4+4;
+            end
+
+            if (!s_axis_tx.tvalid || s_axis_tx.tlast || frame_oversize_next) begin
                 s_axis_tx_tready_next = frame_next; // drop frame
-                frame_error_next = !s_axis_tx.tvalid || s_axis_tx.tuser[0];
-                error_underflow_next = !s_axis_tx.tvalid;
+                frame_error_next = !s_axis_tx.tvalid || s_axis_tx.tuser[0] || frame_oversize_next;
+                stat_tx_err_user_next = s_axis_tx.tuser[0];
+                stat_tx_err_underflow_next = !s_axis_tx.tvalid;
 
                 if (PADDING_EN && frame_min_count_reg != 0) begin
                     if (frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
@@ -367,13 +481,13 @@ always_comb begin
             s_tdata_next = 32'd0;
             s_empty_next = 0;
 
+            stat_tx_byte_next = 3'(CTRL_W);
+
             update_crc = 1'b1;
 
             if (frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
-                frame_min_count_next = MIN_LEN_W'(frame_min_count_reg - CTRL_W);
                 state_next = STATE_PAD;
             end else begin
-                frame_min_count_next = 0;
                 s_empty_next = 2'(CTRL_W-frame_min_count_reg);
                 state_next = STATE_FCS_1;
             end
@@ -385,9 +499,11 @@ always_comb begin
             xgmii_txd_next = fcs_output_txd_0;
             xgmii_txc_next = fcs_output_txc_0;
 
+            stat_tx_byte_next = 3'(CTRL_W);
+
             update_crc = 1'b1;
 
-            ifg_count_next = (cfg_ifg > 8'd12 ? cfg_ifg : 8'd12) - ifg_offset + 8'(deficit_idle_count_reg);
+            ifg_count_next = (cfg_tx_ifg > 8'd12 ? cfg_tx_ifg : 8'd12) - ifg_offset + 8'(deficit_idle_count_reg);
             if (frame_error_reg) begin
                 state_next = STATE_ERR;
             end else begin
@@ -401,9 +517,20 @@ always_comb begin
             xgmii_txd_next = fcs_output_txd_1;
             xgmii_txc_next = fcs_output_txc_1;
 
+            stat_tx_byte_next = 4-s_empty_reg;
+            frame_len_next = frame_len_reg + 16'(4-s_empty_reg);
+
             if (extra_cycle) begin
                 state_next = STATE_FCS_3;
             end else begin
+                stat_tx_pkt_len_next = frame_len_next;
+                stat_tx_pkt_good_next = !frame_error_reg;
+                stat_tx_pkt_bad_next = frame_error_reg;
+                stat_tx_pkt_ucast_next = !is_mcast_reg;
+                stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                stat_tx_pkt_bcast_next = is_bcast_reg;
+                stat_tx_pkt_vlan_next = is_8021q_reg;
+                stat_tx_err_oversize_next = frame_oversize_reg;
                 state_next = STATE_IFG;
             end
         end
@@ -413,6 +540,15 @@ always_comb begin
 
             xgmii_txd_next = {{3{XGMII_IDLE}}, XGMII_TERM};
             xgmii_txc_next = {CTRL_W{1'b1}};
+
+            stat_tx_pkt_len_next = frame_len_reg;
+            stat_tx_pkt_good_next = !frame_error_reg;
+            stat_tx_pkt_bad_next = frame_error_reg;
+            stat_tx_pkt_ucast_next = !is_mcast_reg;
+            stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+            stat_tx_pkt_bcast_next = is_bcast_reg;
+            stat_tx_pkt_vlan_next = is_8021q_reg;
+            stat_tx_err_oversize_next = frame_oversize_reg;
 
             if (DIC_EN) begin
                 if (ifg_count_next > 8'd3) begin
@@ -439,7 +575,16 @@ always_comb begin
             xgmii_txd_next = {XGMII_TERM, {3{XGMII_ERROR}}};
             xgmii_txc_next = {CTRL_W{1'b1}};
 
-            ifg_count_next = cfg_ifg > 8'd12 ? cfg_ifg : 8'd12;
+            ifg_count_next = cfg_tx_ifg > 8'd12 ? cfg_tx_ifg : 8'd12;
+
+            stat_tx_pkt_len_next = frame_len_reg;
+            stat_tx_pkt_good_next = !frame_error_reg;
+            stat_tx_pkt_bad_next = frame_error_reg;
+            stat_tx_pkt_ucast_next = !is_mcast_reg;
+            stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+            stat_tx_pkt_bcast_next = is_bcast_reg;
+            stat_tx_pkt_vlan_next = is_8021q_reg;
+            stat_tx_err_oversize_next = frame_oversize_reg;
 
             state_next = STATE_IFG;
         end
@@ -485,7 +630,15 @@ always_ff @(posedge clk) begin
 
     frame_reg <= frame_next;
     frame_error_reg <= frame_error_next;
+    frame_oversize_reg <= frame_oversize_next;
     frame_min_count_reg <= frame_min_count_next;
+    hdr_ptr_reg <= hdr_ptr_next;
+    is_mcast_reg <= is_mcast_next;
+    is_bcast_reg <= is_bcast_next;
+    is_8021q_reg <= is_8021q_next;
+    frame_len_reg <= frame_len_next;
+    frame_len_lim_reg <= frame_len_lim_next;
+    ifg_cnt_reg <= ifg_cnt_next;
 
     ifg_count_reg <= ifg_count_next;
     deficit_idle_count_reg <= deficit_idle_count_next;
@@ -515,7 +668,18 @@ always_ff @(posedge clk) begin
     xgmii_txc_reg <= xgmii_txc_next;
 
     start_packet_reg <= start_packet_next;
-    error_underflow_reg <= error_underflow_next;
+
+    stat_tx_byte_reg <= stat_tx_byte_next;
+    stat_tx_pkt_len_reg <= stat_tx_pkt_len_next;
+    stat_tx_pkt_ucast_reg <= stat_tx_pkt_ucast_next;
+    stat_tx_pkt_mcast_reg <= stat_tx_pkt_mcast_next;
+    stat_tx_pkt_bcast_reg <= stat_tx_pkt_bcast_next;
+    stat_tx_pkt_vlan_reg <= stat_tx_pkt_vlan_next;
+    stat_tx_pkt_good_reg <= stat_tx_pkt_good_next;
+    stat_tx_pkt_bad_reg <= stat_tx_pkt_bad_next;
+    stat_tx_err_oversize_reg <= stat_tx_err_oversize_next;
+    stat_tx_err_user_reg <= stat_tx_err_user_next;
+    stat_tx_err_underflow_reg <= stat_tx_err_underflow_next;
 
     if (rst) begin
         state_reg <= STATE_IDLE;
@@ -533,7 +697,18 @@ always_ff @(posedge clk) begin
         xgmii_txc_reg <= {CTRL_W{1'b1}};
 
         start_packet_reg <= 1'b0;
-        error_underflow_reg <= 1'b0;
+
+        stat_tx_byte_reg <= '0;
+        stat_tx_pkt_len_reg <= '0;
+        stat_tx_pkt_ucast_reg <= 1'b0;
+        stat_tx_pkt_mcast_reg <= 1'b0;
+        stat_tx_pkt_bcast_reg <= 1'b0;
+        stat_tx_pkt_vlan_reg <= 1'b0;
+        stat_tx_pkt_good_reg <= 1'b0;
+        stat_tx_pkt_bad_reg <= 1'b0;
+        stat_tx_err_oversize_reg <= 1'b0;
+        stat_tx_err_user_reg <= 1'b0;
+        stat_tx_err_underflow_reg <= 1'b0;
     end
 end
 
