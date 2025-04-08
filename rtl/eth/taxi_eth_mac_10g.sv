@@ -200,14 +200,28 @@ if (DATA_W == 64) begin
         /*
          * Configuration
          */
+        .cfg_rx_max_pkt_len(16'd9218),
         .cfg_rx_enable(cfg_rx_enable),
 
         /*
          * Status
          */
-        .start_packet(rx_start_packet),
-        .error_bad_frame(rx_error_bad_frame),
-        .error_bad_fcs(rx_error_bad_fcs)
+        .rx_start_packet(rx_start_packet),
+        .stat_rx_byte(),
+        .stat_rx_pkt_len(),
+        .stat_rx_pkt_fragment(),
+        .stat_rx_pkt_jabber(),
+        .stat_rx_pkt_ucast(),
+        .stat_rx_pkt_mcast(),
+        .stat_rx_pkt_bcast(),
+        .stat_rx_pkt_vlan(),
+        .stat_rx_pkt_good(),
+        .stat_rx_pkt_bad(rx_error_bad_frame),
+        .stat_rx_err_oversize(),
+        .stat_rx_err_bad_fcs(rx_error_bad_fcs),
+        .stat_rx_err_bad_block(),
+        .stat_rx_err_framing(),
+        .stat_rx_err_preamble()
     );
 
     taxi_axis_xgmii_tx_64 #(

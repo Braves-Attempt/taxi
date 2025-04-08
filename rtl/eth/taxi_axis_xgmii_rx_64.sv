@@ -46,14 +46,28 @@ module taxi_axis_xgmii_rx_64 #
     /*
      * Configuration
      */
+    input  wire logic [15:0]          cfg_rx_max_pkt_len = 16'd1518,
     input  wire logic                 cfg_rx_enable,
 
     /*
      * Status
      */
-    output wire logic [1:0]           start_packet,
-    output wire logic                 error_bad_frame,
-    output wire logic                 error_bad_fcs
+    output wire logic [1:0]           rx_start_packet,
+    output wire logic [3:0]           stat_rx_byte,
+    output wire logic [15:0]          stat_rx_pkt_len,
+    output wire logic                 stat_rx_pkt_fragment,
+    output wire logic                 stat_rx_pkt_jabber,
+    output wire logic                 stat_rx_pkt_ucast,
+    output wire logic                 stat_rx_pkt_mcast,
+    output wire logic                 stat_rx_pkt_bcast,
+    output wire logic                 stat_rx_pkt_vlan,
+    output wire logic                 stat_rx_pkt_good,
+    output wire logic                 stat_rx_pkt_bad,
+    output wire logic                 stat_rx_err_oversize,
+    output wire logic                 stat_rx_err_bad_fcs,
+    output wire logic                 stat_rx_err_bad_block,
+    output wire logic                 stat_rx_err_framing,
+    output wire logic                 stat_rx_err_preamble
 );
 
 // extract parameters
@@ -111,6 +125,15 @@ logic xgmii_start_swap = 1'b0;
 logic xgmii_start_d0 = 1'b0;
 logic xgmii_start_d1 = 1'b0;
 
+logic frame_oversize_reg = 1'b0, frame_oversize_next;
+logic pre_ok_reg = 1'b0, pre_ok_next;
+logic [0:0] hdr_ptr_reg = '0, hdr_ptr_next;
+logic is_mcast_reg = 1'b0, is_mcast_next;
+logic is_bcast_reg = 1'b0, is_bcast_next;
+logic is_8021q_reg = 1'b0, is_8021q_next;
+logic [15:0] frame_len_reg = '0, frame_len_next;
+logic [15:0] frame_len_lim_reg = '0, frame_len_lim_next;
+
 logic [DATA_W-1:0] m_axis_rx_tdata_reg = '0, m_axis_rx_tdata_next;
 logic [KEEP_W-1:0] m_axis_rx_tkeep_reg = '0, m_axis_rx_tkeep_next;
 logic m_axis_rx_tvalid_reg = 1'b0, m_axis_rx_tvalid_next;
@@ -118,8 +141,22 @@ logic m_axis_rx_tlast_reg = 1'b0, m_axis_rx_tlast_next;
 logic m_axis_rx_tuser_reg = 1'b0, m_axis_rx_tuser_next;
 
 logic [1:0] start_packet_reg = 2'b00;
-logic error_bad_frame_reg = 1'b0, error_bad_frame_next;
-logic error_bad_fcs_reg = 1'b0, error_bad_fcs_next;
+
+logic [3:0] stat_rx_byte_reg = '0, stat_rx_byte_next;
+logic [15:0] stat_rx_pkt_len_reg = '0, stat_rx_pkt_len_next;
+logic stat_rx_pkt_fragment_reg = 1'b0, stat_rx_pkt_fragment_next;
+logic stat_rx_pkt_jabber_reg = 1'b0, stat_rx_pkt_jabber_next;
+logic stat_rx_pkt_ucast_reg = 1'b0, stat_rx_pkt_ucast_next;
+logic stat_rx_pkt_mcast_reg = 1'b0, stat_rx_pkt_mcast_next;
+logic stat_rx_pkt_bcast_reg = 1'b0, stat_rx_pkt_bcast_next;
+logic stat_rx_pkt_vlan_reg = 1'b0, stat_rx_pkt_vlan_next;
+logic stat_rx_pkt_good_reg = 1'b0, stat_rx_pkt_good_next;
+logic stat_rx_pkt_bad_reg = 1'b0, stat_rx_pkt_bad_next;
+logic stat_rx_err_oversize_reg = 1'b0, stat_rx_err_oversize_next;
+logic stat_rx_err_bad_fcs_reg = 1'b0, stat_rx_err_bad_fcs_next;
+logic stat_rx_err_bad_block_reg = 1'b0, stat_rx_err_bad_block_next;
+logic stat_rx_err_framing_reg = 1'b0, stat_rx_err_framing_next;
+logic stat_rx_err_preamble_reg = 1'b0, stat_rx_err_preamble_next;
 
 logic [PTP_TS_W-1:0] ptp_ts_reg = '0;
 logic [PTP_TS_W-1:0] ptp_ts_out_reg = '0, ptp_ts_out_next;
@@ -157,9 +194,23 @@ if (PTP_TS_EN) begin
     assign m_axis_rx.tuser[1 +: PTP_TS_W] = ptp_ts_out_reg;
 end
 
-assign start_packet = start_packet_reg;
-assign error_bad_frame = error_bad_frame_reg;
-assign error_bad_fcs = error_bad_fcs_reg;
+assign rx_start_packet = start_packet_reg;
+
+assign stat_rx_byte = stat_rx_byte_reg;
+assign stat_rx_pkt_len = stat_rx_pkt_len_reg;
+assign stat_rx_pkt_fragment = stat_rx_pkt_fragment_reg;
+assign stat_rx_pkt_jabber = stat_rx_pkt_jabber_reg;
+assign stat_rx_pkt_ucast = stat_rx_pkt_ucast_reg;
+assign stat_rx_pkt_mcast = stat_rx_pkt_mcast_reg;
+assign stat_rx_pkt_bcast = stat_rx_pkt_bcast_reg;
+assign stat_rx_pkt_vlan = stat_rx_pkt_vlan_reg;
+assign stat_rx_pkt_good = stat_rx_pkt_good_reg;
+assign stat_rx_pkt_bad = stat_rx_pkt_bad_reg;
+assign stat_rx_err_oversize = stat_rx_err_oversize_reg;
+assign stat_rx_err_bad_fcs = stat_rx_err_bad_fcs_reg;
+assign stat_rx_err_bad_block = stat_rx_err_bad_block_reg;
+assign stat_rx_err_framing = stat_rx_err_framing_reg;
+assign stat_rx_err_preamble = stat_rx_err_preamble_reg;
 
 taxi_lfsr #(
     .LFSR_W(32),
@@ -190,6 +241,15 @@ always_comb begin
 
     reset_crc = 1'b0;
 
+    frame_oversize_next = frame_oversize_reg;
+    pre_ok_next = pre_ok_reg;
+    hdr_ptr_next = hdr_ptr_reg;
+    is_mcast_next = is_mcast_reg;
+    is_bcast_next = is_bcast_reg;
+    is_8021q_next = is_8021q_reg;
+    frame_len_next = frame_len_reg;
+    frame_len_lim_next = frame_len_lim_reg;
+
     m_axis_rx_tdata_next = xgmii_rxd_d1;
     m_axis_rx_tkeep_next = {KEEP_W{1'b1}};
     m_axis_rx_tvalid_next = 1'b0;
@@ -198,18 +258,72 @@ always_comb begin
 
     ptp_ts_out_next = ptp_ts_out_reg;
 
-    error_bad_frame_next = 1'b0;
-    error_bad_fcs_next = 1'b0;
+    stat_rx_byte_next = '0;
+    stat_rx_pkt_len_next = '0;
+    stat_rx_pkt_fragment_next = 1'b0;
+    stat_rx_pkt_jabber_next = 1'b0;
+    stat_rx_pkt_ucast_next = 1'b0;
+    stat_rx_pkt_mcast_next = 1'b0;
+    stat_rx_pkt_bcast_next = 1'b0;
+    stat_rx_pkt_vlan_next = 1'b0;
+    stat_rx_pkt_good_next = 1'b0;
+    stat_rx_pkt_bad_next = 1'b0;
+    stat_rx_err_oversize_next = 1'b0;
+    stat_rx_err_bad_fcs_next = 1'b0;
+    stat_rx_err_bad_block_next = 1'b0;
+    stat_rx_err_framing_next = 1'b0;
+    stat_rx_err_preamble_next = 1'b0;
+
+    // counter to measure frame length
+    if (&frame_len_reg[15:3] == 0) begin
+        if (term_present_reg) begin
+            frame_len_next = frame_len_reg + 16'(term_lane_reg);
+        end else begin
+            frame_len_next = frame_len_reg + 16'(CTRL_W);
+        end
+    end else begin
+        frame_len_next = '1;
+    end
+
+    // counter for max frame length enforcement
+    if (frame_len_lim_reg[15:3] != 0) begin
+        frame_len_lim_next = frame_len_lim_reg - 16'(CTRL_W);
+    end else begin
+        frame_len_lim_next = '0;
+    end
+
+    // address and ethertype checks
+    if (&hdr_ptr_reg == 0) begin
+        hdr_ptr_next = hdr_ptr_reg + 1;
+    end
+
+    case (hdr_ptr_reg)
+        1'd0: begin
+            is_mcast_next = xgmii_rxd_d1[0];
+            is_bcast_next = &xgmii_rxd_d1[47:0];
+        end
+        1'd1: is_8021q_next = {xgmii_rxd_d1[39:32], xgmii_rxd_d1[47:40]} == 16'h8100;
+        default: begin
+            // do nothing
+        end
+    endcase
 
     case (state_reg)
         STATE_IDLE: begin
             // idle state - wait for packet
             reset_crc = 1'b1;
 
+            frame_len_next = 16'(CTRL_W);
+            frame_len_lim_next = cfg_rx_max_pkt_len;
+            hdr_ptr_next = 0;
+
+            pre_ok_next = xgmii_rxd_d1[63:8] == 56'hD5555555555555;
+
             if (xgmii_start_d1 && cfg_rx_enable) begin
                 // start condition
 
                 reset_crc = 1'b0;
+                stat_rx_byte_next = 4'(CTRL_W);
                 state_next = STATE_PAYLOAD;
             end else begin
                 state_next = STATE_IDLE;
@@ -227,11 +341,29 @@ always_comb begin
                 ptp_ts_out_next = (!PTP_TS_FMT_TOD || ptp_ts_borrow_reg) ? ptp_ts_reg : ptp_ts_adj_reg;
             end
 
+            if (term_present_reg) begin
+                stat_rx_byte_next = 4'(term_lane_reg);
+                frame_oversize_next = frame_len_lim_reg < 16'(8+term_lane_reg);
+            end else begin
+                stat_rx_byte_next = 4'(CTRL_W);
+                frame_oversize_next = frame_len_lim_reg < 8;
+            end
+
             if (framing_error_reg || framing_error_d0_reg) begin
                 // control or error characters in packet
                 m_axis_rx_tlast_next = 1'b1;
                 m_axis_rx_tuser_next = 1'b1;
-                error_bad_frame_next = 1'b1;
+                stat_rx_pkt_bad_next = 1'b1;
+                stat_rx_pkt_len_next = frame_len_next;
+                stat_rx_pkt_ucast_next = !is_mcast_reg;
+                stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                stat_rx_pkt_bcast_next = is_bcast_reg;
+                stat_rx_pkt_vlan_next = is_8021q_reg;
+                stat_rx_err_oversize_next = frame_oversize_next;
+                stat_rx_err_framing_next = 1'b1;
+                stat_rx_err_preamble_next = !pre_ok_reg;
+                stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
+                stat_rx_pkt_jabber_next = frame_oversize_next;
                 reset_crc = 1'b1;
                 state_next = STATE_IDLE;
             end else if (term_present_reg) begin
@@ -246,11 +378,29 @@ always_comb begin
                         (term_lane_reg == 3 && crc_valid[2]) ||
                         (term_lane_reg == 4 && crc_valid[3])) begin
                         // CRC valid
+                        if (frame_oversize_next) begin
+                            // too long
+                            m_axis_rx_tuser_next = 1'b1;
+                            stat_rx_pkt_bad_next = 1'b1;
+                        end else begin
+                            // length OK
+                            m_axis_rx_tuser_next = 1'b0;
+                            stat_rx_pkt_good_next = 1'b1;
+                        end
                     end else begin
                         m_axis_rx_tuser_next = 1'b1;
-                        error_bad_frame_next = 1'b1;
-                        error_bad_fcs_next = 1'b1;
+                        stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
+                        stat_rx_pkt_jabber_next = frame_oversize_next;
+                        stat_rx_pkt_bad_next = 1'b1;
+                        stat_rx_err_bad_fcs_next = 1'b1;
                     end
+                    stat_rx_pkt_len_next = frame_len_next;
+                    stat_rx_pkt_ucast_next = !is_mcast_reg;
+                    stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                    stat_rx_pkt_bcast_next = is_bcast_reg;
+                    stat_rx_pkt_vlan_next = is_8021q_reg;
+                    stat_rx_err_oversize_next = frame_oversize_next;
+                    stat_rx_err_preamble_next = !pre_ok_reg;
                     state_next = STATE_IDLE;
                 end else begin
                     // need extra cycle
@@ -274,11 +424,30 @@ always_comb begin
                 (term_lane_d0_reg == 6 && crc_valid_save[5]) ||
                 (term_lane_d0_reg == 7 && crc_valid_save[6])) begin
                 // CRC valid
+                if (frame_oversize_reg) begin
+                    // too long
+                    m_axis_rx_tuser_next = 1'b1;
+                    stat_rx_pkt_bad_next = 1'b1;
+                end else begin
+                    // length OK
+                    m_axis_rx_tuser_next = 1'b0;
+                    stat_rx_pkt_good_next = 1'b1;
+                end
             end else begin
                 m_axis_rx_tuser_next = 1'b1;
-                error_bad_frame_next = 1'b1;
-                error_bad_fcs_next = 1'b1;
+                stat_rx_pkt_fragment_next = frame_len_reg[15:6] == 0;
+                stat_rx_pkt_jabber_next = frame_oversize_reg;
+                stat_rx_pkt_bad_next = 1'b1;
+                stat_rx_err_bad_fcs_next = 1'b1;
             end
+
+            stat_rx_pkt_len_next = frame_len_reg;
+            stat_rx_pkt_ucast_next = !is_mcast_reg;
+            stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+            stat_rx_pkt_bcast_next = is_bcast_reg;
+            stat_rx_pkt_vlan_next = is_8021q_reg;
+            stat_rx_err_oversize_next = frame_oversize_reg;
+            stat_rx_err_preamble_next = !pre_ok_reg;
 
             if (xgmii_start_d1 && cfg_rx_enable) begin
                 // start condition
@@ -299,6 +468,15 @@ end
 always_ff @(posedge clk) begin
     state_reg <= state_next;
 
+    frame_oversize_reg <= frame_oversize_next;
+    pre_ok_reg <= pre_ok_next;
+    hdr_ptr_reg <= hdr_ptr_next;
+    is_mcast_reg <= is_mcast_next;
+    is_bcast_reg <= is_bcast_next;
+    is_8021q_reg <= is_8021q_next;
+    frame_len_reg <= frame_len_next;
+    frame_len_lim_reg <= frame_len_lim_next;
+
     m_axis_rx_tdata_reg <= m_axis_rx_tdata_next;
     m_axis_rx_tkeep_reg <= m_axis_rx_tkeep_next;
     m_axis_rx_tvalid_reg <= m_axis_rx_tvalid_next;
@@ -308,8 +486,22 @@ always_ff @(posedge clk) begin
     ptp_ts_out_reg <= ptp_ts_out_next;
 
     start_packet_reg <= 2'b00;
-    error_bad_frame_reg <= error_bad_frame_next;
-    error_bad_fcs_reg <= error_bad_fcs_next;
+
+    stat_rx_byte_reg <= stat_rx_byte_next;
+    stat_rx_pkt_len_reg <= stat_rx_pkt_len_next;
+    stat_rx_pkt_fragment_reg <= stat_rx_pkt_fragment_next;
+    stat_rx_pkt_jabber_reg <= stat_rx_pkt_jabber_next;
+    stat_rx_pkt_ucast_reg <= stat_rx_pkt_ucast_next;
+    stat_rx_pkt_mcast_reg <= stat_rx_pkt_mcast_next;
+    stat_rx_pkt_bcast_reg <= stat_rx_pkt_bcast_next;
+    stat_rx_pkt_vlan_reg <= stat_rx_pkt_vlan_next;
+    stat_rx_pkt_good_reg <= stat_rx_pkt_good_next;
+    stat_rx_pkt_bad_reg <= stat_rx_pkt_bad_next;
+    stat_rx_err_oversize_reg <= stat_rx_err_oversize_next;
+    stat_rx_err_bad_fcs_reg <= stat_rx_err_bad_fcs_next;
+    stat_rx_err_bad_block_reg <= stat_rx_err_bad_block_next;
+    stat_rx_err_framing_reg <= stat_rx_err_framing_next;
+    stat_rx_err_preamble_reg <= stat_rx_err_preamble_next;
 
     swap_rxd <= xgmii_rxd_masked[63:32];
     swap_rxc <= xgmii_rxc[7:4];
@@ -324,19 +516,6 @@ always_ff @(posedge clk) begin
         {ptp_ts_borrow_reg, ptp_ts_adj_reg[45:16]} <= $signed({1'b0, ptp_ts_reg[45:16]}) - $signed(31'd1000000000);
         ptp_ts_adj_reg[47:46] <= 0;
         ptp_ts_adj_reg[95:48] <= ptp_ts_reg[95:48] + 1;
-    end
-
-    // start control character detection
-    if (xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START) begin
-        lanes_swapped <= 1'b0;
-        xgmii_start_d0 <= 1'b1;
-
-        framing_error_reg <= xgmii_rxc[7:1] != 0;
-    end else if (xgmii_rxc[4] && xgmii_rxd[39:32] == XGMII_START) begin
-        lanes_swapped <= 1'b1;
-        xgmii_start_swap <= 1'b1;
-
-        framing_error_reg <= xgmii_rxc[7:5] != 0;
     end
 
     // lane swapping and termination character detection
@@ -370,6 +549,22 @@ always_ff @(posedge clk) begin
                 framing_error_reg <= (xgmii_rxc & ({CTRL_W{1'b1}} >> (CTRL_W-i))) != 0;
             end
         end
+    end
+
+    // start control character detection
+    if (xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START) begin
+        lanes_swapped <= 1'b0;
+        xgmii_start_d0 <= 1'b1;
+
+        xgmii_rxd_d0 <= xgmii_rxd_masked;
+        xgmii_rxc_d0 <= xgmii_rxc;
+
+        framing_error_reg <= xgmii_rxc[7:1] != 0;
+    end else if (xgmii_rxc[4] && xgmii_rxd[39:32] == XGMII_START) begin
+        lanes_swapped <= 1'b1;
+        xgmii_start_swap <= 1'b1;
+
+        framing_error_reg <= xgmii_rxc[7:5] != 0;
     end
 
     // capture timestamps
@@ -413,8 +608,22 @@ always_ff @(posedge clk) begin
         m_axis_rx_tvalid_reg <= 1'b0;
 
         start_packet_reg <= 2'b00;
-        error_bad_frame_reg <= 1'b0;
-        error_bad_fcs_reg <= 1'b0;
+
+        stat_rx_byte_reg <= '0;
+        stat_rx_pkt_len_reg <= '0;
+        stat_rx_pkt_fragment_reg <= 1'b0;
+        stat_rx_pkt_jabber_reg <= 1'b0;
+        stat_rx_pkt_ucast_reg <= 1'b0;
+        stat_rx_pkt_mcast_reg <= 1'b0;
+        stat_rx_pkt_bcast_reg <= 1'b0;
+        stat_rx_pkt_vlan_reg <= 1'b0;
+        stat_rx_pkt_good_reg <= 1'b0;
+        stat_rx_pkt_bad_reg <= 1'b0;
+        stat_rx_err_oversize_reg <= 1'b0;
+        stat_rx_err_bad_fcs_reg <= 1'b0;
+        stat_rx_err_bad_block_reg <= 1'b0;
+        stat_rx_err_framing_reg <= 1'b0;
+        stat_rx_err_preamble_reg <= 1'b0;
 
         xgmii_rxc_d0 <= '0;
 
