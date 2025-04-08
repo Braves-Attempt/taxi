@@ -79,6 +79,9 @@ class TB:
         await RisingEdge(self.dut.clk)
         await RisingEdge(self.dut.clk)
 
+        self.stats_reset()
+
+    def stats_reset(self):
         for stat in self.stats:
             self.stats[stat] = 0
 
@@ -182,6 +185,7 @@ async def run_test_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
     tb = TB(dut)
 
     tb.source.ifg = ifg
+    tb.dut.mii_select.value = mii_sel
     tb.dut.cfg_rx_max_pkt_len.value = 1518
     tb.dut.cfg_rx_enable.value = 1
 
@@ -190,46 +194,81 @@ async def run_test_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
 
     await tb.reset()
 
-    test_data = bytes(x for x in range(60))
+    for max_len in range(128-4-4, 128-4+5):
 
-    for k in range(3):
-        test_frame = GmiiFrame.from_payload(test_data)
-        if k == 1:
-            test_frame = GmiiFrame.from_payload(bytes(x % 256 for x in range(1515)))
-        await tb.source.send(test_frame)
+        tb.stats_reset()
 
-    for k in range(3):
-        rx_frame = await tb.sink.recv()
+        total_bytes = 0
+        total_pkts = 0
+        good_bytes = 0
+        oversz_pkts = 0
+        oversz_bytes_in = 0
+        oversz_bytes_out = 0
 
-        if k == 1:
-            frame_error = rx_frame.tuser[-1] & 1
-            assert frame_error
-        else:
-            frame_error = rx_frame.tuser & 1
-            assert rx_frame.tdata == test_data
-            assert frame_error == 0
+        for test_pkt_len in range(max_len-4, max_len+5):
 
-    assert tb.sink.empty()
+            tb.log.info("max len %d (without FCS), test len %d (without FCS)", max_len, test_pkt_len)
 
-    for stat, val in tb.stats.items():
-        tb.log.info("%s: %d", stat, val)
+            tb.dut.cfg_rx_max_pkt_len.value = max_len+4
 
-    assert tb.stats["rx_start_packet"] == 3
-    assert tb.stats["stat_rx_byte"] == 64*2+1519
-    assert tb.stats["stat_rx_pkt_len"] == 64*2+1519
-    assert tb.stats["stat_rx_pkt_fragment"] == 0
-    assert tb.stats["stat_rx_pkt_jabber"] == 0
-    assert tb.stats["stat_rx_pkt_ucast"] == 3
-    assert tb.stats["stat_rx_pkt_mcast"] == 0
-    assert tb.stats["stat_rx_pkt_bcast"] == 0
-    assert tb.stats["stat_rx_pkt_vlan"] == 0
-    assert tb.stats["stat_rx_pkt_good"] == 2
-    assert tb.stats["stat_rx_pkt_bad"] == 1
-    assert tb.stats["stat_rx_err_oversize"] == 1
-    assert tb.stats["stat_rx_err_bad_fcs"] == 0
-    assert tb.stats["stat_rx_err_bad_block"] == 0
-    assert tb.stats["stat_rx_err_framing"] == 0
-    assert tb.stats["stat_rx_err_preamble"] == 0
+            test_data_1 = bytes(x for x in range(60))
+            test_data_2 = bytes(x for x in range(test_pkt_len))
+
+            for k in range(3):
+                if k == 1:
+                    test_data = test_data_2
+                else:
+                    test_data = test_data_1
+                test_frame = GmiiFrame.from_payload(test_data)
+                await tb.source.send(test_frame)
+                total_bytes += max(len(test_data), 60)+4
+                total_pkts += 1
+                if len(test_data) > max_len:
+                    oversz_pkts += 1
+                    oversz_bytes_in += len(test_data)+4
+                    oversz_bytes_out += max_len
+                else:
+                    good_bytes += len(test_data)+4
+
+            for k in range(3):
+                rx_frame = await tb.sink.recv()
+
+                if k == 1:
+                    if test_pkt_len > max_len:
+                        frame_error = rx_frame.tuser[-1] & 1
+                        assert frame_error
+                    else:
+                        frame_error = rx_frame.tuser & 1
+                        assert rx_frame.tdata == test_data_2
+                        assert frame_error == 0
+                else:
+                    frame_error = rx_frame.tuser & 1
+                    assert rx_frame.tdata == test_data_1
+                    assert frame_error == 0
+
+        assert tb.sink.empty()
+
+        for stat, val in tb.stats.items():
+            tb.log.info("%s: %d", stat, val)
+
+        assert tb.stats["rx_start_packet"] == total_pkts
+        assert tb.stats["stat_rx_byte"] >= good_bytes+oversz_bytes_out
+        assert tb.stats["stat_rx_byte"] <= good_bytes+oversz_bytes_in
+        assert tb.stats["stat_rx_pkt_len"] >= good_bytes+oversz_bytes_out
+        assert tb.stats["stat_rx_pkt_len"] <= good_bytes+oversz_bytes_in
+        assert tb.stats["stat_rx_pkt_fragment"] == 0
+        assert tb.stats["stat_rx_pkt_jabber"] == 0
+        assert tb.stats["stat_rx_pkt_ucast"] == total_pkts
+        assert tb.stats["stat_rx_pkt_mcast"] == 0
+        assert tb.stats["stat_rx_pkt_bcast"] == 0
+        assert tb.stats["stat_rx_pkt_vlan"] == 0
+        assert tb.stats["stat_rx_pkt_good"] == total_pkts-oversz_pkts
+        assert tb.stats["stat_rx_pkt_bad"] == oversz_pkts
+        assert tb.stats["stat_rx_err_oversize"] == oversz_pkts
+        assert tb.stats["stat_rx_err_bad_fcs"] == 0
+        assert tb.stats["stat_rx_err_bad_block"] == 0
+        assert tb.stats["stat_rx_err_framing"] == 0
+        assert tb.stats["stat_rx_err_preamble"] == 0
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
