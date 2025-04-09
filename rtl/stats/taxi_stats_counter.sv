@@ -137,11 +137,11 @@ always_comb begin
 
     s_axil_awready_next = 1'b0;
     s_axil_wready_next = 1'b0;
-    s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil.bready;
+    s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil_wr.bready;
 
     s_axil_arready_next = 1'b0;
     s_axil_rdata_next = s_axil_rdata_reg;
-    s_axil_rvalid_next = s_axil_rvalid_reg && !s_axil.rready;
+    s_axil_rvalid_next = s_axil_rvalid_reg && !s_axil_rd.rready;
 
     mem_rd_addr = 0;
     mem_wr_addr = mem_addr_pipeline_reg[PIPELINE-1];
