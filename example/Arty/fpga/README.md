@@ -4,10 +4,10 @@
 
 This example design targets the Digilent Arty A7 FPGA board.
 
-The design places a looped-back MAC on the BASE-T port, as well as a looped-back UART on the USB UART.
+The design places a looped-back MAC on the BASE-T port, as well as XFCP on the USB UART for monitoring and control.
 
 *  USB UART
-    *  Looped-back UART
+    *  XFCP
 *  RJ-45 Ethernet port with TI DP83848J PHY
     *  Looped-back MAC via MII
 
