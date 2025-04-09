@@ -356,6 +356,7 @@ end else begin : sfp_mac
     taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_tx[0:0]();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[0:0]();
     taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[0:0]();
+    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
     if (SIM) begin
 
@@ -414,7 +415,8 @@ end else begin : sfp_mac
         .PRBS31_EN(1'b0),
         .TX_SERDES_PIPELINE(1),
         .RX_SERDES_PIPELINE(1),
-        .COUNT_125US(125000/6.4)
+        .COUNT_125US(125000/6.4),
+        .STAT_EN(1'b0)
     )
     sfp_mac_inst (
         .xcvr_ctrl_clk(clk),
@@ -493,19 +495,48 @@ end else begin : sfp_mac
         .tx_pause_ack(),
 
         /*
+         * Statistics
+         */
+        .stat_clk(clk),
+        .stat_rst(rst),
+        .m_axis_stat(axis_sfp_stat),
+
+        /*
          * Status
          */
         .tx_start_packet(),
-        .tx_error_underflow(),
+        .stat_tx_byte(),
+        .stat_tx_pkt_len(),
+        .stat_tx_pkt_ucast(),
+        .stat_tx_pkt_mcast(),
+        .stat_tx_pkt_bcast(),
+        .stat_tx_pkt_vlan(),
+        .stat_tx_pkt_good(),
+        .stat_tx_pkt_bad(),
+        .stat_tx_err_oversize(),
+        .stat_tx_err_user(),
+        .stat_tx_err_underflow(),
         .rx_start_packet(),
         .rx_error_count(),
-        .rx_error_bad_frame(),
-        .rx_error_bad_fcs(),
-        .rx_bad_block(),
-        .rx_sequence_error(),
         .rx_block_lock(),
         .rx_high_ber(),
         .rx_status(sfp_rx_status),
+        .stat_rx_byte(),
+        .stat_rx_pkt_len(),
+        .stat_rx_pkt_fragment(),
+        .stat_rx_pkt_jabber(),
+        .stat_rx_pkt_ucast(),
+        .stat_rx_pkt_mcast(),
+        .stat_rx_pkt_bcast(),
+        .stat_rx_pkt_vlan(),
+        .stat_rx_pkt_good(),
+        .stat_rx_pkt_bad(),
+        .stat_rx_err_oversize(),
+        .stat_rx_err_bad_fcs(),
+        .stat_rx_err_bad_block(),
+        .stat_rx_err_framing(),
+        .stat_rx_err_preamble(),
+        .stat_rx_fifo_drop('0),
         .stat_tx_mcf(),
         .stat_rx_mcf(),
         .stat_tx_lfc_pkt(),
@@ -528,8 +559,10 @@ end else begin : sfp_mac
         /*
          * Configuration
          */
-        .cfg_ifg('{1{8'd12}}),
+        .cfg_tx_max_pkt_len('{1{16'd9218}}),
+        .cfg_tx_ifg('{1{8'd12}}),
         .cfg_tx_enable('1),
+        .cfg_rx_max_pkt_len('{1{16'd9218}}),
         .cfg_rx_enable('1),
         .cfg_tx_prbs31_enable('0),
         .cfg_rx_prbs31_enable('0),
