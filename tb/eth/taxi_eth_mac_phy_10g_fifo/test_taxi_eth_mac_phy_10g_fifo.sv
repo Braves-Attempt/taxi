@@ -36,6 +36,11 @@ module test_taxi_eth_mac_phy_10g_fifo #
     parameter BITSLIP_HIGH_CYCLES = 0,
     parameter BITSLIP_LOW_CYCLES = 7,
     parameter COUNT_125US = 125000/6.4,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = STAT_TX_LEVEL,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024,
     parameter TX_FIFO_DEPTH = 4096,
     parameter TX_FIFO_RAM_PIPELINE = 1,
     parameter logic TX_FRAME_FIFO = 1'b1,
@@ -75,6 +80,13 @@ logic [HDR_W-1:0] serdes_rx_hdr;
 logic serdes_rx_bitslip;
 logic serdes_rx_reset_req;
 
+logic [PTP_TS_W-1:0] ptp_ts;
+logic ptp_ts_step;
+
+logic stat_clk;
+logic stat_rst;
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) m_axis_stat();
+
 logic tx_error_underflow;
 logic tx_fifo_overflow;
 logic tx_fifo_bad_frame;
@@ -90,11 +102,10 @@ logic rx_fifo_overflow;
 logic rx_fifo_bad_frame;
 logic rx_fifo_good_frame;
 
-logic [PTP_TS_W-1:0] ptp_ts;
-logic ptp_ts_step;
-
-logic [7:0] cfg_ifg;
+logic [15:0] cfg_tx_max_pkt_len;
+logic [7:0] cfg_tx_ifg;
 logic cfg_tx_enable;
+logic [15:0] cfg_rx_max_pkt_len;
 logic cfg_rx_enable;
 logic cfg_tx_prbs31_enable;
 logic cfg_rx_prbs31_enable;
@@ -116,6 +127,11 @@ taxi_eth_mac_phy_10g_fifo #(
     .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
     .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES),
     .COUNT_125US(COUNT_125US),
+    .STAT_EN(STAT_EN),
+    .STAT_TX_LEVEL(STAT_TX_LEVEL),
+    .STAT_RX_LEVEL(STAT_RX_LEVEL),
+    .STAT_ID_BASE(STAT_ID_BASE),
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
     .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
     .TX_FIFO_RAM_PIPELINE(TX_FIFO_RAM_PIPELINE),
     .TX_FRAME_FIFO(TX_FRAME_FIFO),
@@ -161,6 +177,19 @@ uut (
     .serdes_rx_reset_req(serdes_rx_reset_req),
 
     /*
+     * PTP clock
+     */
+    .ptp_ts(ptp_ts),
+    .ptp_ts_step(ptp_ts_step),
+
+    /*
+     * Statistics
+     */
+    .stat_clk(stat_clk),
+    .stat_rst(stat_rst),
+    .m_axis_stat(m_axis_stat),
+
+    /*
      * Status
      */
     .tx_error_underflow(tx_error_underflow),
@@ -179,16 +208,12 @@ uut (
     .rx_fifo_good_frame(rx_fifo_good_frame),
 
     /*
-     * PTP clock
-     */
-    .ptp_ts(ptp_ts),
-    .ptp_ts_step(ptp_ts_step),
-
-    /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable),
     .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable),
     .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable)

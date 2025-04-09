@@ -42,7 +42,12 @@ module taxi_eth_mac_25g_us #
     parameter RX_SERDES_PIPELINE = 1,
     parameter BITSLIP_HIGH_CYCLES = 0,
     parameter BITSLIP_LOW_CYCLES = 7,
-    parameter COUNT_125US = 125000/6.4
+    parameter COUNT_125US = 125000/6.4,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = 1,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024
 )
 (
     input  wire logic                 xcvr_ctrl_clk,
@@ -121,19 +126,48 @@ module taxi_eth_mac_25g_us #
     output wire logic [CNT-1:0]       tx_pause_ack,
 
     /*
+     * Statistics
+     */
+    input  wire logic                 stat_clk,
+    input  wire logic                 stat_rst,
+    taxi_axis_if.src                  m_axis_stat,
+
+    /*
      * Status
      */
     output wire logic [1:0]           tx_start_packet[CNT],
-    output wire logic [CNT-1:0]       tx_error_underflow,
+    output wire logic [3:0]           stat_tx_byte[CNT],
+    output wire logic [15:0]          stat_tx_pkt_len[CNT],
+    output wire logic [CNT-1:0]       stat_tx_pkt_ucast,
+    output wire logic [CNT-1:0]       stat_tx_pkt_mcast,
+    output wire logic [CNT-1:0]       stat_tx_pkt_bcast,
+    output wire logic [CNT-1:0]       stat_tx_pkt_vlan,
+    output wire logic [CNT-1:0]       stat_tx_pkt_good,
+    output wire logic [CNT-1:0]       stat_tx_pkt_bad,
+    output wire logic [CNT-1:0]       stat_tx_err_oversize,
+    output wire logic [CNT-1:0]       stat_tx_err_user,
+    output wire logic [CNT-1:0]       stat_tx_err_underflow,
     output wire logic [1:0]           rx_start_packet[CNT],
     output wire logic [6:0]           rx_error_count[CNT],
-    output wire logic [CNT-1:0]       rx_error_bad_frame,
-    output wire logic [CNT-1:0]       rx_error_bad_fcs,
-    output wire logic [CNT-1:0]       rx_bad_block,
-    output wire logic [CNT-1:0]       rx_sequence_error,
     output wire logic [CNT-1:0]       rx_block_lock,
     output wire logic [CNT-1:0]       rx_high_ber,
     output wire logic [CNT-1:0]       rx_status,
+    output wire logic [3:0]           stat_rx_byte[CNT],
+    output wire logic [15:0]          stat_rx_pkt_len[CNT],
+    output wire logic [CNT-1:0]       stat_rx_pkt_fragment,
+    output wire logic [CNT-1:0]       stat_rx_pkt_jabber,
+    output wire logic [CNT-1:0]       stat_rx_pkt_ucast,
+    output wire logic [CNT-1:0]       stat_rx_pkt_mcast,
+    output wire logic [CNT-1:0]       stat_rx_pkt_bcast,
+    output wire logic [CNT-1:0]       stat_rx_pkt_vlan,
+    output wire logic [CNT-1:0]       stat_rx_pkt_good,
+    output wire logic [CNT-1:0]       stat_rx_pkt_bad,
+    output wire logic [CNT-1:0]       stat_rx_err_oversize,
+    output wire logic [CNT-1:0]       stat_rx_err_bad_fcs,
+    output wire logic [CNT-1:0]       stat_rx_err_bad_block,
+    output wire logic [CNT-1:0]       stat_rx_err_framing,
+    output wire logic [CNT-1:0]       stat_rx_err_preamble,
+    input  wire logic [CNT-1:0]       stat_rx_fifo_drop = '0,
     output wire logic [CNT-1:0]       stat_tx_mcf,
     output wire logic [CNT-1:0]       stat_rx_mcf,
     output wire logic [CNT-1:0]       stat_tx_lfc_pkt,
@@ -156,9 +190,12 @@ module taxi_eth_mac_25g_us #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg[CNT] = '{CNT{8'd12}},
+    input  wire logic [15:0]          cfg_tx_max_pkt_len[CNT] = '{CNT{16'd1518}},
+    input  wire logic [7:0]           cfg_tx_ifg[CNT] = '{CNT{8'd12}},
     input  wire logic [CNT-1:0]       cfg_tx_enable = '1,
+    input  wire logic [15:0]          cfg_rx_max_pkt_len[CNT] = '{CNT{16'd1518}},
     input  wire logic [CNT-1:0]       cfg_rx_enable = '1,
+    input  wire logic [7:0]           cfg_ifg[CNT] = '{CNT{8'd12}},
     input  wire logic [CNT-1:0]       cfg_tx_prbs31_enable = '0,
     input  wire logic [CNT-1:0]       cfg_rx_prbs31_enable = '0,
     input  wire logic [47:0]          cfg_mcf_rx_eth_dst_mcast[CNT] = '{CNT{48'h01_80_C2_00_00_01}},
@@ -193,6 +230,46 @@ module taxi_eth_mac_25g_us #
     input  wire logic [15:0]          cfg_rx_pfc_opcode[CNT] = '{CNT{16'h0101}},
     input  wire logic [CNT-1:0]       cfg_rx_pfc_en = '0
 );
+
+// statistics
+localparam STAT_TX_CNT = STAT_TX_LEVEL == 0 ? 8 : (STAT_TX_LEVEL == 1 ? 16: 32);
+localparam STAT_RX_CNT = STAT_RX_LEVEL == 0 ? 8 : (STAT_RX_LEVEL == 1 ? 16: 32);
+
+taxi_axis_if #(
+    .DATA_W(m_axis_stat.DATA_W),
+    .KEEP_W(1),
+    .LAST_EN(0),
+    .ID_W(m_axis_stat.ID_W),
+    .ID_EN(m_axis_stat.ID_EN),
+    .USER_W(1),
+    .USER_EN(1)
+)
+axis_stat_int[CNT]();
+
+if (STAT_EN) begin : stats
+
+    taxi_axis_arb_mux #(
+        .S_COUNT(CNT),
+        .UPDATE_TID(1'b0),
+        .ARB_ROUND_ROBIN(1'b1),
+        .ARB_LSB_HIGH_PRIO(1'b0)
+    )
+    stat_mux_inst (
+        .clk(stat_clk),
+        .rst(stat_rst),
+
+        /*
+         * AXI4-Stream inputs (sink)
+         */
+        .s_axis(axis_stat_int),
+
+        /*
+         * AXI4-Stream output (source)
+         */
+        .m_axis(m_axis_stat)
+    );
+
+end
 
 for (genvar n = 0; n < CNT; n = n + 1) begin : ch
 
@@ -239,7 +316,12 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         .RX_SERDES_PIPELINE(RX_SERDES_PIPELINE),
         .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
         .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES),
-        .COUNT_125US(COUNT_125US)
+        .COUNT_125US(COUNT_125US),
+        .STAT_EN(STAT_EN),
+        .STAT_TX_LEVEL(STAT_TX_LEVEL),
+        .STAT_RX_LEVEL(STAT_RX_LEVEL),
+        .STAT_ID_BASE(STAT_ID_BASE + n*(STAT_TX_CNT+STAT_RX_CNT)),
+        .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
     )
     ch_inst (
         .xcvr_ctrl_clk(xcvr_ctrl_clk),
@@ -330,19 +412,48 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         .tx_pause_ack(tx_pause_ack[n]),
 
         /*
+         * Statistics
+         */
+        .stat_clk(stat_clk),
+        .stat_rst(stat_rst),
+        .m_axis_stat(axis_stat_int[n]),
+
+        /*
          * Status
          */
         .tx_start_packet(tx_start_packet[n]),
-        .tx_error_underflow(tx_error_underflow[n]),
+        .stat_tx_byte(stat_tx_byte[n]),
+        .stat_tx_pkt_len(stat_tx_pkt_len[n]),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast[n]),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast[n]),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast[n]),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan[n]),
+        .stat_tx_pkt_good(stat_tx_pkt_good[n]),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad[n]),
+        .stat_tx_err_oversize(stat_tx_err_oversize[n]),
+        .stat_tx_err_user(stat_tx_err_user[n]),
+        .stat_tx_err_underflow(stat_tx_err_underflow[n]),
         .rx_start_packet(rx_start_packet[n]),
         .rx_error_count(rx_error_count[n]),
-        .rx_error_bad_frame(rx_error_bad_frame[n]),
-        .rx_error_bad_fcs(rx_error_bad_fcs[n]),
-        .rx_bad_block(rx_bad_block[n]),
-        .rx_sequence_error(rx_sequence_error[n]),
         .rx_block_lock(rx_block_lock[n]),
         .rx_high_ber(rx_high_ber[n]),
         .rx_status(rx_status[n]),
+        .stat_rx_byte(stat_rx_byte[n]),
+        .stat_rx_pkt_len(stat_rx_pkt_len[n]),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment[n]),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber[n]),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast[n]),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast[n]),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast[n]),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan[n]),
+        .stat_rx_pkt_good(stat_rx_pkt_good[n]),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad[n]),
+        .stat_rx_err_oversize(stat_rx_err_oversize[n]),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs[n]),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block[n]),
+        .stat_rx_err_framing(stat_rx_err_framing[n]),
+        .stat_rx_err_preamble(stat_rx_err_preamble[n]),
+        .stat_rx_fifo_drop(stat_rx_fifo_drop[n]),
         .stat_tx_mcf(stat_tx_mcf[n]),
         .stat_rx_mcf(stat_rx_mcf[n]),
         .stat_tx_lfc_pkt(stat_tx_lfc_pkt[n]),
@@ -365,8 +476,10 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         /*
          * Configuration
          */
-        .cfg_ifg(cfg_ifg[n]),
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len[n]),
+        .cfg_tx_ifg(cfg_tx_ifg[n]),
         .cfg_tx_enable(cfg_tx_enable[n]),
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len[n]),
         .cfg_rx_enable(cfg_rx_enable[n]),
         .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable[n]),
         .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable[n]),

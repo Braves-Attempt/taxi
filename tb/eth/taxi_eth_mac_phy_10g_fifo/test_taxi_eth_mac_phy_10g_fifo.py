@@ -52,6 +52,7 @@ class TB:
         cocotb.start_soon(Clock(dut.logic_clk, self.clk_period, units="ns").start())
         cocotb.start_soon(Clock(dut.rx_clk, self.clk_period, units="ns").start())
         cocotb.start_soon(Clock(dut.tx_clk, self.clk_period, units="ns").start())
+        cocotb.start_soon(Clock(dut.stat_clk, self.clk_period, units="ns").start())
         cocotb.start_soon(Clock(dut.ptp_sample_clk, 9.9, units="ns").start())
 
         self.serdes_source = BaseRSerdesSource(dut.serdes_rx_data, dut.serdes_rx_hdr, dut.rx_clk, slip=dut.serdes_rx_bitslip)
@@ -61,12 +62,16 @@ class TB:
         self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.logic_clk, dut.logic_rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.logic_clk, dut.logic_rst)
 
+        self.stat_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_stat), dut.stat_clk, dut.stat_rst)
+
         self.ptp_clock = PtpClockSimTime(ts_tod=dut.ptp_ts, clock=dut.logic_clk)
 
         dut.ptp_ts_step.setimmediatevalue(0)
 
-        dut.cfg_ifg.setimmediatevalue(0)
+        dut.cfg_tx_max_pkt_len.setimmediatevalue(0)
+        dut.cfg_tx_ifg.setimmediatevalue(0)
         dut.cfg_tx_enable.setimmediatevalue(0)
+        dut.cfg_rx_max_pkt_len.setimmediatevalue(0)
         dut.cfg_rx_enable.setimmediatevalue(0)
         dut.cfg_tx_prbs31_enable.setimmediatevalue(0)
         dut.cfg_rx_prbs31_enable.setimmediatevalue(0)
@@ -75,16 +80,19 @@ class TB:
         self.dut.logic_rst.setimmediatevalue(0)
         self.dut.rx_rst.setimmediatevalue(0)
         self.dut.tx_rst.setimmediatevalue(0)
+        self.dut.stat_rst.setimmediatevalue(0)
         await RisingEdge(self.dut.logic_clk)
         await RisingEdge(self.dut.logic_clk)
         self.dut.logic_rst.value = 1
         self.dut.rx_rst.value = 1
         self.dut.tx_rst.value = 1
+        self.dut.stat_rst.value = 1
         await RisingEdge(self.dut.logic_clk)
         await RisingEdge(self.dut.logic_clk)
         self.dut.logic_rst.value = 0
         self.dut.rx_rst.value = 0
         self.dut.tx_rst.value = 0
+        self.dut.stat_rst.value = 0
         await RisingEdge(self.dut.logic_clk)
         await RisingEdge(self.dut.logic_clk)
 
@@ -94,7 +102,8 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12):
     tb = TB(dut)
 
     tb.serdes_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
 
     await tb.reset()
@@ -152,7 +161,8 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12):
     tb = TB(dut)
 
     tb.serdes_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
@@ -204,7 +214,8 @@ async def run_test_tx_alignment(dut, payload_data=None, ifg=12):
     byte_width = tb.axis_source.width // 8
 
     tb.serdes_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
@@ -411,6 +422,11 @@ def test_taxi_eth_mac_phy_10g_fifo(request, data_w, dic_en):
     parameters['BITSLIP_HIGH_CYCLES'] = 0
     parameters['BITSLIP_LOW_CYCLES'] = 7
     parameters['COUNT_125US'] = int(1250/6.4)
+    parameters['STAT_EN'] = 1
+    parameters['STAT_TX_LEVEL'] = 2
+    parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
+    parameters['STAT_ID_BASE'] = 0
+    parameters['STAT_UPDATE_PERIOD'] = 1024
     parameters['TX_FIFO_DEPTH'] = 16384
     parameters['TX_FIFO_RAM_PIPELINE'] = 1
     parameters['TX_FRAME_FIFO'] = 1

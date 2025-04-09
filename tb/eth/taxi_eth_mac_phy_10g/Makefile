@@ -47,6 +47,11 @@ export PARAM_BITSLIP_LOW_CYCLES := 7
 export PARAM_COUNT_125US := 195
 export PARAM_PFC_EN := 1
 export PARAM_PAUSE_EN := $(PARAM_PFC_EN)
+export PARAM_STAT_EN := 1
+export PARAM_STAT_TX_LEVEL := 2
+export PARAM_STAT_RX_LEVEL := $(PARAM_STAT_TX_LEVEL)
+export PARAM_STAT_ID_BASE := 0
+export PARAM_STAT_UPDATE_PERIOD := 1024
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

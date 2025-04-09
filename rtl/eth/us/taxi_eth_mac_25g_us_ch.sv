@@ -42,7 +42,12 @@ module taxi_eth_mac_25g_us_ch #
     parameter RX_SERDES_PIPELINE = 1,
     parameter BITSLIP_HIGH_CYCLES = 0,
     parameter BITSLIP_LOW_CYCLES = 7,
-    parameter COUNT_125US = 125000/6.4
+    parameter COUNT_125US = 125000/6.4,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = 1,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024
 )
 (
     input  wire logic                 xcvr_ctrl_clk,
@@ -133,19 +138,48 @@ module taxi_eth_mac_25g_us_ch #
     output wire logic                 tx_pause_ack,
 
     /*
+     * Statistics
+     */
+    input  wire logic                 stat_clk,
+    input  wire logic                 stat_rst,
+    taxi_axis_if.src                  m_axis_stat,
+
+    /*
      * Status
      */
     output wire logic [1:0]           tx_start_packet,
-    output wire logic                 tx_error_underflow,
+    output wire logic [3:0]           stat_tx_byte,
+    output wire logic [15:0]          stat_tx_pkt_len,
+    output wire logic                 stat_tx_pkt_ucast,
+    output wire logic                 stat_tx_pkt_mcast,
+    output wire logic                 stat_tx_pkt_bcast,
+    output wire logic                 stat_tx_pkt_vlan,
+    output wire logic                 stat_tx_pkt_good,
+    output wire logic                 stat_tx_pkt_bad,
+    output wire logic                 stat_tx_err_oversize,
+    output wire logic                 stat_tx_err_user,
+    output wire logic                 stat_tx_err_underflow,
     output wire logic [1:0]           rx_start_packet,
     output wire logic [6:0]           rx_error_count,
-    output wire logic                 rx_error_bad_frame,
-    output wire logic                 rx_error_bad_fcs,
-    output wire logic                 rx_bad_block,
-    output wire logic                 rx_sequence_error,
     output wire logic                 rx_block_lock,
     output wire logic                 rx_high_ber,
     output wire logic                 rx_status,
+    output wire logic [3:0]           stat_rx_byte,
+    output wire logic [15:0]          stat_rx_pkt_len,
+    output wire logic                 stat_rx_pkt_fragment,
+    output wire logic                 stat_rx_pkt_jabber,
+    output wire logic                 stat_rx_pkt_ucast,
+    output wire logic                 stat_rx_pkt_mcast,
+    output wire logic                 stat_rx_pkt_bcast,
+    output wire logic                 stat_rx_pkt_vlan,
+    output wire logic                 stat_rx_pkt_good,
+    output wire logic                 stat_rx_pkt_bad,
+    output wire logic                 stat_rx_err_oversize,
+    output wire logic                 stat_rx_err_bad_fcs,
+    output wire logic                 stat_rx_err_bad_block,
+    output wire logic                 stat_rx_err_framing,
+    output wire logic                 stat_rx_err_preamble,
+    input  wire logic                 stat_rx_fifo_drop = 1'b0,
     output wire logic                 stat_tx_mcf,
     output wire logic                 stat_rx_mcf,
     output wire logic                 stat_tx_lfc_pkt,
@@ -168,8 +202,10 @@ module taxi_eth_mac_25g_us_ch #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg = 8'd12,
+    input  wire logic [15:0]          cfg_tx_max_pkt_len = 16'd1518,
+    input  wire logic [7:0]           cfg_tx_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable = 1'b1,
+    input  wire logic [15:0]          cfg_rx_max_pkt_len = 16'd1518,
     input  wire logic                 cfg_rx_enable = 1'b1,
     input  wire logic                 cfg_tx_prbs31_enable = 1'b0,
     input  wire logic                 cfg_rx_prbs31_enable = 1'b0,
@@ -693,7 +729,12 @@ taxi_eth_mac_phy_10g #(
     .RX_SERDES_PIPELINE(RX_SERDES_PIPELINE),
     .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
     .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES),
-    .COUNT_125US(COUNT_125US)
+    .COUNT_125US(COUNT_125US),
+    .STAT_EN(STAT_EN),
+    .STAT_TX_LEVEL(STAT_TX_LEVEL),
+    .STAT_RX_LEVEL(STAT_RX_LEVEL),
+    .STAT_ID_BASE(STAT_ID_BASE),
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
 )
 eth_mac_phy_10g_inst (
     .tx_clk(tx_clk),
@@ -754,19 +795,48 @@ eth_mac_phy_10g_inst (
     .tx_pause_ack(tx_pause_ack),
 
     /*
+     * Statistics
+     */
+    .stat_clk(stat_clk),
+    .stat_rst(stat_rst),
+    .m_axis_stat(m_axis_stat),
+
+    /*
      * Status
      */
     .tx_start_packet(tx_start_packet),
-    .tx_error_underflow(tx_error_underflow),
+    .stat_tx_byte(stat_tx_byte),
+    .stat_tx_pkt_len(stat_tx_pkt_len),
+    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+    .stat_tx_pkt_good(stat_tx_pkt_good),
+    .stat_tx_pkt_bad(stat_tx_pkt_bad),
+    .stat_tx_err_oversize(stat_tx_err_oversize),
+    .stat_tx_err_user(stat_tx_err_user),
+    .stat_tx_err_underflow(stat_tx_err_underflow),
     .rx_start_packet(rx_start_packet),
     .rx_error_count(rx_error_count),
-    .rx_error_bad_frame(rx_error_bad_frame),
-    .rx_error_bad_fcs(rx_error_bad_fcs),
-    .rx_bad_block(rx_bad_block),
-    .rx_sequence_error(rx_sequence_error),
     .rx_block_lock(rx_block_lock),
     .rx_high_ber(rx_high_ber),
     .rx_status(rx_status),
+    .stat_rx_byte(stat_rx_byte),
+    .stat_rx_pkt_len(stat_rx_pkt_len),
+    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+    .stat_rx_pkt_good(stat_rx_pkt_good),
+    .stat_rx_pkt_bad(stat_rx_pkt_bad),
+    .stat_rx_err_oversize(stat_rx_err_oversize),
+    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+    .stat_rx_err_bad_block(stat_rx_err_bad_block),
+    .stat_rx_err_framing(stat_rx_err_framing),
+    .stat_rx_err_preamble(stat_rx_err_preamble),
+    .stat_rx_fifo_drop(stat_rx_fifo_drop),
     .stat_tx_mcf(stat_tx_mcf),
     .stat_rx_mcf(stat_rx_mcf),
     .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
@@ -789,8 +859,10 @@ eth_mac_phy_10g_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable),
     .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable),
     .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable),
