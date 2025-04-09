@@ -42,17 +42,17 @@ module taxi_axis_arb_mux #
 );
 
 // extract parameters
-localparam DATA_W = s_axis.DATA_W;
-localparam logic KEEP_EN = s_axis.KEEP_EN && m_axis.KEEP_EN;
-localparam KEEP_W = s_axis.KEEP_W;
-localparam logic STRB_EN = s_axis.STRB_EN && m_axis.STRB_EN;
-localparam logic LAST_EN = s_axis.LAST_EN && m_axis.LAST_EN;
-localparam logic ID_EN = s_axis.ID_EN && m_axis.ID_EN;
-localparam S_ID_W = s_axis.ID_W;
-localparam logic DEST_EN = s_axis.DEST_EN && m_axis.DEST_EN;
-localparam DEST_W = s_axis.DEST_W;
-localparam logic USER_EN = s_axis.USER_EN && m_axis.USER_EN;
-localparam USER_W = s_axis.USER_W;
+localparam DATA_W = s_axis[0].DATA_W;
+localparam logic KEEP_EN = s_axis[0].KEEP_EN && m_axis.KEEP_EN;
+localparam KEEP_W = s_axis[0].KEEP_W;
+localparam logic STRB_EN = s_axis[0].STRB_EN && m_axis.STRB_EN;
+localparam logic LAST_EN = s_axis[0].LAST_EN && m_axis.LAST_EN;
+localparam logic ID_EN = s_axis[0].ID_EN && m_axis.ID_EN;
+localparam S_ID_W = s_axis[0].ID_W;
+localparam logic DEST_EN = s_axis[0].DEST_EN && m_axis.DEST_EN;
+localparam DEST_W = s_axis[0].DEST_W;
+localparam logic USER_EN = s_axis[0].USER_EN && m_axis.USER_EN;
+localparam USER_W = s_axis[0].USER_W;
 
 localparam M_ID_W = m_axis.ID_W;
 
