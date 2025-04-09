@@ -39,6 +39,7 @@ class TB:
         cocotb.start_soon(Clock(dut.logic_clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.rx_clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.tx_clk, 8, units="ns").start())
+        cocotb.start_soon(Clock(dut.stat_clk, 8, units="ns").start())
 
         self.gmii_source = GmiiSource(dut.gmii_rxd, dut.gmii_rx_er, dut.gmii_rx_dv,
             dut.rx_clk, dut.rx_rst, dut.rx_clk_enable, dut.rx_mii_select)
@@ -49,11 +50,18 @@ class TB:
         self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.logic_clk, dut.logic_rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.logic_clk, dut.logic_rst)
 
+        self.stat_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_stat), dut.stat_clk, dut.stat_rst)
+
+        dut.cfg_tx_max_pkt_len.setimmediatevalue(0)
+        dut.cfg_tx_ifg.setimmediatevalue(0)
+        dut.cfg_tx_enable.setimmediatevalue(0)
+        dut.cfg_rx_max_pkt_len.setimmediatevalue(0)
+        dut.cfg_rx_enable.setimmediatevalue(0)
         dut.rx_clk_enable.setimmediatevalue(1)
         dut.tx_clk_enable.setimmediatevalue(1)
         dut.rx_mii_select.setimmediatevalue(0)
         dut.tx_mii_select.setimmediatevalue(0)
-        dut.cfg_ifg.setimmediatevalue(0)
+        dut.cfg_tx_ifg.setimmediatevalue(0)
         dut.cfg_tx_enable.setimmediatevalue(0)
         dut.cfg_rx_enable.setimmediatevalue(0)
 
@@ -61,16 +69,19 @@ class TB:
         self.dut.logic_rst.setimmediatevalue(0)
         self.dut.rx_rst.setimmediatevalue(0)
         self.dut.tx_rst.setimmediatevalue(0)
+        self.dut.stat_rst.setimmediatevalue(0)
         for k in range(10):
             await RisingEdge(self.dut.logic_clk)
         self.dut.logic_rst.value = 1
         self.dut.rx_rst.value = 1
         self.dut.tx_rst.value = 1
+        self.dut.stat_rst.value = 1
         for k in range(10):
             await RisingEdge(self.dut.logic_clk)
         self.dut.logic_rst.value = 0
         self.dut.rx_rst.value = 0
         self.dut.tx_rst.value = 0
+        self.dut.stat_rst.value = 0
         for k in range(10):
             await RisingEdge(self.dut.logic_clk)
 
@@ -116,7 +127,8 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12, enab
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
@@ -150,7 +162,8 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12, enab
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
@@ -242,6 +255,11 @@ def test_taxi_eth_mac_1g_fifo(request):
     parameters['PADDING_EN'] = 1
     parameters['MIN_FRAME_LEN'] = 64
     parameters['TX_TAG_W'] = 16
+    parameters['STAT_EN'] = 1
+    parameters['STAT_TX_LEVEL'] = 2
+    parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
+    parameters['STAT_ID_BASE'] = 0
+    parameters['STAT_UPDATE_PERIOD'] = 1024
     parameters['TX_FIFO_DEPTH'] = 16384
     parameters['TX_FIFO_RAM_PIPELINE'] = 1
     parameters['TX_FRAME_FIFO'] = 1

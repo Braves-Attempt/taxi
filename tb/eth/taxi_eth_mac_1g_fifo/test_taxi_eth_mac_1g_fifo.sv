@@ -23,6 +23,11 @@ module test_taxi_eth_mac_1g_fifo #
     parameter logic PADDING_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
     parameter TX_TAG_W = 16,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = STAT_TX_LEVEL,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024,
     parameter TX_FIFO_DEPTH = 4096,
     parameter TX_FIFO_RAM_PIPELINE = 1,
     parameter logic TX_FRAME_FIFO = 1'b1,
@@ -66,6 +71,10 @@ logic tx_clk_enable;
 logic rx_mii_select;
 logic tx_mii_select;
 
+logic stat_clk;
+logic stat_rst;
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) m_axis_stat();
+
 logic tx_error_underflow;
 logic tx_fifo_overflow;
 logic tx_fifo_bad_frame;
@@ -76,14 +85,21 @@ logic rx_fifo_overflow;
 logic rx_fifo_bad_frame;
 logic rx_fifo_good_frame;
 
-logic [7:0] cfg_ifg;
+logic [15:0] cfg_tx_max_pkt_len;
+logic [7:0] cfg_tx_ifg;
 logic cfg_tx_enable;
+logic [15:0] cfg_rx_max_pkt_len;
 logic cfg_rx_enable;
 
 taxi_eth_mac_1g_fifo #(
     .DATA_W(DATA_W),
     .PADDING_EN(PADDING_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
+    .STAT_EN(STAT_EN),
+    .STAT_TX_LEVEL(STAT_TX_LEVEL),
+    .STAT_RX_LEVEL(STAT_RX_LEVEL),
+    .STAT_ID_BASE(STAT_ID_BASE),
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
     .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
     .TX_FIFO_RAM_PIPELINE(TX_FIFO_RAM_PIPELINE),
     .TX_FRAME_FIFO(TX_FRAME_FIFO),
@@ -136,6 +152,13 @@ uut (
     .tx_mii_select(tx_mii_select),
 
     /*
+     * Statistics
+     */
+    .stat_clk(stat_clk),
+    .stat_rst(stat_rst),
+    .m_axis_stat(m_axis_stat),
+
+    /*
      * Status
      */
     .tx_error_underflow(tx_error_underflow),
@@ -151,8 +174,10 @@ uut (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable)
 );
 

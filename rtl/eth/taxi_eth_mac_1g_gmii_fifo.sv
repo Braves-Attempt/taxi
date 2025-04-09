@@ -22,6 +22,11 @@ module taxi_eth_mac_1g_gmii_fifo #
     parameter string FAMILY = "virtex7",
     parameter logic PADDING_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = STAT_TX_LEVEL,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024,
     parameter TX_FIFO_DEPTH = 4096,
     parameter TX_FIFO_RAM_PIPELINE = 1,
     parameter logic TX_FRAME_FIFO = 1'b1,
@@ -67,6 +72,13 @@ module taxi_eth_mac_1g_gmii_fifo #
     output wire logic                 gmii_tx_er,
 
     /*
+     * Statistics
+     */
+    input  wire logic                 stat_clk,
+    input  wire logic                 stat_rst,
+    taxi_axis_if.src                  m_axis_stat,
+
+    /*
      * Status
      */
     output wire logic                 tx_error_underflow,
@@ -83,8 +95,10 @@ module taxi_eth_mac_1g_gmii_fifo #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg = 8'd12,
+    input  wire logic [15:0]          cfg_tx_max_pkt_len = 16'd1518,
+    input  wire logic [7:0]           cfg_tx_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable = 1'b1,
+    input  wire logic [15:0]          cfg_rx_max_pkt_len = 16'd1518,
     input  wire logic                 cfg_rx_enable = 1'b1
 );
 
@@ -177,6 +191,8 @@ always @(posedge logic_clk) begin
     link_speed_sync_reg_2 <= link_speed_sync_reg_1;
 end
 
+wire stat_rx_fifo_drop;
+
 taxi_eth_mac_1g_gmii #(
     .SIM(SIM),
     .VENDOR(VENDOR),
@@ -185,7 +201,12 @@ taxi_eth_mac_1g_gmii #(
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
     .PTP_TS_EN(1'b0),
     .PFC_EN(1'b0),
-    .PAUSE_EN(1'b0)
+    .PAUSE_EN(1'b0),
+    .STAT_EN(STAT_EN),
+    .STAT_TX_LEVEL(STAT_TX_LEVEL),
+    .STAT_RX_LEVEL(STAT_RX_LEVEL),
+    .STAT_ID_BASE(STAT_ID_BASE),
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
 )
 eth_mac_1g_gmii_inst (
     .gtx_clk(gtx_clk),
@@ -251,13 +272,45 @@ eth_mac_1g_gmii_inst (
     .tx_pause_ack(),
 
     /*
+     * Statistics
+     */
+    .stat_clk(stat_clk),
+    .stat_rst(stat_rst),
+    .m_axis_stat(m_axis_stat),
+
+    /*
      * Status
      */
+    // .rx_error_bad_frame(rx_error_bad_frame_int),
     .tx_start_packet(),
-    .tx_error_underflow(tx_error_underflow_int),
+    .stat_tx_byte(),
+    .stat_tx_pkt_len(),
+    .stat_tx_pkt_ucast(),
+    .stat_tx_pkt_mcast(),
+    .stat_tx_pkt_bcast(),
+    .stat_tx_pkt_vlan(),
+    .stat_tx_pkt_good(),
+    .stat_tx_pkt_bad(),
+    .stat_tx_err_oversize(),
+    .stat_tx_err_user(),
+    .stat_tx_err_underflow(tx_error_underflow_int),
     .rx_start_packet(),
-    .rx_error_bad_frame(rx_error_bad_frame_int),
-    .rx_error_bad_fcs(rx_error_bad_fcs_int),
+    .stat_rx_byte(),
+    .stat_rx_pkt_len(),
+    .stat_rx_pkt_fragment(),
+    .stat_rx_pkt_jabber(),
+    .stat_rx_pkt_ucast(),
+    .stat_rx_pkt_mcast(),
+    .stat_rx_pkt_bcast(),
+    .stat_rx_pkt_vlan(),
+    .stat_rx_pkt_good(),
+    .stat_rx_pkt_bad(),
+    .stat_rx_err_oversize(),
+    .stat_rx_err_bad_fcs(rx_error_bad_fcs_int),
+    .stat_rx_err_bad_block(),
+    .stat_rx_err_framing(),
+    .stat_rx_err_preamble(),
+    .stat_rx_fifo_drop(stat_rx_fifo_drop),
     .link_speed(link_speed_int),
     .stat_tx_mcf(),
     .stat_rx_mcf(),
@@ -281,8 +334,10 @@ eth_mac_1g_gmii_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable),
     .cfg_mcf_rx_eth_dst_mcast('0),
     .cfg_mcf_rx_check_eth_dst_mcast('0),
@@ -445,7 +500,7 @@ rx_fifo (
      */
     .s_status_depth(),
     .s_status_depth_commit(),
-    .s_status_overflow(),
+    .s_status_overflow(stat_rx_fifo_drop),
     .s_status_bad_frame(),
     .s_status_good_frame(),
     .m_status_depth(),

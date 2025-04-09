@@ -26,7 +26,12 @@ module taxi_eth_mac_1g_rgmii #
     parameter logic PTP_TS_EN = 1'b0,
     parameter PTP_TS_W = 96,
     parameter logic PFC_EN = 1'b0,
-    parameter logic PAUSE_EN = PFC_EN
+    parameter logic PAUSE_EN = PFC_EN,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = STAT_TX_LEVEL,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024
 )
 (
     input  wire logic                 gtx_clk,
@@ -90,13 +95,44 @@ module taxi_eth_mac_1g_rgmii #
     output wire logic                 tx_pause_ack,
 
     /*
+     * Statistics
+     */
+    input  wire logic                 stat_clk,
+    input  wire logic                 stat_rst,
+    taxi_axis_if.src                  m_axis_stat,
+
+    /*
      * Status
      */
     output wire logic                 tx_start_packet,
-    output wire logic                 tx_error_underflow,
+    output wire logic                 stat_tx_byte,
+    output wire logic [15:0]          stat_tx_pkt_len,
+    output wire logic                 stat_tx_pkt_ucast,
+    output wire logic                 stat_tx_pkt_mcast,
+    output wire logic                 stat_tx_pkt_bcast,
+    output wire logic                 stat_tx_pkt_vlan,
+    output wire logic                 stat_tx_pkt_good,
+    output wire logic                 stat_tx_pkt_bad,
+    output wire logic                 stat_tx_err_oversize,
+    output wire logic                 stat_tx_err_user,
+    output wire logic                 stat_tx_err_underflow,
     output wire logic                 rx_start_packet,
-    output wire logic                 rx_error_bad_frame,
-    output wire logic                 rx_error_bad_fcs,
+    output wire logic                 stat_rx_byte,
+    output wire logic [15:0]          stat_rx_pkt_len,
+    output wire logic                 stat_rx_pkt_fragment,
+    output wire logic                 stat_rx_pkt_jabber,
+    output wire logic                 stat_rx_pkt_ucast,
+    output wire logic                 stat_rx_pkt_mcast,
+    output wire logic                 stat_rx_pkt_bcast,
+    output wire logic                 stat_rx_pkt_vlan,
+    output wire logic                 stat_rx_pkt_good,
+    output wire logic                 stat_rx_pkt_bad,
+    output wire logic                 stat_rx_err_oversize,
+    output wire logic                 stat_rx_err_bad_fcs,
+    output wire logic                 stat_rx_err_bad_block,
+    output wire logic                 stat_rx_err_framing,
+    output wire logic                 stat_rx_err_preamble,
+    input  wire logic                 stat_rx_fifo_drop = 1'b0,
     output wire logic [1:0]           link_speed,
     output wire logic                 stat_tx_mcf,
     output wire logic                 stat_rx_mcf,
@@ -120,8 +156,10 @@ module taxi_eth_mac_1g_rgmii #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg = 8'd12,
+    input  wire logic [15:0]          cfg_tx_max_pkt_len = 16'd1518,
+    input  wire logic [7:0]           cfg_tx_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable = 1'b1,
+    input  wire logic [15:0]          cfg_rx_max_pkt_len = 16'd1518,
     input  wire logic                 cfg_rx_enable = 1'b1,
     input  wire logic [47:0]          cfg_mcf_rx_eth_dst_mcast = 48'h01_80_C2_00_00_01,
     input  wire logic                 cfg_mcf_rx_check_eth_dst_mcast = 1'b1,
@@ -301,7 +339,12 @@ taxi_eth_mac_1g #(
     .PTP_TS_EN(PTP_TS_EN),
     .PTP_TS_W(PTP_TS_W),
     .PFC_EN(PFC_EN),
-    .PAUSE_EN(PAUSE_EN)
+    .PAUSE_EN(PAUSE_EN),
+    .STAT_EN(STAT_EN),
+    .STAT_TX_LEVEL(STAT_TX_LEVEL),
+    .STAT_RX_LEVEL(STAT_RX_LEVEL),
+    .STAT_ID_BASE(STAT_ID_BASE),
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
 )
 eth_mac_1g_inst (
     .tx_clk(tx_clk),
@@ -370,13 +413,44 @@ eth_mac_1g_inst (
     .tx_mii_select(tx_mii_select_sync),
 
     /*
+     * Statistics
+     */
+    .stat_clk(stat_clk),
+    .stat_rst(stat_rst),
+    .m_axis_stat(m_axis_stat),
+
+    /*
      * Status
      */
     .tx_start_packet(tx_start_packet),
-    .tx_error_underflow(tx_error_underflow),
+    .stat_tx_byte(stat_tx_byte),
+    .stat_tx_pkt_len(stat_tx_pkt_len),
+    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+    .stat_tx_pkt_good(stat_tx_pkt_good),
+    .stat_tx_pkt_bad(stat_tx_pkt_bad),
+    .stat_tx_err_oversize(stat_tx_err_oversize),
+    .stat_tx_err_user(stat_tx_err_user),
+    .stat_tx_err_underflow(stat_tx_err_underflow),
     .rx_start_packet(rx_start_packet),
-    .rx_error_bad_frame(rx_error_bad_frame),
-    .rx_error_bad_fcs(rx_error_bad_fcs),
+    .stat_rx_byte(stat_rx_byte),
+    .stat_rx_pkt_len(stat_rx_pkt_len),
+    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+    .stat_rx_pkt_good(stat_rx_pkt_good),
+    .stat_rx_pkt_bad(stat_rx_pkt_bad),
+    .stat_rx_err_oversize(stat_rx_err_oversize),
+    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+    .stat_rx_err_bad_block(stat_rx_err_bad_block),
+    .stat_rx_err_framing(stat_rx_err_framing),
+    .stat_rx_err_preamble(stat_rx_err_preamble),
+    .stat_rx_fifo_drop(stat_rx_fifo_drop),
     .stat_tx_mcf(stat_tx_mcf),
     .stat_rx_mcf(stat_rx_mcf),
     .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
@@ -399,8 +473,10 @@ eth_mac_1g_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable),
     .cfg_mcf_rx_eth_dst_mcast(cfg_mcf_rx_eth_dst_mcast),
     .cfg_mcf_rx_check_eth_dst_mcast(cfg_mcf_rx_check_eth_dst_mcast),

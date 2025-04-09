@@ -33,6 +33,7 @@ class TB:
 
         cocotb.start_soon(Clock(dut.gtx_clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.logic_clk, 8, units="ns").start())
+        cocotb.start_soon(Clock(dut.stat_clk, 8, units="ns").start())
 
         self.gmii_phy = GmiiPhy(dut.gmii_txd, dut.gmii_tx_er, dut.gmii_tx_en, dut.mii_tx_clk, dut.gmii_tx_clk,
             dut.gmii_rxd, dut.gmii_rx_er, dut.gmii_rx_dv, dut.gmii_rx_clk, speed=speed)
@@ -41,21 +42,28 @@ class TB:
         self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.logic_clk, dut.logic_rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.logic_clk, dut.logic_rst)
 
-        dut.cfg_ifg.setimmediatevalue(0)
+        self.stat_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_stat), dut.stat_clk, dut.stat_rst)
+
+        dut.cfg_tx_max_pkt_len.setimmediatevalue(0)
+        dut.cfg_tx_ifg.setimmediatevalue(0)
         dut.cfg_tx_enable.setimmediatevalue(0)
+        dut.cfg_rx_max_pkt_len.setimmediatevalue(0)
         dut.cfg_rx_enable.setimmediatevalue(0)
 
     async def reset(self):
         self.dut.gtx_rst.setimmediatevalue(0)
         self.dut.logic_rst.setimmediatevalue(0)
+        self.dut.stat_rst.setimmediatevalue(0)
         await RisingEdge(self.dut.gtx_clk)
         await RisingEdge(self.dut.gtx_clk)
         self.dut.gtx_rst.value = 1
         self.dut.logic_rst.value = 1
+        self.dut.stat_rst.value = 1
         await RisingEdge(self.dut.gtx_clk)
         await RisingEdge(self.dut.gtx_clk)
         self.dut.gtx_rst.value = 0
         self.dut.logic_rst.value = 0
+        self.dut.stat_rst.value = 0
         await RisingEdge(self.dut.gtx_clk)
         await RisingEdge(self.dut.gtx_clk)
 
@@ -65,7 +73,8 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12, spee
     tb = TB(dut, speed)
 
     tb.gmii_phy.rx.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
 
     await tb.reset()
@@ -103,7 +112,8 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12, spee
     tb = TB(dut, speed)
 
     tb.gmii_phy.rx.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
@@ -200,6 +210,11 @@ def test_taxi_eth_mac_1g_gmii_fifo(request):
     parameters['PADDING_EN'] = 1
     parameters['MIN_FRAME_LEN'] = 64
     parameters['TX_TAG_W'] = 16
+    parameters['STAT_EN'] = 1
+    parameters['STAT_TX_LEVEL'] = 2
+    parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
+    parameters['STAT_ID_BASE'] = 0
+    parameters['STAT_UPDATE_PERIOD'] = 1024
     parameters['TX_FIFO_DEPTH'] = 16384
     parameters['TX_FIFO_RAM_PIPELINE'] = 1
     parameters['TX_FRAME_FIFO'] = 1

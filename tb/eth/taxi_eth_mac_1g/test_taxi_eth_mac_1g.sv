@@ -25,7 +25,12 @@ module test_taxi_eth_mac_1g #
     parameter PTP_TS_W = 96,
     parameter TX_TAG_W = 16,
     parameter logic PFC_EN = 1'b0,
-    parameter logic PAUSE_EN = PFC_EN
+    parameter logic PAUSE_EN = PFC_EN,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = STAT_TX_LEVEL,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024
     /* verilator lint_on WIDTHTRUNC */
 )
 ();
@@ -73,11 +78,39 @@ logic tx_clk_enable;
 logic rx_mii_select;
 logic tx_mii_select;
 
+logic stat_clk;
+logic stat_rst;
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) m_axis_stat();
+
 logic tx_start_packet;
-logic tx_error_underflow;
+logic stat_tx_byte;
+logic [15:0] stat_tx_pkt_len;
+logic stat_tx_pkt_ucast;
+logic stat_tx_pkt_mcast;
+logic stat_tx_pkt_bcast;
+logic stat_tx_pkt_vlan;
+logic stat_tx_pkt_good;
+logic stat_tx_pkt_bad;
+logic stat_tx_err_oversize;
+logic stat_tx_err_user;
+logic stat_tx_err_underflow;
 logic rx_start_packet;
-logic rx_error_bad_frame;
-logic rx_error_bad_fcs;
+logic stat_rx_byte;
+logic [15:0] stat_rx_pkt_len;
+logic stat_rx_pkt_fragment;
+logic stat_rx_pkt_jabber;
+logic stat_rx_pkt_ucast;
+logic stat_rx_pkt_mcast;
+logic stat_rx_pkt_bcast;
+logic stat_rx_pkt_vlan;
+logic stat_rx_pkt_good;
+logic stat_rx_pkt_bad;
+logic stat_rx_err_oversize;
+logic stat_rx_err_bad_fcs;
+logic stat_rx_err_bad_block;
+logic stat_rx_err_framing;
+logic stat_rx_err_preamble;
+logic stat_rx_fifo_drop;
 logic stat_tx_mcf;
 logic stat_rx_mcf;
 logic stat_tx_lfc_pkt;
@@ -97,8 +130,10 @@ logic [7:0] stat_rx_pfc_xon;
 logic [7:0] stat_rx_pfc_xoff;
 logic [7:0] stat_rx_pfc_paused;
 
-logic [7:0] cfg_ifg;
+logic [15:0] cfg_tx_max_pkt_len;
+logic [7:0] cfg_tx_ifg;
 logic cfg_tx_enable;
+logic [15:0] cfg_rx_max_pkt_len;
 logic cfg_rx_enable;
 logic [47:0] cfg_mcf_rx_eth_dst_mcast;
 logic cfg_mcf_rx_check_eth_dst_mcast;
@@ -139,7 +174,12 @@ taxi_eth_mac_1g #(
     .PTP_TS_EN(PTP_TS_EN),
     .PTP_TS_W(PTP_TS_W),
     .PFC_EN(PFC_EN),
-    .PAUSE_EN(PAUSE_EN)
+    .PAUSE_EN(PAUSE_EN),
+    .STAT_EN(STAT_EN),
+    .STAT_TX_LEVEL(STAT_TX_LEVEL),
+    .STAT_RX_LEVEL(STAT_RX_LEVEL),
+    .STAT_ID_BASE(STAT_ID_BASE),
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
 )
 uut (
     .rx_clk(rx_clk),
@@ -208,13 +248,44 @@ uut (
     .tx_mii_select(tx_mii_select),
 
     /*
+     * Statistics
+     */
+    .stat_clk(stat_clk),
+    .stat_rst(stat_rst),
+    .m_axis_stat(m_axis_stat),
+
+    /*
      * Status
      */
     .tx_start_packet(tx_start_packet),
-    .tx_error_underflow(tx_error_underflow),
+    .stat_tx_byte(stat_tx_byte),
+    .stat_tx_pkt_len(stat_tx_pkt_len),
+    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+    .stat_tx_pkt_good(stat_tx_pkt_good),
+    .stat_tx_pkt_bad(stat_tx_pkt_bad),
+    .stat_tx_err_oversize(stat_tx_err_oversize),
+    .stat_tx_err_user(stat_tx_err_user),
+    .stat_tx_err_underflow(stat_tx_err_underflow),
     .rx_start_packet(rx_start_packet),
-    .rx_error_bad_frame(rx_error_bad_frame),
-    .rx_error_bad_fcs(rx_error_bad_fcs),
+    .stat_rx_byte(stat_rx_byte),
+    .stat_rx_pkt_len(stat_rx_pkt_len),
+    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+    .stat_rx_pkt_good(stat_rx_pkt_good),
+    .stat_rx_pkt_bad(stat_rx_pkt_bad),
+    .stat_rx_err_oversize(stat_rx_err_oversize),
+    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+    .stat_rx_err_bad_block(stat_rx_err_bad_block),
+    .stat_rx_err_framing(stat_rx_err_framing),
+    .stat_rx_err_preamble(stat_rx_err_preamble),
+    .stat_rx_fifo_drop(stat_rx_fifo_drop),
     .stat_tx_mcf(stat_tx_mcf),
     .stat_rx_mcf(stat_rx_mcf),
     .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
@@ -237,8 +308,10 @@ uut (
     /*
      * Configuration
      */
-    .cfg_ifg(cfg_ifg),
+    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+    .cfg_tx_ifg(cfg_tx_ifg),
     .cfg_tx_enable(cfg_tx_enable),
+    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
     .cfg_rx_enable(cfg_rx_enable),
     .cfg_mcf_rx_eth_dst_mcast(cfg_mcf_rx_eth_dst_mcast),
     .cfg_mcf_rx_check_eth_dst_mcast(cfg_mcf_rx_check_eth_dst_mcast),

@@ -43,6 +43,7 @@ class TB:
 
         cocotb.start_soon(Clock(dut.rx_clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.tx_clk, 8, units="ns").start())
+        cocotb.start_soon(Clock(dut.stat_clk, 8, units="ns").start())
 
         self.gmii_source = GmiiSource(dut.gmii_rxd, dut.gmii_rx_er, dut.gmii_rx_dv,
             dut.rx_clk, dut.rx_rst, dut.rx_clk_enable, dut.rx_mii_select)
@@ -52,6 +53,8 @@ class TB:
         self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.tx_clk, dut.tx_rst)
         self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.tx_clk, dut.tx_rst)
         self.axis_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.rx_clk, dut.rx_rst)
+
+        self.stat_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_stat), dut.stat_clk, dut.stat_rst)
 
         self.rx_ptp_clock = PtpClockSimTime(ts_tod=dut.rx_ptp_ts, clock=dut.rx_clk)
         self.tx_ptp_clock = PtpClockSimTime(ts_tod=dut.tx_ptp_ts, clock=dut.tx_clk)
@@ -74,8 +77,12 @@ class TB:
         dut.rx_mii_select.setimmediatevalue(0)
         dut.tx_mii_select.setimmediatevalue(0)
 
-        dut.cfg_ifg.setimmediatevalue(0)
+        dut.stat_rx_fifo_drop.setimmediatevalue(0)
+
+        dut.cfg_tx_max_pkt_len.setimmediatevalue(0)
+        dut.cfg_tx_ifg.setimmediatevalue(0)
         dut.cfg_tx_enable.setimmediatevalue(0)
+        dut.cfg_rx_max_pkt_len.setimmediatevalue(0)
         dut.cfg_rx_enable.setimmediatevalue(0)
         dut.cfg_mcf_rx_eth_dst_mcast.setimmediatevalue(0)
         dut.cfg_mcf_rx_check_eth_dst_mcast.setimmediatevalue(0)
@@ -112,14 +119,17 @@ class TB:
     async def reset(self):
         self.dut.rx_rst.setimmediatevalue(0)
         self.dut.tx_rst.setimmediatevalue(0)
+        self.dut.stat_rst.setimmediatevalue(0)
         await RisingEdge(self.dut.tx_clk)
         await RisingEdge(self.dut.tx_clk)
         self.dut.rx_rst.value = 1
         self.dut.tx_rst.value = 1
+        self.dut.stat_rst.value = 1
         await RisingEdge(self.dut.tx_clk)
         await RisingEdge(self.dut.tx_clk)
         self.dut.rx_rst.value = 0
         self.dut.tx_rst.value = 0
+        self.dut.stat_rst.value = 0
         await RisingEdge(self.dut.tx_clk)
         await RisingEdge(self.dut.tx_clk)
 
@@ -165,7 +175,9 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12, enab
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
@@ -212,8 +224,10 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12, enab
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
 
@@ -256,8 +270,10 @@ async def run_test_tx_underrun(dut, ifg=12, enable_gen=None, mii_sel=False):
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
 
@@ -310,8 +326,10 @@ async def run_test_tx_error(dut, ifg=12, enable_gen=None, mii_sel=False):
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
 
@@ -345,13 +363,100 @@ async def run_test_tx_error(dut, ifg=12, enable_gen=None, mii_sel=False):
     await RisingEdge(dut.tx_clk)
 
 
+async def run_test_rx_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
+
+    tb = TB(dut)
+
+    tb.gmii_source.ifg = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 1518
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_rx_max_pkt_len.value = 1518
+    tb.dut.cfg_rx_enable.value = 1
+    tb.dut.rx_mii_select.value = mii_sel
+    tb.dut.tx_mii_select.value = mii_sel
+
+    if enable_gen is not None:
+        tb.set_enable_generator_rx(enable_gen())
+        tb.set_enable_generator_tx(enable_gen())
+
+    await tb.reset()
+
+    test_data = bytes(x for x in range(60))
+
+    for k in range(3):
+        test_frame = GmiiFrame.from_payload(test_data)
+        if k == 1:
+            test_frame = GmiiFrame.from_payload(bytes(x % 256 for x in range(1515)))
+        await tb.gmii_source.send(test_frame)
+
+    for k in range(3):
+        rx_frame = await tb.axis_sink.recv()
+
+        if k == 1:
+            frame_error = rx_frame.tuser[-1] & 1
+            assert frame_error
+        else:
+            frame_error = rx_frame.tuser & 1
+            assert rx_frame.tdata == test_data
+            assert frame_error == 0
+
+    assert tb.axis_sink.empty()
+
+    await RisingEdge(dut.rx_clk)
+    await RisingEdge(dut.rx_clk)
+
+
+async def run_test_tx_oversize(dut, ifg=12, enable_gen=None, mii_sel=False):
+
+    tb = TB(dut)
+
+    tb.gmii_source.ifg = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 1518
+    tb.dut.cfg_tx_ifg.value = ifg
+    tb.dut.cfg_tx_enable.value = 1
+    tb.dut.cfg_rx_max_pkt_len.value = 1518
+    tb.dut.rx_mii_select.value = mii_sel
+    tb.dut.tx_mii_select.value = mii_sel
+
+    if enable_gen is not None:
+        tb.set_enable_generator_rx(enable_gen())
+        tb.set_enable_generator_tx(enable_gen())
+
+    await tb.reset()
+
+    test_data = bytes(x for x in range(60))
+
+    for k in range(3):
+        test_frame = AxiStreamFrame(test_data)
+        if k == 1:
+            test_frame = AxiStreamFrame(bytes(x % 256 for x in range(1515)))
+        await tb.axis_source.send(test_frame)
+
+    for k in range(3):
+        rx_frame = await tb.gmii_sink.recv()
+
+        if k == 1:
+            assert rx_frame.error[-1] == 1
+        else:
+            assert rx_frame.get_payload() == test_data
+            assert rx_frame.check_fcs()
+            assert rx_frame.error is None
+
+    assert tb.gmii_sink.empty()
+
+    await RisingEdge(dut.tx_clk)
+    await RisingEdge(dut.tx_clk)
+
+
 async def run_test_lfc(dut, ifg=12, enable_gen=None, mii_sel=True):
 
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
@@ -501,8 +606,10 @@ async def run_test_pfc(dut, ifg=12, enable_gen=None, mii_sel=True):
     tb = TB(dut)
 
     tb.gmii_source.ifg = ifg
-    tb.dut.cfg_ifg.value = ifg
+    tb.dut.cfg_tx_max_pkt_len.value = 9218
+    tb.dut.cfg_tx_ifg.value = ifg
     tb.dut.cfg_tx_enable.value = 1
+    tb.dut.cfg_rx_max_pkt_len.value = 9218
     tb.dut.cfg_rx_enable.value = 1
     tb.dut.rx_mii_select.value = mii_sel
     tb.dut.tx_mii_select.value = mii_sel
@@ -649,7 +756,10 @@ def cycle_en():
 
 if cocotb.SIM_NAME:
 
-    for test in [run_test_rx, run_test_tx]:
+    for test in [
+                run_test_rx,
+                run_test_tx,
+            ]:
 
         factory = TestFactory(test)
         factory.add_option("payload_lengths", [size_list])
@@ -659,7 +769,12 @@ if cocotb.SIM_NAME:
         factory.add_option("mii_sel", [False, True])
         factory.generate_tests()
 
-    for test in [run_test_tx_underrun, run_test_tx_error]:
+    for test in [
+                run_test_tx_underrun,
+                run_test_tx_error,
+                run_test_rx_oversize,
+                run_test_tx_oversize,
+            ]:
 
         factory = TestFactory(test)
         factory.add_option("ifg", [12])
@@ -668,7 +783,11 @@ if cocotb.SIM_NAME:
         factory.generate_tests()
 
     if cocotb.top.PFC_EN.value:
-        for test in [run_test_lfc, run_test_pfc]:
+        for test in [
+                    run_test_lfc,
+                    run_test_pfc,
+                ]:
+
             factory = TestFactory(test)
             factory.add_option("ifg", [12])
             factory.add_option("enable_gen", [None, cycle_en])
@@ -718,6 +837,11 @@ def test_taxi_eth_mac_1g(request, pfc_en):
     parameters['TX_TAG_W'] = 16
     parameters['PFC_EN'] = pfc_en
     parameters['PAUSE_EN'] = parameters['PFC_EN']
+    parameters['STAT_EN'] = 1
+    parameters['STAT_TX_LEVEL'] = 2
+    parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
+    parameters['STAT_ID_BASE'] = 0
+    parameters['STAT_UPDATE_PERIOD'] = 1024
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
