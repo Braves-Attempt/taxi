@@ -26,7 +26,12 @@ module taxi_eth_mac_10g #
     parameter logic PTP_TS_FMT_TOD = 1'b1,
     parameter PTP_TS_W = PTP_TS_FMT_TOD ? 96 : 64,
     parameter logic PFC_EN = 1'b0,
-    parameter logic PAUSE_EN = PFC_EN
+    parameter logic PAUSE_EN = PFC_EN,
+    parameter logic STAT_EN = 1'b0,
+    parameter STAT_TX_LEVEL = 1,
+    parameter STAT_RX_LEVEL = 1,
+    parameter STAT_ID_BASE = 0,
+    parameter STAT_UPDATE_PERIOD = 1024
 )
 (
     input  wire logic                 rx_clk,
@@ -85,13 +90,44 @@ module taxi_eth_mac_10g #
     output wire logic                 tx_pause_ack,
 
     /*
+     * Statistics
+     */
+    input  wire logic                 stat_clk,
+    input  wire logic                 stat_rst,
+    taxi_axis_if.src                  m_axis_stat,
+
+    /*
      * Status
      */
     output wire logic [1:0]           tx_start_packet,
-    output wire logic                 tx_error_underflow,
+    output wire logic [3:0]           stat_tx_byte,
+    output wire logic [15:0]          stat_tx_pkt_len,
+    output wire logic                 stat_tx_pkt_ucast,
+    output wire logic                 stat_tx_pkt_mcast,
+    output wire logic                 stat_tx_pkt_bcast,
+    output wire logic                 stat_tx_pkt_vlan,
+    output wire logic                 stat_tx_pkt_good,
+    output wire logic                 stat_tx_pkt_bad,
+    output wire logic                 stat_tx_err_oversize,
+    output wire logic                 stat_tx_err_user,
+    output wire logic                 stat_tx_err_underflow,
     output wire logic [1:0]           rx_start_packet,
-    output wire logic                 rx_error_bad_frame,
-    output wire logic                 rx_error_bad_fcs,
+    output wire logic [3:0]           stat_rx_byte,
+    output wire logic [15:0]          stat_rx_pkt_len,
+    output wire logic                 stat_rx_pkt_fragment,
+    output wire logic                 stat_rx_pkt_jabber,
+    output wire logic                 stat_rx_pkt_ucast,
+    output wire logic                 stat_rx_pkt_mcast,
+    output wire logic                 stat_rx_pkt_bcast,
+    output wire logic                 stat_rx_pkt_vlan,
+    output wire logic                 stat_rx_pkt_good,
+    output wire logic                 stat_rx_pkt_bad,
+    output wire logic                 stat_rx_err_oversize,
+    output wire logic                 stat_rx_err_bad_fcs,
+    output wire logic                 stat_rx_err_bad_block,
+    output wire logic                 stat_rx_err_framing,
+    output wire logic                 stat_rx_err_preamble,
+    input  wire logic                 stat_rx_fifo_drop = 1'b0,
     output wire logic                 stat_tx_mcf,
     output wire logic                 stat_rx_mcf,
     output wire logic                 stat_tx_lfc_pkt,
@@ -114,8 +150,10 @@ module taxi_eth_mac_10g #
     /*
      * Configuration
      */
-    input  wire logic [7:0]           cfg_ifg = 8'd12,
+    input  wire logic [15:0]          cfg_tx_max_pkt_len = 16'd1518,
+    input  wire logic [7:0]           cfg_tx_ifg = 8'd12,
     input  wire logic                 cfg_tx_enable = 1'b1,
+    input  wire logic [15:0]          cfg_rx_max_pkt_len = 16'd1518,
     input  wire logic                 cfg_rx_enable = 1'b1,
     input  wire logic [47:0]          cfg_mcf_rx_eth_dst_mcast = 48'h01_80_C2_00_00_01,
     input  wire logic                 cfg_mcf_rx_check_eth_dst_mcast = 1'b1,
@@ -200,28 +238,28 @@ if (DATA_W == 64) begin
         /*
          * Configuration
          */
-        .cfg_rx_max_pkt_len(16'd9218),
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
         .cfg_rx_enable(cfg_rx_enable),
 
         /*
          * Status
          */
         .rx_start_packet(rx_start_packet),
-        .stat_rx_byte(),
-        .stat_rx_pkt_len(),
-        .stat_rx_pkt_fragment(),
-        .stat_rx_pkt_jabber(),
-        .stat_rx_pkt_ucast(),
-        .stat_rx_pkt_mcast(),
-        .stat_rx_pkt_bcast(),
-        .stat_rx_pkt_vlan(),
-        .stat_rx_pkt_good(),
-        .stat_rx_pkt_bad(rx_error_bad_frame),
-        .stat_rx_err_oversize(),
-        .stat_rx_err_bad_fcs(rx_error_bad_fcs),
-        .stat_rx_err_bad_block(),
-        .stat_rx_err_framing(),
-        .stat_rx_err_preamble()
+        .stat_rx_byte(stat_rx_byte),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble)
     );
 
     taxi_axis_xgmii_tx_64 #(
@@ -259,25 +297,25 @@ if (DATA_W == 64) begin
         /*
          * Configuration
          */
-        .cfg_tx_max_pkt_len(16'd9218),
-        .cfg_tx_ifg(cfg_ifg),
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+        .cfg_tx_ifg(cfg_tx_ifg),
         .cfg_tx_enable(cfg_tx_enable),
 
         /*
          * Status
          */
         .tx_start_packet(tx_start_packet),
-        .stat_tx_byte(),
-        .stat_tx_pkt_len(),
-        .stat_tx_pkt_ucast(),
-        .stat_tx_pkt_mcast(),
-        .stat_tx_pkt_bcast(),
-        .stat_tx_pkt_vlan(),
-        .stat_tx_pkt_good(),
-        .stat_tx_pkt_bad(),
-        .stat_tx_err_oversize(),
-        .stat_tx_err_user(),
-        .stat_tx_err_underflow(tx_error_underflow)
+        .stat_tx_byte(stat_tx_byte),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow)
     );
 
 end else if (DATA_W == 32) begin
@@ -311,31 +349,32 @@ end else if (DATA_W == 32) begin
         /*
          * Configuration
          */
-        .cfg_rx_max_pkt_len(16'd9218),
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
         .cfg_rx_enable(cfg_rx_enable),
 
         /*
          * Status
          */
         .rx_start_packet(rx_start_packet[0]),
-        .stat_rx_byte(),
-        .stat_rx_pkt_len(),
-        .stat_rx_pkt_fragment(),
-        .stat_rx_pkt_jabber(),
-        .stat_rx_pkt_ucast(),
-        .stat_rx_pkt_mcast(),
-        .stat_rx_pkt_bcast(),
-        .stat_rx_pkt_vlan(),
-        .stat_rx_pkt_good(),
-        .stat_rx_pkt_bad(rx_error_bad_frame),
-        .stat_rx_err_oversize(),
-        .stat_rx_err_bad_fcs(rx_error_bad_fcs),
-        .stat_rx_err_bad_block(),
-        .stat_rx_err_framing(),
-        .stat_rx_err_preamble()
+        .stat_rx_byte(stat_rx_byte[2:0]),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble)
     );
 
     assign rx_start_packet[1] = 1'b0;
+    assign stat_rx_byte[3] = 1'b0;
 
     taxi_axis_xgmii_tx_32 #(
         .DATA_W(DATA_W),
@@ -371,32 +410,119 @@ end else if (DATA_W == 32) begin
         /*
          * Configuration
          */
-        .cfg_tx_max_pkt_len(16'd9218),
-        .cfg_tx_ifg(cfg_ifg),
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+        .cfg_tx_ifg(cfg_tx_ifg),
         .cfg_tx_enable(cfg_tx_enable),
 
         /*
          * Status
          */
         .tx_start_packet(tx_start_packet[0]),
-        .stat_tx_byte(),
-        .stat_tx_pkt_len(),
-        .stat_tx_pkt_ucast(),
-        .stat_tx_pkt_mcast(),
-        .stat_tx_pkt_bcast(),
-        .stat_tx_pkt_vlan(),
-        .stat_tx_pkt_good(),
-        .stat_tx_pkt_bad(),
-        .stat_tx_err_oversize(),
-        .stat_tx_err_user(),
-        .stat_tx_err_underflow(tx_error_underflow)
+        .stat_tx_byte(stat_tx_byte[2:0]),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow)
     );
 
     assign tx_start_packet[1] = 1'b0;
+    assign stat_tx_byte[3] = 1'b0;
 
 end else begin
 
     $fatal(0, "Invalid DATA_W selection (instance %m)");
+
+end
+
+if (STAT_EN) begin : stats
+
+    taxi_eth_mac_stats #(
+        .STAT_TX_LEVEL(STAT_TX_LEVEL),
+        .STAT_RX_LEVEL(STAT_RX_LEVEL),
+        .STAT_ID_BASE(STAT_ID_BASE),
+        .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+        .INC_W(4)
+    )
+    mac_stats_inst (
+        .rx_clk(rx_clk),
+        .rx_rst(rx_rst),
+        .tx_clk(tx_clk),
+        .tx_rst(tx_rst),
+
+        /*
+         * Statistics
+         */
+        .stat_clk(stat_clk),
+        .stat_rst(stat_rst),
+        .m_axis_stat(m_axis_stat),
+
+        /*
+         * Status
+         */
+        .tx_start_packet(|tx_start_packet),
+        .stat_tx_byte(stat_tx_byte),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow),
+        .rx_start_packet(|rx_start_packet),
+        .stat_rx_byte(stat_rx_byte),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble),
+        .stat_rx_fifo_drop(stat_rx_fifo_drop),
+        .stat_tx_mcf(stat_tx_mcf),
+        .stat_rx_mcf(stat_rx_mcf),
+        .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
+        .stat_tx_lfc_xon(stat_tx_lfc_xon),
+        .stat_tx_lfc_xoff(stat_tx_lfc_xoff),
+        .stat_tx_lfc_paused(stat_tx_lfc_paused),
+        .stat_tx_pfc_pkt(stat_tx_pfc_pkt),
+        .stat_tx_pfc_xon(stat_tx_pfc_xon),
+        .stat_tx_pfc_xoff(stat_tx_pfc_xoff),
+        .stat_tx_pfc_paused(stat_tx_pfc_paused),
+        .stat_rx_lfc_pkt(stat_rx_lfc_pkt),
+        .stat_rx_lfc_xon(stat_rx_lfc_xon),
+        .stat_rx_lfc_xoff(stat_rx_lfc_xoff),
+        .stat_rx_lfc_paused(stat_rx_lfc_paused),
+        .stat_rx_pfc_pkt(stat_rx_pfc_pkt),
+        .stat_rx_pfc_xon(stat_rx_pfc_xon),
+        .stat_rx_pfc_xoff(stat_rx_pfc_xoff),
+        .stat_rx_pfc_paused(stat_rx_pfc_paused)
+    );
+
+end else begin
+
+    assign m_axis_stat.tdata = '0;
+    assign m_axis_stat.tkeep = '0;
+    assign m_axis_stat.tlast = '0;
+    assign m_axis_stat.tvalid = '0;
+    assign m_axis_stat.tid = '0;
+    assign m_axis_stat.tdest = '0;
+    assign m_axis_stat.tuser = '0;
 
 end
 

@@ -3,6 +3,7 @@ taxi_axis_xgmii_rx_64.sv
 taxi_axis_xgmii_tx_64.sv
 taxi_axis_xgmii_rx_32.sv
 taxi_axis_xgmii_tx_32.sv
+taxi_eth_mac_stats.f
 taxi_mac_ctrl_tx.sv
 taxi_mac_ctrl_rx.sv
 taxi_mac_pause_ctrl_tx.sv
