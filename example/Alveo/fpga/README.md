@@ -4,10 +4,10 @@
 
 This example design targets the Xilinx Alveo series.
 
-The design places looped-back MACs on the Ethernet ports as well as a looped-back UART on on the USB UART connections.
+The design places looped-back MACs on the Ethernet ports, as well as XFCP on the USB UART for monitoring and control.
 
 *  USB UART
-    *  Looped-back UART
+    *  XFCP (3 Mbaud)
 *  DSFP/QSFP28
     *  Looped-back 10GBASE-R or 25GBASE-R MACs via GTY transceivers
 
@@ -49,7 +49,5 @@ Run `make` in the appropriate `fpga*` subdirectory to build the bitstream.  Ensu
 ## How to test
 
 Run `make program` to program the board with Vivado.
-
-To test the looped-back UART, use any serial terminal software like minicom, screen, etc.  The looped-back UART will echo typed text back without modification.
 
 To test the looped-back MAC, it is recommended to use a network tester like the Viavi T-BERD 5800 that supports basic layer 2 tests with a loopback.  Do not connect the looped-back MAC to a network as the reflected packets may cause problems.

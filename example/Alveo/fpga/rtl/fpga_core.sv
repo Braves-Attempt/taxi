@@ -72,8 +72,110 @@ module fpga_core #
     output wire logic [PORT_CNT-1:0]     eth_port_lpmode
 );
 
-// UART
-for (genvar n = 0; n < UART_CNT; n = n + 1) begin : uart_ch
+// XFCP
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_ds(), xfcp_us();
+
+taxi_xfcp_if_uart #(
+    .TX_FIFO_DEPTH(512),
+    .RX_FIFO_DEPTH(512)
+)
+xfcp_if_uart_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * UART interface
+     */
+    .uart_rxd(uart_rxd),
+    .uart_txd(uart_txd),
+
+    /*
+     * XFCP downstream interface
+     */
+    .xfcp_dsp_ds(xfcp_ds),
+    .xfcp_dsp_us(xfcp_us),
+
+    /*
+     * Configuration
+     */
+    .prescale(16'(125000000/3000000))
+);
+
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[1](), xfcp_sw_us[1]();
+
+taxi_xfcp_switch #(
+    .XFCP_ID_STR("Alveo"),
+    .XFCP_EXT_ID(0),
+    .XFCP_EXT_ID_STR("Taxi example"),
+    .PORTS($size(xfcp_sw_us))
+)
+xfcp_sw_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_ds),
+    .xfcp_usp_us(xfcp_us),
+
+    /*
+     * XFCP downstream ports
+     */
+    .xfcp_dsp_ds(xfcp_sw_ds),
+    .xfcp_dsp_us(xfcp_sw_us)
+);
+
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(10)) axis_stat();
+
+taxi_xfcp_mod_stats #(
+    .XFCP_ID_STR("Statistics"),
+    .XFCP_EXT_ID(0),
+    .XFCP_EXT_ID_STR(""),
+    .STAT_COUNT_W(64),
+    .STAT_PIPELINE(2)
+)
+xfcp_stats_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_sw_ds[0]),
+    .xfcp_usp_us(xfcp_sw_us[0]),
+
+    /*
+     * Statistics increment input
+     */
+    .s_axis_stat(axis_stat)
+);
+
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(10)) axis_eth_stat[GTY_QUAD_CNT]();
+
+taxi_axis_arb_mux #(
+    .S_COUNT($size(axis_eth_stat)),
+    .UPDATE_TID(1'b0),
+    .ARB_ROUND_ROBIN(1'b1),
+    .ARB_LSB_HIGH_PRIO(1'b0)
+)
+stat_mux_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * AXI4-Stream inputs (sink)
+     */
+    .s_axis(axis_eth_stat),
+
+    /*
+     * AXI4-Stream output (source)
+     */
+    .m_axis(axis_stat)
+);
+
+// Additional UARTs
+for (genvar n = 1; n < UART_CNT; n = n + 1) begin : uart_ch
 
     taxi_axis_if #(.DATA_W(8)) axis_uart();
 
@@ -127,8 +229,6 @@ taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) eth_gty_axis_tx_cpl[GTY_CNT]()
 wire [GTY_CNT-1:0] eth_gty_rx_clk;
 wire [GTY_CNT-1:0] eth_gty_rx_rst;
 taxi_axis_if #(.DATA_W(64), .ID_W(8)) eth_gty_axis_rx[GTY_CNT]();
-
-taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) eth_gty_axis_stat[GTY_QUAD_CNT]();
 
 wire [GTY_CNT-1:0] eth_gty_rx_status;
 
@@ -210,7 +310,11 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
         .TX_SERDES_PIPELINE(1),
         .RX_SERDES_PIPELINE(1),
         .COUNT_125US(125000/6.4),
-        .STAT_EN(1'b0)
+        .STAT_EN(1),
+        .STAT_TX_LEVEL(1),
+        .STAT_RX_LEVEL(1),
+        .STAT_ID_BASE(n*CNT*(16+16)),
+        .STAT_UPDATE_PERIOD(1024)
     )
     mac_inst (
         .xcvr_ctrl_clk(clk_125mhz),
@@ -293,7 +397,7 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
          */
         .stat_clk(clk_125mhz),
         .stat_rst(rst_125mhz),
-        .m_axis_stat(eth_gty_axis_stat[n]),
+        .m_axis_stat(axis_eth_stat[n]),
 
         /*
          * Status

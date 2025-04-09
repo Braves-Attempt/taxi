@@ -43,8 +43,8 @@ class TB:
 
         cocotb.start_soon(Clock(dut.clk_125mhz, 8, units="ns").start())
 
-        self.uart_source = UartSource(dut.uart_rxd, baud=115200, bits=8, stop_bits=1)
-        self.uart_sink = UartSink(dut.uart_txd, baud=115200, bits=8, stop_bits=1)
+        self.uart_source = UartSource(dut.uart_rxd, baud=3000000, bits=8, stop_bits=1)
+        self.uart_sink = UartSink(dut.uart_txd, baud=3000000, bits=8, stop_bits=1)
 
         self.qsfp_sources = []
         self.qsfp_sinks = []
@@ -88,25 +88,6 @@ class TB:
             await t
             self.dut.eth_gty_mgt_refclk_p.value = 0
             await t
-
-
-async def uart_test(tb, source, sink):
-    tb.log.info("Test UART")
-
-    tx_data = b"FPGA"
-
-    tb.log.info("UART TX: %s", tx_data)
-
-    await source.write(tx_data)
-
-    rx_data = bytearray()
-
-    while len(rx_data) < len(tx_data):
-        rx_data.extend(await sink.read())
-
-    tb.log.info("UART RX: %s", rx_data)
-
-    tb.log.info("UART test done")
 
 
 async def mac_test(tb, source, sink):
@@ -158,10 +139,6 @@ async def run_test(dut):
 
     tests = []
 
-    tb.log.info("Start UART test")
-
-    tests.append(cocotb.start_soon(uart_test(tb, tb.uart_source, tb.uart_sink)))
-
     for k in range(len(tb.qsfp_sources)):
         tb.log.info("Start QSFP %d MAC loopback test", k)
 
@@ -201,7 +178,9 @@ def test_fpga_core(request):
     verilog_sources = [
         os.path.join(rtl_dir, f"{dut}.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "us", "taxi_eth_mac_25g_us.f"),
-        os.path.join(lib_dir, "taxi", "rtl", "lss", "taxi_uart.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_if_uart.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_switch.sv"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_mod_stats.f"),
         os.path.join(lib_dir, "taxi", "rtl", "axis", "taxi_axis_async_fifo.f"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_reset.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_signal.sv"),
