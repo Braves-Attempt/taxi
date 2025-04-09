@@ -49,7 +49,7 @@ foreach fifo_inst [get_cells -hier -filter {(ORIG_REF_NAME == taxi_axis_async_fi
     }
 
     # output register (needed for distributed RAM sync write/async read)
-    set output_reg_ffs [get_cells -quiet "$fifo_inst/m_axis_pipe_reg_reg[0][*]"]
+    set output_reg_ffs [get_cells -quiet "$fifo_inst/mem_rd_data_pipe_reg_reg[0][*]"]
 
     if {[llength $output_reg_ffs]} {
         if {[llength $write_clk]} {
