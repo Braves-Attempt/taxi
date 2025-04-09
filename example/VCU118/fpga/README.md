@@ -4,10 +4,10 @@
 
 This example design targets the Xilinx VCU118 FPGA board.
 
-The design places looped-back MACs on the BASE-T and QSFP28 ports as well as a looped-back UART on on the USB UART connection.
+The design places looped-back MACs on the BASE-T and QSFP28 ports, as well as XFCP on the USB UART for monitoring and control.
 
 *  USB UART
-    *  Looped-back UART
+    *  XFCP (921600 baud)
 *  RJ-45 Ethernet port with TI DP83867ISRGZ PHY
     *  Looped-back MAC via SGMII via Xilinx PCS/PMA core and LVDS IOSERDES
 *  QSFP28
@@ -34,7 +34,5 @@ Run `make` in the appropriate `fpga*` subdirectory to build the bitstream.  Ensu
 ## How to test
 
 Run `make program` to program the board with Vivado.
-
-To test the looped-back UART, use any serial terminal software like minicom, screen, etc.  The looped-back UART will echo typed text back without modification.
 
 To test the looped-back MAC, it is recommended to use a network tester like the Viavi T-BERD 5800 that supports basic layer 2 tests with a loopback.  Do not connect the looped-back MAC to a network as the reflected packets may cause problems.
