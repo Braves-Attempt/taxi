@@ -117,6 +117,7 @@ uart_inst (
 
 taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_tx_cpl();
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_stat();
 
 taxi_eth_mac_mii_fifo #(
     .SIM(SIM),
@@ -124,6 +125,7 @@ taxi_eth_mac_mii_fifo #(
     .FAMILY(FAMILY),
     .PADDING_EN(1),
     .MIN_FRAME_LEN(64),
+    .STAT_EN(1'b0),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),
@@ -158,6 +160,13 @@ eth_mac_inst (
     .mii_tx_er(),
 
     /*
+     * Statistics
+     */
+    .stat_clk(clk),
+    .stat_rst(rst),
+    .m_axis_stat(axis_stat),
+
+    /*
      * Status
      */
     .tx_error_underflow(),
@@ -173,8 +182,10 @@ eth_mac_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(8'd12),
+    .cfg_tx_max_pkt_len(16'd9218),
+    .cfg_tx_ifg(8'd12),
     .cfg_tx_enable(1'b1),
+    .cfg_rx_max_pkt_len(16'd9218),
     .cfg_rx_enable(1'b1)
 );
 

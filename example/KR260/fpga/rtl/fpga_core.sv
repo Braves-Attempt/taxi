@@ -101,9 +101,11 @@ assign phy3_reset_n = !rst;
 
 taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_phy2_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_phy2_tx_cpl();
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_phy2_stat();
 
 taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_phy3_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_phy3_tx_cpl();
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_phy3_stat();
 
 taxi_eth_mac_1g_rgmii_fifo #(
     .SIM(SIM),
@@ -112,6 +114,7 @@ taxi_eth_mac_1g_rgmii_fifo #(
     .USE_CLK90(USE_CLK90),
     .PADDING_EN(1),
     .MIN_FRAME_LEN(64),
+    .STAT_EN(1'b0),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),
@@ -146,6 +149,13 @@ phy2_eth_mac_inst (
     .rgmii_tx_ctl(phy2_rgmii_tx_ctl),
 
     /*
+     * Statistics
+     */
+    .stat_clk(clk),
+    .stat_rst(rst),
+    .m_axis_stat(axis_phy2_stat),
+
+    /*
      * Status
      */
     .tx_error_underflow(),
@@ -162,8 +172,10 @@ phy2_eth_mac_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(8'd12),
+    .cfg_tx_max_pkt_len(16'd9218),
+    .cfg_tx_ifg(8'd12),
     .cfg_tx_enable(1'b1),
+    .cfg_rx_max_pkt_len(16'd9218),
     .cfg_rx_enable(1'b1)
 );
 
@@ -174,6 +186,7 @@ taxi_eth_mac_1g_rgmii_fifo #(
     .USE_CLK90(USE_CLK90),
     .PADDING_EN(1),
     .MIN_FRAME_LEN(64),
+    .STAT_EN(1'b0),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),
@@ -208,6 +221,13 @@ phy3_eth_mac_inst (
     .rgmii_tx_ctl(phy3_rgmii_tx_ctl),
 
     /*
+     * Statistics
+     */
+    .stat_clk(clk),
+    .stat_rst(rst),
+    .m_axis_stat(axis_phy3_stat),
+
+    /*
      * Status
      */
     .tx_error_underflow(),
@@ -224,8 +244,10 @@ phy3_eth_mac_inst (
     /*
      * Configuration
      */
-    .cfg_ifg(8'd12),
+    .cfg_tx_max_pkt_len(16'd9218),
+    .cfg_tx_ifg(8'd12),
     .cfg_tx_enable(1'b1),
+    .cfg_rx_max_pkt_len(16'd9218),
     .cfg_rx_enable(1'b1)
 );
 
@@ -236,10 +258,12 @@ if (SFP_RATE == 0) begin : sfp_mac
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl();
+    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
+        .STAT_EN(1'b0),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -283,6 +307,13 @@ if (SFP_RATE == 0) begin : sfp_mac
         .tx_mii_select(1'b0),
 
         /*
+         * Statistics
+         */
+        .stat_clk(clk),
+        .stat_rst(rst),
+        .m_axis_stat(axis_sfp_stat),
+
+        /*
          * Status
          */
         .tx_error_underflow(),
@@ -298,8 +329,10 @@ if (SFP_RATE == 0) begin : sfp_mac
         /*
          * Configuration
          */
-        .cfg_ifg(8'd12),
+        .cfg_tx_max_pkt_len(16'd9218),
+        .cfg_tx_ifg(8'd12),
         .cfg_tx_enable(1'b1),
+        .cfg_rx_max_pkt_len(16'd9218),
         .cfg_rx_enable(1'b1)
     );
 

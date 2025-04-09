@@ -155,19 +155,24 @@ if (SFP_RATE == 0) begin : sfp_mac
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp0_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp0_tx_cpl();
+    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp0_stat();
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp1_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp1_tx_cpl();
+    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp1_stat();
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp2_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp2_tx_cpl();
+    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp2_stat();
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp3_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp3_tx_cpl();
+    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp3_stat();
 
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
+        .STAT_EN(1'b0),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -211,6 +216,13 @@ if (SFP_RATE == 0) begin : sfp_mac
         .tx_mii_select(1'b0),
 
         /*
+         * Statistics
+         */
+        .stat_clk(clk_125mhz),
+        .stat_rst(rst_125mhz),
+        .m_axis_stat(axis_sfp0_stat),
+
+        /*
          * Status
          */
         .tx_error_underflow(),
@@ -226,14 +238,17 @@ if (SFP_RATE == 0) begin : sfp_mac
         /*
          * Configuration
          */
-        .cfg_ifg(8'd12),
+        .cfg_tx_max_pkt_len(16'd9218),
+        .cfg_tx_ifg(8'd12),
         .cfg_tx_enable(1'b1),
+        .cfg_rx_max_pkt_len(16'd9218),
         .cfg_rx_enable(1'b1)
     );
 
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
+        .STAT_EN(1'b0),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -277,6 +292,13 @@ if (SFP_RATE == 0) begin : sfp_mac
         .tx_mii_select(1'b0),
 
         /*
+         * Statistics
+         */
+        .stat_clk(clk_125mhz),
+        .stat_rst(rst_125mhz),
+        .m_axis_stat(axis_sfp1_stat),
+
+        /*
          * Status
          */
         .tx_error_underflow(),
@@ -292,14 +314,17 @@ if (SFP_RATE == 0) begin : sfp_mac
         /*
          * Configuration
          */
-        .cfg_ifg(8'd12),
+        .cfg_tx_max_pkt_len(16'd9218),
+        .cfg_tx_ifg(8'd12),
         .cfg_tx_enable(1'b1),
+        .cfg_rx_max_pkt_len(16'd9218),
         .cfg_rx_enable(1'b1)
     );
 
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
+        .STAT_EN(1'b0),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -343,6 +368,13 @@ if (SFP_RATE == 0) begin : sfp_mac
         .tx_mii_select(1'b0),
 
         /*
+         * Statistics
+         */
+        .stat_clk(clk_125mhz),
+        .stat_rst(rst_125mhz),
+        .m_axis_stat(axis_sfp2_stat),
+
+        /*
          * Status
          */
         .tx_error_underflow(),
@@ -358,14 +390,17 @@ if (SFP_RATE == 0) begin : sfp_mac
         /*
          * Configuration
          */
-        .cfg_ifg(8'd12),
+        .cfg_tx_max_pkt_len(16'd9218),
+        .cfg_tx_ifg(8'd12),
         .cfg_tx_enable(1'b1),
+        .cfg_rx_max_pkt_len(16'd9218),
         .cfg_rx_enable(1'b1)
     );
 
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
+        .STAT_EN(1'b0),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -409,6 +444,13 @@ if (SFP_RATE == 0) begin : sfp_mac
         .tx_mii_select(1'b0),
 
         /*
+         * Statistics
+         */
+        .stat_clk(clk_125mhz),
+        .stat_rst(rst_125mhz),
+        .m_axis_stat(axis_sfp3_stat),
+
+        /*
          * Status
          */
         .tx_error_underflow(),
@@ -424,8 +466,10 @@ if (SFP_RATE == 0) begin : sfp_mac
         /*
          * Configuration
          */
-        .cfg_ifg(8'd12),
+        .cfg_tx_max_pkt_len(16'd9218),
+        .cfg_tx_ifg(8'd12),
         .cfg_tx_enable(1'b1),
+        .cfg_rx_max_pkt_len(16'd9218),
         .cfg_rx_enable(1'b1)
     );
 
