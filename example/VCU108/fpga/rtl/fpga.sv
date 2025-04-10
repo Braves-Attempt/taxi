@@ -115,7 +115,7 @@ MMCME3_BASE #(
     .CLKFBOUT_MULT_F(10),
     .CLKFBOUT_PHASE(0),
     // 1250 MHz / 10 = 125 MHz, 0 degrees
-    .CLKOUT0_DIVIDE_F(5),
+    .CLKOUT0_DIVIDE_F(10),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
     // Not used
