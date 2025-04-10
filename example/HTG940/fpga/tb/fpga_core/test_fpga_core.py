@@ -33,8 +33,8 @@ class TB:
         self.baset_phy = RgmiiPhy(dut.phy_rgmii_txd, dut.phy_rgmii_tx_ctl, dut.phy_rgmii_tx_clk,
             dut.phy_rgmii_rxd, dut.phy_rgmii_rx_ctl, dut.phy_rgmii_rx_clk, speed=speed)
 
-        self.uart_source = UartSource(dut.uart_txd, baud=115200, bits=8, stop_bits=1)
-        self.uart_sink = UartSink(dut.uart_rxd, baud=115200, bits=8, stop_bits=1)
+        self.uart_source = UartSource(dut.uart_txd, baud=921600, bits=8, stop_bits=1)
+        self.uart_sink = UartSink(dut.uart_rxd, baud=921600, bits=8, stop_bits=1)
 
         cocotb.start_soon(self._run_clk())
 
@@ -63,25 +63,6 @@ class TB:
             await t
             self.dut.clk90.value = 0
             await t
-
-
-async def uart_test(tb, source, sink):
-    tb.log.info("Test UART")
-
-    tx_data = b"FPGA Ninja"
-
-    tb.log.info("UART TX: %s", tx_data)
-
-    await source.write(tx_data)
-
-    rx_data = bytearray()
-
-    while len(rx_data) < len(tx_data):
-        rx_data.extend(await sink.read())
-
-    tb.log.info("UART RX: %s", rx_data)
-
-    tb.log.info("UART test done")
 
 
 async def mac_test(tb, source, sink):
@@ -133,15 +114,11 @@ async def run_test(dut):
 
     await tb.init()
 
-    tb.log.info("Start UART test")
-
-    uart_test_cr = cocotb.start_soon(uart_test(tb, tb.uart_source, tb.uart_sink))
-
     tb.log.info("Start BASE-T MAC loopback test")
 
     phy_test_cr = cocotb.start_soon(mac_test(tb, tb.baset_phy.rx, tb.baset_phy.tx))
 
-    await Combine(uart_test_cr, phy_test_cr)
+    await Combine(phy_test_cr)
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -175,7 +152,9 @@ def test_fpga_core(request):
     verilog_sources = [
         os.path.join(rtl_dir, f"{dut}.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "taxi_eth_mac_1g_rgmii_fifo.f"),
-        os.path.join(lib_dir, "taxi", "rtl", "lss", "taxi_uart.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_if_uart.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_switch.sv"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_mod_stats.f"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_reset.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_signal.sv"),
     ]
