@@ -103,44 +103,108 @@ module fpga_core #
 
 assign led = sw;
 
-// UART
+// XFCP
 assign uart_cts = 1'b0;
 
-taxi_axis_if #(.DATA_W(8)) axis_uart();
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_ds(), xfcp_us();
 
-taxi_uart
-uart_inst (
+taxi_xfcp_if_uart #(
+    .TX_FIFO_DEPTH(512),
+    .RX_FIFO_DEPTH(512)
+)
+xfcp_if_uart_inst (
     .clk(clk),
     .rst(rst),
 
     /*
-     * AXI4-Stream input (sink)
-     */
-    .s_axis_tx(axis_uart),
-
-    /*
-     * AXI4-Stream output (source)
-     */
-    .m_axis_rx(axis_uart),
-
-    /*
      * UART interface
      */
-    .rxd(uart_rxd),
-    .txd(uart_txd),
+    .uart_rxd(uart_rxd),
+    .uart_txd(uart_txd),
 
     /*
-     * Status
+     * XFCP downstream interface
      */
-    .tx_busy(),
-    .rx_busy(),
-    .rx_overrun_error(),
-    .rx_frame_error(),
+    .xfcp_dsp_ds(xfcp_ds),
+    .xfcp_dsp_us(xfcp_us),
 
     /*
      * Configuration
      */
-    .prescale(16'(125000000/115200))
+    .prescale(16'(125000000/921600))
+);
+
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[1](), xfcp_sw_us[1]();
+
+taxi_xfcp_switch #(
+    .XFCP_ID_STR("KCU105"),
+    .XFCP_EXT_ID(0),
+    .XFCP_EXT_ID_STR("Taxi example"),
+    .PORTS($size(xfcp_sw_us))
+)
+xfcp_sw_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_ds),
+    .xfcp_usp_us(xfcp_us),
+
+    /*
+     * XFCP downstream ports
+     */
+    .xfcp_dsp_ds(xfcp_sw_ds),
+    .xfcp_dsp_us(xfcp_sw_us)
+);
+
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(10)) axis_stat();
+
+taxi_xfcp_mod_stats #(
+    .XFCP_ID_STR("Statistics"),
+    .XFCP_EXT_ID(0),
+    .XFCP_EXT_ID_STR(""),
+    .STAT_COUNT_W(64),
+    .STAT_PIPELINE(2)
+)
+xfcp_stats_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_sw_ds[0]),
+    .xfcp_usp_us(xfcp_sw_us[0]),
+
+    /*
+     * Statistics increment input
+     */
+    .s_axis_stat(axis_stat)
+);
+
+taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(10)) axis_eth_stat[SFP_RATE ? 2 : 3]();
+
+taxi_axis_arb_mux #(
+    .S_COUNT($size(axis_eth_stat)),
+    .UPDATE_TID(1'b0),
+    .ARB_ROUND_ROBIN(1'b1),
+    .ARB_LSB_HIGH_PRIO(1'b0)
+)
+stat_mux_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * AXI4-Stream inputs (sink)
+     */
+    .s_axis(axis_eth_stat),
+
+    /*
+     * AXI4-Stream output (source)
+     */
+    .m_axis(axis_stat)
 );
 
 // BASE-T PHY
@@ -148,12 +212,15 @@ assign phy_reset_n = !rst;
 
 taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_tx_cpl();
-taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_stat();
 
 taxi_eth_mac_1g_fifo #(
     .PADDING_EN(1),
     .MIN_FRAME_LEN(64),
-    .STAT_EN(1'b0),
+    .STAT_EN(1),
+    .STAT_TX_LEVEL(1),
+    .STAT_RX_LEVEL(1),
+    .STAT_ID_BASE(0),
+    .STAT_UPDATE_PERIOD(1024),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),
@@ -201,7 +268,7 @@ eth_mac_inst (
      */
     .stat_clk(clk),
     .stat_rst(rst),
-    .m_axis_stat(axis_stat),
+    .m_axis_stat(axis_eth_stat[0]),
 
     /*
      * Status
@@ -233,16 +300,18 @@ if (SFP_RATE == 0) begin : sfp_mac
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp0_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp0_tx_cpl();
-    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp0_stat();
 
     taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp1_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp1_tx_cpl();
-    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp1_stat();
 
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
-        .STAT_EN(1'b0),
+        .STAT_EN(1),
+        .STAT_TX_LEVEL(1),
+        .STAT_RX_LEVEL(1),
+        .STAT_ID_BASE((16+16)+(16+16)*0),
+        .STAT_UPDATE_PERIOD(1024),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -290,7 +359,7 @@ if (SFP_RATE == 0) begin : sfp_mac
          */
         .stat_clk(clk),
         .stat_rst(rst),
-        .m_axis_stat(axis_sfp0_stat),
+        .m_axis_stat(axis_eth_stat[1]),
 
         /*
          * Status
@@ -318,7 +387,11 @@ if (SFP_RATE == 0) begin : sfp_mac
     taxi_eth_mac_1g_fifo #(
         .PADDING_EN(1),
         .MIN_FRAME_LEN(64),
-        .STAT_EN(1'b0),
+        .STAT_EN(1),
+        .STAT_TX_LEVEL(1),
+        .STAT_RX_LEVEL(1),
+        .STAT_ID_BASE((16+16)+(16+16)*1),
+        .STAT_UPDATE_PERIOD(1024),
         .TX_FIFO_DEPTH(16384),
         .TX_FRAME_FIFO(1),
         .RX_FIFO_DEPTH(16384),
@@ -366,7 +439,7 @@ if (SFP_RATE == 0) begin : sfp_mac
          */
         .stat_clk(clk),
         .stat_rst(rst),
-        .m_axis_stat(axis_sfp1_stat),
+        .m_axis_stat(axis_eth_stat[2]),
 
         /*
          * Status
@@ -411,7 +484,6 @@ end else begin : sfp_mac
     taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_tx[2]();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[2]();
     taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[2]();
-    taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
     if (SIM) begin
 
@@ -471,7 +543,11 @@ end else begin : sfp_mac
         .TX_SERDES_PIPELINE(1),
         .RX_SERDES_PIPELINE(1),
         .COUNT_125US(125000/6.4),
-        .STAT_EN(1'b0)
+        .STAT_EN(1),
+        .STAT_TX_LEVEL(1),
+        .STAT_RX_LEVEL(1),
+        .STAT_ID_BASE(16+16),
+        .STAT_UPDATE_PERIOD(1024)
     )
     sfp_mac_inst (
         .xcvr_ctrl_clk(clk),
@@ -554,7 +630,7 @@ end else begin : sfp_mac
          */
         .stat_clk(clk),
         .stat_rst(rst),
-        .m_axis_stat(axis_sfp_stat),
+        .m_axis_stat(axis_eth_stat[1]),
 
         /*
          * Status

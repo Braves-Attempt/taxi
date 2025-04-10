@@ -77,8 +77,8 @@ class TB:
                 self.sfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
                 self.sfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True))
 
-        self.uart_source = UartSource(dut.uart_rxd, baud=115200, bits=8, stop_bits=1)
-        self.uart_sink = UartSink(dut.uart_txd, baud=115200, bits=8, stop_bits=1)
+        self.uart_source = UartSource(dut.uart_rxd, baud=921600, bits=8, stop_bits=1)
+        self.uart_sink = UartSink(dut.uart_txd, baud=921600, bits=8, stop_bits=1)
 
         dut.phy_gmii_clk_en.setimmediatevalue(1)
 
@@ -115,25 +115,6 @@ class TB:
 
         for k in range(10):
             await RisingEdge(self.dut.clk)
-
-
-async def uart_test(tb, source, sink):
-    tb.log.info("Test UART")
-
-    tx_data = b"FPGA Ninja"
-
-    tb.log.info("UART TX: %s", tx_data)
-
-    await source.write(tx_data)
-
-    rx_data = bytearray()
-
-    while len(rx_data) < len(tx_data):
-        rx_data.extend(await sink.read())
-
-    tb.log.info("UART RX: %s", rx_data)
-
-    tb.log.info("UART test done")
 
 
 async def mac_test(tb, source, sink):
@@ -227,10 +208,6 @@ async def run_test(dut):
 
     tests = []
 
-    tb.log.info("Start UART test")
-
-    tests.append(cocotb.start_soon(uart_test(tb, tb.uart_source, tb.uart_sink)))
-
     tb.log.info("Start BASE-T MAC loopback test")
 
     tests.append(cocotb.start_soon(mac_test(tb, tb.gmii_source, tb.gmii_sink)))
@@ -279,7 +256,9 @@ def test_fpga_core(request, sfp_rate):
         os.path.join(rtl_dir, f"{dut}.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "taxi_eth_mac_1g_fifo.f"),
         os.path.join(lib_dir, "taxi", "rtl", "eth", "us", "taxi_eth_mac_25g_us.f"),
-        os.path.join(lib_dir, "taxi", "rtl", "lss", "taxi_uart.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_if_uart.f"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_switch.sv"),
+        os.path.join(lib_dir, "taxi", "rtl", "xfcp", "taxi_xfcp_mod_stats.f"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_reset.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "sync", "taxi_sync_signal.sv"),
         os.path.join(lib_dir, "taxi", "rtl", "io", "taxi_debounce_switch.sv"),
