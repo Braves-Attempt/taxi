@@ -35,8 +35,8 @@ class TB:
         self.mii_phy = MiiPhy(dut.phy_txd, None, dut.phy_tx_en, dut.phy_tx_clk,
             dut.phy_rxd, dut.phy_rx_er, dut.phy_rx_dv, dut.phy_rx_clk, speed=speed)
 
-        self.uart_source = UartSource(dut.uart_rxd, baud=115200, bits=8, stop_bits=1)
-        self.uart_sink = UartSink(dut.uart_txd, baud=115200, bits=8, stop_bits=1)
+        self.uart_source = UartSource(dut.uart_rxd, baud=3000000, bits=8, stop_bits=1)
+        self.uart_sink = UartSink(dut.uart_txd, baud=3000000, bits=8, stop_bits=1)
 
         dut.phy_crs.setimmediatevalue(0)
         dut.phy_col.setimmediatevalue(0)

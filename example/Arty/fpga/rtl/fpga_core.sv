@@ -78,6 +78,7 @@ module fpga_core #
 assign {led7, led6, led5, led4, led3_g, led2_g, led1_g, led0_g} = {sw, btn};
 assign phy_reset_n = !rst;
 
+// XFCP
 taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_ds(), xfcp_us();
 
 taxi_xfcp_if_uart #(
