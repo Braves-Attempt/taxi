@@ -66,7 +66,7 @@ logic m_axis_stat_tvalid_reg = 0, m_axis_stat_tvalid_next;
 
 logic [CNT_W-1:0] count_reg = '0, count_next;
 logic [PERIOD_CNT_W-1:0] update_period_reg = PERIOD_CNT_W'(UPDATE_PERIOD), update_period_next;
-logic [CNT-1:0] zero_reg = '1, zero_next;
+logic zero_reg = 1'b1, zero_next;
 logic [CNT-1:0] update_reg = '0, update_next;
 
 wire [ACC_W-1:0] acc_int[CNT];
@@ -143,7 +143,7 @@ always_comb begin
             if (!m_axis_stat_tvalid_reg && update_reg[count_reg]) begin
                 update_next[count_reg] = 1'b0;
                 mem_wr_data = '0;
-                if (zero_reg[count_reg]) begin
+                if (zero_reg) begin
                     m_axis_stat_tdata_next = STAT_INC_W'(acc_int[count_reg]);
                     m_axis_stat_tid_next = STAT_ID_W'(count_reg+ID_BASE);
                     m_axis_stat_tvalid_next = acc_int[count_reg] != 0;
@@ -153,15 +153,15 @@ always_comb begin
                     m_axis_stat_tvalid_next = mem_rd_data_reg != 0 || acc_int[count_reg] != 0;
                 end
             end else begin
-                if (zero_reg[count_reg]) begin
+                if (zero_reg) begin
                     mem_wr_data = STAT_INC_W'(acc_int[count_reg]);
                 end else begin
                     mem_wr_data = mem_rd_data_reg + STAT_INC_W'(acc_int[count_reg]);
                 end
             end
-            zero_next[count_reg] = 1'b0;
 
             if (count_reg == CNT_W'(CNT-1)) begin
+                zero_next = 1'b0;
                 count_next = '0;
             end else begin
                 count_next = count_reg + 1;
@@ -206,7 +206,7 @@ always_ff @(posedge clk) begin
         m_axis_stat_tvalid_reg <= 1'b0;
         count_reg <= '0;
         update_period_reg <= PERIOD_CNT_W'(UPDATE_PERIOD);
-        zero_reg <= '1;
+        zero_reg <= 1'b1;
         update_reg <= '0;
     end
 end
