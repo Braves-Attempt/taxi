@@ -69,10 +69,10 @@ set_false_path -from [get_ports {sw[*]}]
 set_input_delay 0 [get_ports {sw[*]}]
 
 # UART (U12 CP2103)
-set_property -dict {LOC K24  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_txd}] ;# U12.24 RXD_I
-set_property -dict {LOC M19  IOSTANDARD LVCMOS18} [get_ports {uart_rxd}] ;# U12.25 TXD_O
-set_property -dict {LOC L27  IOSTANDARD LVCMOS18} [get_ports {uart_rts}] ;# U12.23 RTS_O_B
-set_property -dict {LOC K23  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {uart_cts}] ;# U12.22 CTS_I_B
+set_property -dict {LOC K24  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports {uart_txd}] ;# U12.24 RXD_I
+set_property -dict {LOC M19  IOSTANDARD LVCMOS25} [get_ports {uart_rxd}] ;# U12.25 TXD_O
+set_property -dict {LOC L27  IOSTANDARD LVCMOS25} [get_ports {uart_rts}] ;# U12.23 RTS_O_B
+set_property -dict {LOC K23  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports {uart_cts}] ;# U12.22 CTS_I_B
 
 set_false_path -to [get_ports {uart_txd uart_cts}]
 set_output_delay 0 [get_ports {uart_txd uart_cts}]
