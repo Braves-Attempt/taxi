@@ -67,7 +67,9 @@ logic m_axis_stat_tvalid_reg = 0, m_axis_stat_tvalid_next;
 logic [CNT_W-1:0] count_reg = '0, count_next;
 logic [PERIOD_CNT_W-1:0] update_period_reg = PERIOD_CNT_W'(UPDATE_PERIOD), update_period_next;
 logic zero_reg = 1'b1, zero_next;
-logic [CNT-1:0] update_reg = '0, update_next;
+logic update_req_reg = 1'b0, update_req_next;
+logic update_reg = 1'b0, update_next;
+logic [CNT-1:0] update_shift_reg = '0, update_shift_next;
 
 wire [ACC_W-1:0] acc_int[CNT];
 logic [CNT-1:0] acc_clear;
@@ -124,7 +126,9 @@ always_comb begin
     count_next = count_reg;
     update_period_next = update_period_reg;
     zero_next = zero_reg;
+    update_req_next = update_req_reg;
     update_next = update_reg;
+    update_shift_next = update_shift_reg;
 
     acc_clear = '0;
 
@@ -140,8 +144,9 @@ always_comb begin
         STATE_WRITE: begin
             mem_wr_en = 1'b1;
             acc_clear[count_reg] = 1'b1;
-            if (!m_axis_stat_tvalid_reg && update_reg[count_reg]) begin
-                update_next[count_reg] = 1'b0;
+            update_shift_next = {update_reg || update_shift_reg[0], update_shift_reg[CNT-1:1]};
+            if (!m_axis_stat_tvalid_reg && (update_reg || update_shift_reg[0])) begin
+                update_shift_next[CNT-1] = 1'b0;
                 mem_wr_data = '0;
                 if (zero_reg) begin
                     m_axis_stat_tdata_next = STAT_INC_W'(acc_int[count_reg]);
@@ -162,6 +167,8 @@ always_comb begin
 
             if (count_reg == CNT_W'(CNT-1)) begin
                 zero_next = 1'b0;
+                update_req_next = 1'b0;
+                update_next = update_req_reg;
                 count_next = '0;
             end else begin
                 count_next = count_reg + 1;
@@ -171,15 +178,11 @@ always_comb begin
         end
     endcase
 
-    if (update_period_reg == 0) begin
-        update_next = '1;
+    if (update_period_reg == 0 || update) begin
+        update_req_next = 1'b1;
         update_period_next = PERIOD_CNT_W'(UPDATE_PERIOD);
     end else begin
         update_period_next = update_period_reg - 1;
-    end
-
-    if (update) begin
-        update_next = '1;
     end
 end
 
@@ -193,7 +196,9 @@ always_ff @(posedge clk) begin
     count_reg <= count_next;
     update_period_reg <= update_period_next;
     zero_reg <= zero_next;
+    update_req_reg <= update_req_next;
     update_reg <= update_next;
+    update_shift_reg <= update_shift_next;
 
     if (mem_wr_en) begin
         mem_reg[count_reg] <= mem_wr_data;
@@ -207,7 +212,8 @@ always_ff @(posedge clk) begin
         count_reg <= '0;
         update_period_reg <= PERIOD_CNT_W'(UPDATE_PERIOD);
         zero_reg <= 1'b1;
-        update_reg <= '0;
+        update_req_reg <= 1'b0;
+        update_reg <= 1'b0;
     end
 end
 
