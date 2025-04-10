@@ -4,10 +4,10 @@
 
 This example design targets the Xilinx KC705 FPGA board.
 
-The design places looped-back MACs on both the BASE-T port as well as the SFP+ cage, as well as a looped-back UART on on the USB UART connection.
+The design places looped-back MACs on both the BASE-T port and the SFP+ cage, as well as XFCP on the USB UART for monitoring and control.
 
 *  USB UART
-    *  Looped-back UART
+    *  XFCP (921600 baud)
 *  RJ-45 Ethernet port with Marvell 88E1111 PHY
     *  Looped-back MAC via GMII
     *  Looped-back MAC via RGMII
@@ -48,7 +48,5 @@ Also, note that version 1.0 of the KC705 has the SFP+ TX and RX connections pola
 ## How to test
 
 Run `make program` to program the board with Vivado.
-
-To test the looped-back UART, use any serial terminal software like minicom, screen, etc.  The looped-back UART will echo typed text back without modification.
 
 To test the looped-back MAC, it is recommended to use a network tester like the Viavi T-BERD 5800 that supports basic layer 2 tests with a loopback.  Do not connect the looped-back MAC to a network as the reflected packets may cause problems.
