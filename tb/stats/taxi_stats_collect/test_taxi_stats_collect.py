@@ -97,12 +97,50 @@ async def run_test_acc(dut, backpressure_inserter=None):
     await RisingEdge(dut.clk)
 
 
+async def run_test_max(dut, backpressure_inserter=None):
+
+    tb = TB(dut)
+
+    stat_count = len(dut.stat_valid)
+    stat_inc_width = len(dut.stat_inc[0])
+
+    await tb.cycle_reset()
+
+    tb.set_backpressure_generator(backpressure_inserter)
+
+    dut.stat_inc.value = [2**stat_inc_width-1 for k in range(stat_count)]
+    dut.stat_valid.value = [1]*stat_count
+    for k in range(2048):
+        await RisingEdge(dut.clk)
+    dut.stat_inc.value = [0]*stat_count
+    dut.stat_valid.value = [0]*stat_count
+
+    await Timer(1000, 'ns')
+
+    data = [0]*stat_count
+
+    while not tb.stat_sink.empty():
+        stat = await tb.stat_sink.recv()
+
+        assert stat.tdata[0] != 0
+
+        data[stat.tid] += stat.tdata[0]
+
+    print(data)
+
+    for n in range(stat_count):
+        assert data[n] == 2048*(2**stat_inc_width-1)
+
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
 async def run_stress_test(dut, backpressure_inserter=None):
 
     tb = TB(dut)
 
     stat_count = len(dut.stat_valid)
-    stat_inc_width = len(dut.stat_inc) // stat_count
+    stat_inc_width = len(dut.stat_inc[0])
 
     await tb.cycle_reset()
 
@@ -181,14 +219,15 @@ def cycle_pause():
 
 if cocotb.SIM_NAME:
 
-    for test in [run_test_acc]:
+    for test in [
+                run_test_acc,
+                run_test_max,
+                run_stress_test,
+            ]:
 
         factory = TestFactory(test)
         factory.add_option("backpressure_inserter", [None, cycle_pause])
         factory.generate_tests()
-
-    factory = TestFactory(run_stress_test)
-    factory.generate_tests()
 
 
 # cocotb-test
