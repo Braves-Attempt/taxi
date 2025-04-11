@@ -70,6 +70,7 @@ logic zero_reg = 1'b1, zero_next;
 logic update_req_reg = 1'b0, update_req_next;
 logic update_reg = 1'b0, update_next;
 logic [CNT-1:0] update_shift_reg = '0, update_shift_next;
+logic [ACC_W-1:0] ch_reg = '0, ch_next;
 
 wire [ACC_W-1:0] acc_int[CNT];
 logic [CNT-1:0] acc_clear;
@@ -92,8 +93,8 @@ assign m_axis_stat.tid = m_axis_stat_tid_reg;
 assign m_axis_stat.tdest = '0;
 assign m_axis_stat.tuser = '0;
 
-for (genvar n = 0; n < CNT; n = n + 1) begin
-    reg [ACC_W-1:0] acc_reg = '0;
+for (genvar n = 0; n < CNT; n = n + 1) begin : ch
+    logic [ACC_W-1:0] acc_reg = '0;
 
     assign acc_int[n] = acc_reg;
 
@@ -129,6 +130,7 @@ always_comb begin
     update_req_next = update_req_reg;
     update_next = update_reg;
     update_shift_next = update_shift_reg;
+    ch_next = ch_reg;
 
     acc_clear = '0;
 
@@ -138,30 +140,31 @@ always_comb begin
 
     case (state_reg)
         STATE_READ: begin
+            acc_clear[count_reg] = 1'b1;
+            ch_next = acc_int[count_reg];
             mem_rd_en = 1'b1;
             state_next = STATE_WRITE;
         end
         STATE_WRITE: begin
             mem_wr_en = 1'b1;
-            acc_clear[count_reg] = 1'b1;
             update_shift_next = {update_reg || update_shift_reg[0], update_shift_reg[CNT-1:1]};
             if (!m_axis_stat_tvalid_reg && (update_reg || update_shift_reg[0])) begin
                 update_shift_next[CNT-1] = 1'b0;
                 mem_wr_data = '0;
                 if (zero_reg) begin
-                    m_axis_stat_tdata_next = STAT_INC_W'(acc_int[count_reg]);
+                    m_axis_stat_tdata_next = STAT_INC_W'(ch_reg);
                     m_axis_stat_tid_next = STAT_ID_W'(count_reg+ID_BASE);
-                    m_axis_stat_tvalid_next = acc_int[count_reg] != 0;
+                    m_axis_stat_tvalid_next = ch_reg != 0;
                 end else begin
-                    m_axis_stat_tdata_next = STAT_INC_W'(mem_rd_data_reg + acc_int[count_reg]);
+                    m_axis_stat_tdata_next = mem_rd_data_reg + STAT_INC_W'(ch_reg);
                     m_axis_stat_tid_next = STAT_ID_W'(count_reg+ID_BASE);
-                    m_axis_stat_tvalid_next = mem_rd_data_reg != 0 || acc_int[count_reg] != 0;
+                    m_axis_stat_tvalid_next = mem_rd_data_reg != 0 || ch_reg != 0;
                 end
             end else begin
                 if (zero_reg) begin
-                    mem_wr_data = STAT_INC_W'(acc_int[count_reg]);
+                    mem_wr_data = STAT_INC_W'(ch_reg);
                 end else begin
-                    mem_wr_data = mem_rd_data_reg + STAT_INC_W'(acc_int[count_reg]);
+                    mem_wr_data = mem_rd_data_reg + STAT_INC_W'(ch_reg);
                 end
             end
 
@@ -199,6 +202,7 @@ always_ff @(posedge clk) begin
     update_req_reg <= update_req_next;
     update_reg <= update_next;
     update_shift_reg <= update_shift_next;
+    ch_reg <= ch_next;
 
     if (mem_wr_en) begin
         mem_reg[count_reg] <= mem_wr_data;
