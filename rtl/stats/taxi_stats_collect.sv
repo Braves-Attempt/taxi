@@ -34,7 +34,7 @@ module taxi_stats_collect #
      * Increment inputs
      */
     input  wire logic [INC_W-1:0]  stat_inc[CNT],
-    input  wire logic              stat_valid[CNT],
+    input  wire logic              stat_valid[CNT] = '{CNT{1'b1}},
 
     /*
      * Statistics increment output
@@ -44,7 +44,7 @@ module taxi_stats_collect #
     /*
      * Control inputs
      */
-    input  wire logic              update
+    input  wire logic              update = 1'b0
 );
 
 localparam STAT_INC_W = m_axis_stat.DATA_W;
