@@ -42,6 +42,7 @@ taxi_axis_if #(
     .ID_W(STAT_ID_W)
 ) m_axis_stat();
 
+logic gate;
 logic update;
 
 taxi_stats_collect #(
@@ -68,6 +69,7 @@ uut (
     /*
      * Control inputs
      */
+    .gate(gate),
     .update(update)
 );
 

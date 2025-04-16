@@ -39,6 +39,8 @@ class TB(object):
         for k in range(len(dut.stat_inc)):
             dut.stat_inc[k].setimmediatevalue(0)
             dut.stat_valid[k].setimmediatevalue(0)
+
+        dut.gate.setimmediatevalue(1)
         dut.update.setimmediatevalue(0)
 
     def set_backpressure_generator(self, generator=None):

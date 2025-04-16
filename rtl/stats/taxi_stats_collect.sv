@@ -44,6 +44,7 @@ module taxi_stats_collect #
     /*
      * Control inputs
      */
+    input  wire logic              gate = 1'b1,
     input  wire logic              update = 1'b0
 );
 
@@ -100,13 +101,13 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
 
     always_ff @(posedge clk) begin
         if (acc_clear[n]) begin
-            if (stat_valid[n]) begin
+            if (stat_valid[n] && gate) begin
                 acc_reg <= ACC_W'(stat_inc[n]);
             end else begin
                 acc_reg <= '0;
             end
         end else begin
-            if (stat_valid[n]) begin
+            if (stat_valid[n] && gate) begin
                 acc_reg <= acc_reg + ACC_W'(stat_inc[n]);
             end
         end

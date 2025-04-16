@@ -214,6 +214,7 @@ tx_stats_inst (
     /*
      * Control inputs
      */
+    .gate(1'b1),
     .update(1'b0)
 );
 
@@ -372,6 +373,7 @@ rx_stats_inst (
     /*
      * Control inputs
      */
+    .gate(1'b1),
     .update(1'b0)
 );
 
