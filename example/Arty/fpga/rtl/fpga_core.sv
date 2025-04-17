@@ -171,6 +171,8 @@ taxi_eth_mac_mii_fifo #(
     .STAT_RX_LEVEL(1),
     .STAT_ID_BASE(0),
     .STAT_UPDATE_PERIOD(1024),
+    .STAT_STR_EN(1),
+    .STAT_PREFIX_STR("MII0"),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),

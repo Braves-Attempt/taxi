@@ -254,7 +254,9 @@ taxi_eth_mac_25g_us #(
     .STAT_TX_LEVEL(1),
     .STAT_RX_LEVEL(1),
     .STAT_ID_BASE(0),
-    .STAT_UPDATE_PERIOD(1024)
+    .STAT_UPDATE_PERIOD(1024),
+    .STAT_STR_EN(1),
+    .STAT_PREFIX_STR('{"SFP0", "SFP1", "SFP2", "SFP3"})
 )
 sfp_mac_inst (
     .xcvr_ctrl_clk(clk_125mhz),

@@ -221,6 +221,8 @@ taxi_eth_mac_1g_fifo #(
     .STAT_RX_LEVEL(1),
     .STAT_ID_BASE(0),
     .STAT_UPDATE_PERIOD(1024),
+    .STAT_STR_EN(1),
+    .STAT_PREFIX_STR("SGMII0"),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),
@@ -528,6 +530,9 @@ assign qsfp1_tx_n = qsfp_tx_n[3:0];
 assign qsfp2_tx_p = qsfp_tx_p[7:4];
 assign qsfp2_tx_n = qsfp_tx_n[7:4];
 
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP1[4] = '{"QSFP1.1", "QSFP1.2", "QSFP1.3",  "QSFP1.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP2[4] = '{"QSFP2.1", "QSFP2.2", "QSFP2.3",  "QSFP2.4"};
+
 for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
 
     localparam CNT = 4;
@@ -557,7 +562,9 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
         .STAT_TX_LEVEL(1),
         .STAT_RX_LEVEL(1),
         .STAT_ID_BASE((16+16)+n*CNT*(16+16)),
-        .STAT_UPDATE_PERIOD(1024)
+        .STAT_UPDATE_PERIOD(1024),
+        .STAT_STR_EN(1),
+        .STAT_PREFIX_STR(n == 0 ? STAT_PREFIX_STR_QSFP1 : STAT_PREFIX_STR_QSFP2)
     )
     mac_inst (
         .xcvr_ctrl_clk(clk_125mhz),

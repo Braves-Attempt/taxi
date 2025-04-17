@@ -203,6 +203,8 @@ taxi_eth_mac_1g_fifo #(
     .STAT_RX_LEVEL(1),
     .STAT_ID_BASE(0),
     .STAT_UPDATE_PERIOD(1024),
+    .STAT_STR_EN(1),
+    .STAT_PREFIX_STR("SGMII0"),
     .TX_FIFO_DEPTH(16384),
     .TX_FRAME_FIFO(1),
     .RX_FIFO_DEPTH(16384),
@@ -364,7 +366,9 @@ taxi_eth_mac_25g_us #(
     .STAT_TX_LEVEL(1),
     .STAT_RX_LEVEL(1),
     .STAT_ID_BASE(16+16),
-    .STAT_UPDATE_PERIOD(1024)
+    .STAT_UPDATE_PERIOD(1024),
+    .STAT_STR_EN(1),
+    .STAT_PREFIX_STR('{"QSFP.1", "QSFP.2", "QSFP.3", "QSFP.4"})
 )
 qsfp_mac_inst (
     .xcvr_ctrl_clk(clk),

@@ -284,6 +284,9 @@ for (genvar n = 0; n < GTY_CLK_CNT; n = n + 1) begin : gty_clk
 
 end
 
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP1[4] = '{"QSFP1.1", "QSFP1.2", "QSFP1.3",  "QSFP1.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP2[4] = '{"QSFP2.1", "QSFP2.2", "QSFP2.3",  "QSFP2.4"};
+
 for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
 
     localparam CLK = n;
@@ -314,7 +317,9 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
         .STAT_TX_LEVEL(1),
         .STAT_RX_LEVEL(1),
         .STAT_ID_BASE(n*CNT*(16+16)),
-        .STAT_UPDATE_PERIOD(1024)
+        .STAT_UPDATE_PERIOD(1024),
+        .STAT_STR_EN(1),
+        .STAT_PREFIX_STR(n == 0 ? STAT_PREFIX_STR_QSFP1 : STAT_PREFIX_STR_QSFP2)
     )
     mac_inst (
         .xcvr_ctrl_clk(clk_125mhz),
