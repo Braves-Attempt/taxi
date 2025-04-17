@@ -226,6 +226,7 @@ tx_stats_inst (
 
 taxi_axis_async_fifo #(
     .DEPTH(32),
+    .RAM_PIPELINE(0),
     .FRAME_FIFO(1'b0),
     .DROP_BAD_FRAME(1'b0),
     .DROP_WHEN_FULL(1'b0)
@@ -389,6 +390,7 @@ rx_stats_inst (
 
 taxi_axis_async_fifo #(
     .DEPTH(32),
+    .RAM_PIPELINE(0),
     .FRAME_FIFO(1'b0),
     .DROP_BAD_FRAME(1'b0),
     .DROP_WHEN_FULL(1'b0)
