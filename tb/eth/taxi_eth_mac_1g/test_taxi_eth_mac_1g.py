@@ -842,6 +842,8 @@ def test_taxi_eth_mac_1g(request, pfc_en):
     parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
     parameters['STAT_ID_BASE'] = 0
     parameters['STAT_UPDATE_PERIOD'] = 1024
+    parameters['STAT_STR_EN'] = 1
+    parameters['STAT_PREFIX_STR'] = "\"MAC\""
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

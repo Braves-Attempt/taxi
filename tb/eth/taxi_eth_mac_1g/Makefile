@@ -41,6 +41,8 @@ export PARAM_STAT_TX_LEVEL := 2
 export PARAM_STAT_RX_LEVEL := $(PARAM_STAT_TX_LEVEL)
 export PARAM_STAT_ID_BASE := 0
 export PARAM_STAT_UPDATE_PERIOD := 1024
+export PARAM_STAT_STR_EN := 1
+export PARAM_STAT_PREFIX_STR := "\"MAC\""
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

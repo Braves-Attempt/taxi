@@ -47,7 +47,9 @@ module taxi_eth_mac_25g_us #
     parameter STAT_TX_LEVEL = 1,
     parameter STAT_RX_LEVEL = 1,
     parameter STAT_ID_BASE = 0,
-    parameter STAT_UPDATE_PERIOD = 1024
+    parameter STAT_UPDATE_PERIOD = 1024,
+    parameter logic STAT_STR_EN = 1'b0,
+    parameter logic [8*8-1:0] STAT_PREFIX_STR[CNT] = '{CNT{"MAC"}}
 )
 (
     input  wire logic                 xcvr_ctrl_clk,
@@ -321,7 +323,9 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         .STAT_TX_LEVEL(STAT_TX_LEVEL),
         .STAT_RX_LEVEL(STAT_RX_LEVEL),
         .STAT_ID_BASE(STAT_ID_BASE + n*(STAT_TX_CNT+STAT_RX_CNT)),
-        .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
+        .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+        .STAT_STR_EN(STAT_STR_EN),
+        .STAT_PREFIX_STR(STAT_PREFIX_STR[n])
     )
     ch_inst (
         .xcvr_ctrl_clk(xcvr_ctrl_clk),

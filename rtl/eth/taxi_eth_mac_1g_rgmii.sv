@@ -31,7 +31,9 @@ module taxi_eth_mac_1g_rgmii #
     parameter STAT_TX_LEVEL = 1,
     parameter STAT_RX_LEVEL = STAT_TX_LEVEL,
     parameter STAT_ID_BASE = 0,
-    parameter STAT_UPDATE_PERIOD = 1024
+    parameter STAT_UPDATE_PERIOD = 1024,
+    parameter logic STAT_STR_EN = 1'b0,
+    parameter logic [8*8-1:0] STAT_PREFIX_STR = "MAC"
 )
 (
     input  wire logic                 gtx_clk,
@@ -344,7 +346,9 @@ taxi_eth_mac_1g #(
     .STAT_TX_LEVEL(STAT_TX_LEVEL),
     .STAT_RX_LEVEL(STAT_RX_LEVEL),
     .STAT_ID_BASE(STAT_ID_BASE),
-    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+    .STAT_STR_EN(STAT_STR_EN),
+    .STAT_PREFIX_STR(STAT_PREFIX_STR)
 )
 eth_mac_1g_inst (
     .tx_clk(tx_clk),

@@ -191,6 +191,8 @@ def test_taxi_eth_mac_mii_fifo(request):
     parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
     parameters['STAT_ID_BASE'] = 0
     parameters['STAT_UPDATE_PERIOD'] = 1024
+    parameters['STAT_STR_EN'] = 1
+    parameters['STAT_PREFIX_STR'] = "\"MAC\""
     parameters['TX_FIFO_DEPTH'] = 16384
     parameters['TX_FIFO_RAM_PIPELINE'] = 1
     parameters['TX_FRAME_FIFO'] = 1

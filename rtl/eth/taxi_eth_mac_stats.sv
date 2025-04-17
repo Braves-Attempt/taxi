@@ -21,6 +21,8 @@ module taxi_eth_mac_stats #
     parameter STAT_RX_LEVEL = 1,
     parameter STAT_ID_BASE = 0,
     parameter STAT_UPDATE_PERIOD = 1024,
+    parameter logic STAT_STR_EN = 1'b0,
+    parameter logic [8*8-1:0] STAT_PREFIX_STR = "MAC",
     parameter INC_W = 1
 )
 (
@@ -103,6 +105,7 @@ taxi_axis_if #(
 )
 axis_stat_tx(), axis_stat_rx(), axis_stat_int[2]();
 
+wire [8*8-1:0] tx_str[TX_CNT];
 wire [INC_W-1:0] tx_inc[TX_CNT];
 
 wire hist_tx_pkt_small     = (stat_tx_pkt_len != 0) && stat_tx_pkt_len[15:6] == 0;
@@ -119,74 +122,74 @@ wire hist_tx_pkt_4096_8192 = stat_tx_pkt_len[15:12] == 1;
 wire hist_tx_pkt_8192_9215 = stat_tx_pkt_len[15:13] == 1 && stat_tx_pkt_len <= 9215;
 wire hist_tx_pkt_large_2   = stat_tx_pkt_len > 9215;
 
-// TX_BYTES
+assign tx_str[0]  = "TX_BYTES";
 assign tx_inc[0]  = stat_tx_byte;
-// TX_PKTS
+assign tx_str[1]  = "TX_PKTS";
 assign tx_inc[1]  = INC_W'(tx_start_packet);
-// TX_ERR
+assign tx_str[2]  = "TX_ERR";
 assign tx_inc[2]  = INC_W'(stat_tx_err_user);
-// TX_UNDR
+assign tx_str[3]  = "TX_UNDR";
 assign tx_inc[3]  = INC_W'(stat_tx_err_underflow);
-// TX_OVRSZ
+assign tx_str[4]  = "TX_OVRSZ";
 assign tx_inc[4]  = INC_W'(stat_tx_err_oversize);
-// TX_CTRL
+assign tx_str[5]  = "TX_CTRL";
 assign tx_inc[5]  = INC_W'(stat_tx_mcf);
-// TX_COL
+assign tx_str[6]  = "TX_COL";
 assign tx_inc[6]  = INC_W'(0);
-// reserved
+assign tx_str[7]  = "";
 assign tx_inc[7]  = INC_W'(0);
 
 if (STAT_TX_LEVEL > 0) begin
-    // TX_PSM
+    assign tx_str[8]  = "TX_PSM";
     assign tx_inc[8]  = INC_W'(hist_tx_pkt_small);
-    // TX_P64
+    assign tx_str[9]  = "TX_P64";
     assign tx_inc[9]  = INC_W'(hist_tx_pkt_64);
-    // TX_P65
+    assign tx_str[10] = "TX_P65";
     assign tx_inc[10] = INC_W'(hist_tx_pkt_65_127);
-    // TX_P128
+    assign tx_str[11] = "TX_P128";
     assign tx_inc[11] = INC_W'(hist_tx_pkt_128_255);
-    // TX_P256
+    assign tx_str[12] = "TX_P256";
     assign tx_inc[12] = INC_W'(hist_tx_pkt_256_511);
-    // TX_P512
+    assign tx_str[13] = "TX_P512";
     assign tx_inc[13] = INC_W'(hist_tx_pkt_512_1023);
-    // TX_P1024
+    assign tx_str[14] = "TX_P1024";
     assign tx_inc[14] = INC_W'(hist_tx_pkt_1024_1518);
-    // TX_PLG
+    assign tx_str[15] = "TX_PLG";
     assign tx_inc[15] = INC_W'(STAT_TX_LEVEL > 1 ? hist_tx_pkt_large_2 : hist_tx_pkt_large_1);
 end
 
 if (STAT_TX_LEVEL > 1) begin
-    // TX_P1519
+    assign tx_str[16] = "TX_P1519";
     assign tx_inc[16] = INC_W'(hist_tx_pkt_1519_2047);
-    // TX_P2048
+    assign tx_str[17] = "TX_P2048";
     assign tx_inc[17] = INC_W'(hist_tx_pkt_2048_4095);
-    // TX_P4096
+    assign tx_str[18] = "TX_P4096";
     assign tx_inc[18] = INC_W'(hist_tx_pkt_4096_8192);
-    // TX_P8192
+    assign tx_str[19] = "TX_P8192";
     assign tx_inc[19] = INC_W'(hist_tx_pkt_8192_9215);
-    // TX_UCAST
+    assign tx_str[20] = "TX_UCAST";
     assign tx_inc[20] = INC_W'(stat_tx_pkt_ucast);
-    // TX_MCAST
+    assign tx_str[21] = "TX_MCAST";
     assign tx_inc[21] = INC_W'(stat_tx_pkt_mcast);
-    // TX_BCAST
+    assign tx_str[22] = "TX_BCAST";
     assign tx_inc[22] = INC_W'(stat_tx_pkt_bcast);
-    // TX_VLAN
+    assign tx_str[23] = "TX_VLAN";
     assign tx_inc[23] = INC_W'(stat_tx_pkt_vlan);
-    // TX_LFC
+    assign tx_str[24] = "TX_LFC";
     assign tx_inc[24] = INC_W'(stat_tx_lfc_pkt);
-    // TX_PFC
+    assign tx_str[25] = "TX_PFC";
     assign tx_inc[25] = INC_W'(stat_tx_pfc_pkt);
-    // TX_MCOL
+    assign tx_str[26] = "TX_MCOL";
     assign tx_inc[26] = INC_W'(0);
-    // TX_DEFER
+    assign tx_str[27] = "TX_DEFER";
     assign tx_inc[27] = INC_W'(0);
-    // TX_LCOL
+    assign tx_str[28] = "TX_LCOL";
     assign tx_inc[28] = INC_W'(0);
-    // TX_ECOL
+    assign tx_str[29] = "TX_ECOL";
     assign tx_inc[29] = INC_W'(0);
-    // TX_EDEF
+    assign tx_str[30] = "TX_EDEF";
     assign tx_inc[30] = INC_W'(0);
-    // reserved
+    assign tx_str[31] = "";
     assign tx_inc[31] = INC_W'(0);
 end
 
@@ -194,7 +197,9 @@ taxi_stats_collect #(
     .CNT(TX_CNT),
     .INC_W(INC_W),
     .ID_BASE(STAT_ID_BASE),
-    .UPDATE_PERIOD(STAT_UPDATE_PERIOD)
+    .UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+    .STR_EN(STAT_STR_EN),
+    .PREFIX_STR(STAT_PREFIX_STR)
 )
 tx_stats_inst (
     .clk(tx_clk),
@@ -205,6 +210,7 @@ tx_stats_inst (
      */
     .stat_inc(tx_inc),
     .stat_valid('{TX_CNT{1'b1}}),
+    .stat_str(tx_str),
 
     /*
      * Statistics increment output
@@ -262,6 +268,7 @@ tx_stat_fifo (
     .m_status_good_frame()
 );
 
+wire [8*8-1:0] rx_str[TX_CNT];
 wire [INC_W-1:0] rx_inc[RX_CNT];
 
 wire hist_rx_pkt_small     = (stat_rx_pkt_len != 0) && stat_rx_pkt_len[15:6] == 0;
@@ -278,74 +285,74 @@ wire hist_rx_pkt_4096_8192 = stat_rx_pkt_len[15:12] == 1;
 wire hist_rx_pkt_8192_9215 = stat_rx_pkt_len[15:13] == 1 && stat_rx_pkt_len <= 9215;
 wire hist_rx_pkt_large_2   = stat_rx_pkt_len > 9215;
 
-// RX_BYTES
+assign rx_str[0]  = "RX_BYTES";
 assign rx_inc[0]  = stat_rx_byte;
-// RX_PKTS
+assign rx_str[1]  = "RX_PKTS";
 assign rx_inc[1]  = INC_W'(rx_start_packet);
-// RX_FCSER
+assign rx_str[2]  = "RX_FCSER";
 assign rx_inc[2]  = INC_W'(stat_rx_err_bad_fcs);
-// RX_FDRP
+assign rx_str[3]  = "RX_FDRP";
 assign rx_inc[3]  = INC_W'(stat_rx_fifo_drop);
-// RX_OVRSZ
+assign rx_str[4]  = "RX_OVRSZ";
 assign rx_inc[4]  = INC_W'(stat_rx_err_oversize);
-// RX_ERBLK
+assign rx_str[5]  = "RX_ERBLK";
 assign rx_inc[5]  = INC_W'(stat_rx_err_bad_block);
-// RX_ERFRM
+assign rx_str[6]  = "RX_ERFRM";
 assign rx_inc[6]  = INC_W'(stat_rx_err_framing);
-// reserved
+assign rx_str[7]  = "";
 assign rx_inc[7]  = INC_W'(0);
 
 if (STAT_RX_LEVEL > 0) begin
-    // RX_PSM
+    assign rx_str[8]  = "RX_PSM";
     assign rx_inc[8]  = INC_W'(hist_rx_pkt_small);
-    // RX_P64
+    assign rx_str[9]  = "RX_P64";
     assign rx_inc[9]  = INC_W'(hist_rx_pkt_64);
-    // RX_P65
+    assign rx_str[10] = "RX_P65";
     assign rx_inc[10] = INC_W'(hist_rx_pkt_65_127);
-    // RX_P128
+    assign rx_str[11] = "RX_P128";
     assign rx_inc[11] = INC_W'(hist_rx_pkt_128_255);
-    // RX_P256
+    assign rx_str[12] = "RX_P256";
     assign rx_inc[12] = INC_W'(hist_rx_pkt_256_511);
-    // RX_P512
+    assign rx_str[13] = "RX_P512";
     assign rx_inc[13] = INC_W'(hist_rx_pkt_512_1023);
-    // RX_P1024
+    assign rx_str[14] = "RX_P1024";
     assign rx_inc[14] = INC_W'(hist_rx_pkt_1024_1518);
-    // RX_PLG
+    assign rx_str[15] = "RX_PLG";
     assign rx_inc[15] = INC_W'(STAT_RX_LEVEL > 1 ? hist_rx_pkt_large_2 : hist_rx_pkt_large_1);
 end
 
 if (STAT_RX_LEVEL > 1) begin
-    // RX_P1519
+    assign rx_str[16] = "RX_P1519";
     assign rx_inc[16] = INC_W'(hist_rx_pkt_1519_2047);
-    // RX_P2048
+    assign rx_str[17] = "RX_P2048";
     assign rx_inc[17] = INC_W'(hist_rx_pkt_2048_4095);
-    // RX_P4096
+    assign rx_str[18] = "RX_P4096";
     assign rx_inc[18] = INC_W'(hist_rx_pkt_4096_8192);
-    // RX_P8192
+    assign rx_str[19] = "RX_P8192";
     assign rx_inc[19] = INC_W'(hist_rx_pkt_8192_9215);
-    // RX_UCAST
+    assign rx_str[20] = "RX_UCAST";
     assign rx_inc[20] = INC_W'(stat_rx_pkt_ucast);
-    // RX_MCAST
+    assign rx_str[21] = "RX_MCAST";
     assign rx_inc[21] = INC_W'(stat_rx_pkt_mcast);
-    // RX_BCAST
+    assign rx_str[22] = "RX_BCAST";
     assign rx_inc[22] = INC_W'(stat_rx_pkt_bcast);
-    // RX_VLAN
+    assign rx_str[23] = "RX_VLAN";
     assign rx_inc[23] = INC_W'(stat_rx_pkt_vlan);
-    // RX_LFC
+    assign rx_str[24] = "RX_LFC";
     assign rx_inc[24] = INC_W'(stat_rx_lfc_pkt);
-    // RX_PFC
+    assign rx_str[25] = "RX_PFC";
     assign rx_inc[25] = INC_W'(stat_rx_pfc_pkt);
-    // RX_ERPRE
+    assign rx_str[26] = "RX_ERPRE";
     assign rx_inc[26] = INC_W'(stat_rx_err_preamble);
-    // RX_FRG
+    assign rx_str[27] = "RX_FRG";
     assign rx_inc[27] = INC_W'(stat_rx_pkt_fragment);
-    // RX_JBR
+    assign rx_str[28] = "RX_JBR";
     assign rx_inc[28] = INC_W'(stat_rx_pkt_jabber);
-    // reserved
+    assign rx_str[29] = "";
     assign rx_inc[29] = INC_W'(0);
-    // reserved
+    assign rx_str[30] = "";
     assign rx_inc[30] = INC_W'(0);
-    // reserved
+    assign rx_str[31] = "";
     assign rx_inc[31] = INC_W'(0);
 end
 
@@ -353,7 +360,9 @@ taxi_stats_collect #(
     .CNT(RX_CNT),
     .INC_W(INC_W),
     .ID_BASE(STAT_ID_BASE+TX_CNT),
-    .UPDATE_PERIOD(STAT_UPDATE_PERIOD)
+    .UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+    .STR_EN(STAT_STR_EN),
+    .PREFIX_STR(STAT_PREFIX_STR)
 )
 rx_stats_inst (
     .clk(rx_clk),
@@ -364,6 +373,7 @@ rx_stats_inst (
      */
     .stat_inc(rx_inc),
     .stat_valid('{RX_CNT{1'b1}}),
+    .stat_str(rx_str),
 
     /*
      * Statistics increment output

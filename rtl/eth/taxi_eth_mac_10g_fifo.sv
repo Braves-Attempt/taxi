@@ -30,6 +30,8 @@ module taxi_eth_mac_10g_fifo #
     parameter STAT_RX_LEVEL = 1,
     parameter STAT_ID_BASE = 0,
     parameter STAT_UPDATE_PERIOD = 1024,
+    parameter logic STAT_STR_EN = 1'b0,
+    parameter logic [8*8-1:0] STAT_PREFIX_STR = "MAC",
     parameter TX_FIFO_DEPTH = 4096,
     parameter TX_FIFO_RAM_PIPELINE = 1,
     parameter logic TX_FRAME_FIFO = 1'b1,
@@ -252,7 +254,9 @@ taxi_eth_mac_10g #(
     .STAT_TX_LEVEL(STAT_TX_LEVEL),
     .STAT_RX_LEVEL(STAT_RX_LEVEL),
     .STAT_ID_BASE(STAT_ID_BASE),
-    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD)
+    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+    .STAT_STR_EN(STAT_STR_EN),
+    .STAT_PREFIX_STR(STAT_PREFIX_STR)
 )
 eth_mac_10g_inst (
     .tx_clk(tx_clk),

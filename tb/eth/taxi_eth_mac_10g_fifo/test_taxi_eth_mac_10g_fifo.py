@@ -357,6 +357,8 @@ def test_taxi_eth_mac_10g_fifo(request, data_w, dic_en):
     parameters['STAT_RX_LEVEL'] = parameters['STAT_TX_LEVEL']
     parameters['STAT_ID_BASE'] = 0
     parameters['STAT_UPDATE_PERIOD'] = 1024
+    parameters['STAT_STR_EN'] = 1
+    parameters['STAT_PREFIX_STR'] = "\"MAC\""
     parameters['TX_FIFO_DEPTH'] = 16384
     parameters['TX_FIFO_RAM_PIPELINE'] = 1
     parameters['TX_FRAME_FIFO'] = 1
