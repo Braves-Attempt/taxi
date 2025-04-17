@@ -186,7 +186,7 @@ always_comb begin
         axil_shift_pipeline_next[0] = s_axil_araddr_shift;
     end else if (s_axis_stat.tvalid && !s_axis_stat.tready && !op_acc_pipe_hazard) begin
         // accumulate
-        op_acc_pipe_next[0] = 1'b1;
+        op_acc_pipe_next[0] = !s_axis_stat.USER_EN || !s_axis_stat.tuser;
 
         s_axis_stat_tready_next = 1'b1;
 
