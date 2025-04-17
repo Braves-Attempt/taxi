@@ -22,6 +22,8 @@ module test_taxi_stats_collect #
     parameter INC_W = 8,
     parameter ID_BASE = 0,
     parameter UPDATE_PERIOD = 128,
+    parameter logic STR_EN = 1'b1,
+    parameter logic [8*8-1:0] PREFIX_STR = "BLK",
     parameter STAT_INC_W = 16,
     parameter STAT_ID_W = $clog2(CNT)
     /* verilator lint_on WIDTHTRUNC */
@@ -33,13 +35,16 @@ logic rst;
 
 logic [INC_W-1:0] stat_inc[CNT];
 logic [0:0] stat_valid[CNT];
+logic [8*8-1:0] stat_str[CNT];
 
 taxi_axis_if #(
     .DATA_W(STAT_INC_W),
     .KEEP_EN(0),
     .KEEP_W(1),
     .ID_EN(1),
-    .ID_W(STAT_ID_W)
+    .ID_W(STAT_ID_W),
+    .USER_EN(1),
+    .USER_W(1)
 ) m_axis_stat();
 
 logic gate;
@@ -49,7 +54,9 @@ taxi_stats_collect #(
     .CNT(CNT),
     .INC_W(INC_W),
     .ID_BASE(ID_BASE),
-    .UPDATE_PERIOD(UPDATE_PERIOD)
+    .UPDATE_PERIOD(UPDATE_PERIOD),
+    .STR_EN(STR_EN),
+    .PREFIX_STR(PREFIX_STR)
 )
 uut (
     .clk(clk),
@@ -60,6 +67,7 @@ uut (
      */
     .stat_inc(stat_inc),
     .stat_valid(stat_valid),
+    .stat_str(stat_str),
 
     /*
      * Statistics increment output

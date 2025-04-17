@@ -33,6 +33,8 @@ export PARAM_CNT := 8
 export PARAM_INC_W := 8
 export PARAM_ID_BASE := 0
 export PARAM_UPDATE_PERIOD := 128
+export PARAM_STR_EN := 1
+export PARAM_PREFIX_STR := "\"BLK\""
 export PARAM_STAT_INC_W := 16
 export PARAM_STAT_ID_W := $(shell python -c "print(($(PARAM_CNT)-1).bit_length())")
 

@@ -25,6 +25,10 @@ from cocotb.regression import TestFactory
 from cocotbext.axi import AxiStreamBus, AxiStreamSink
 
 
+def str2int(s):
+    return int.from_bytes(s.encode('utf-8'), 'big')
+
+
 class TB(object):
     def __init__(self, dut):
         self.dut = dut
@@ -39,6 +43,7 @@ class TB(object):
         for k in range(len(dut.stat_inc)):
             dut.stat_inc[k].setimmediatevalue(0)
             dut.stat_valid[k].setimmediatevalue(0)
+            dut.stat_str[k].setimmediatevalue(str2int(f"STR_{k}"))
 
         dut.gate.setimmediatevalue(1)
         dut.update.setimmediatevalue(0)
@@ -86,9 +91,10 @@ async def run_test_acc(dut, backpressure_inserter=None):
     while not tb.stat_sink.empty():
         stat = await tb.stat_sink.recv()
 
-        assert stat.tdata[0] != 0
+        if not stat.tuser:
+            assert stat.tdata[0] != 0
 
-        data[stat.tid] += stat.tdata[0]
+            data[stat.tid] += stat.tdata[0]
 
     print(data)
 
@@ -124,14 +130,63 @@ async def run_test_max(dut, backpressure_inserter=None):
     while not tb.stat_sink.empty():
         stat = await tb.stat_sink.recv()
 
-        assert stat.tdata[0] != 0
+        if not stat.tuser:
+            assert stat.tdata[0] != 0
 
-        data[stat.tid] += stat.tdata[0]
+            data[stat.tid] += stat.tdata[0]
 
     print(data)
 
     for n in range(stat_count):
         assert data[n] == 2048*(2**stat_inc_width-1)
+
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+
+async def run_test_str(dut, backpressure_inserter=None):
+
+    tb = TB(dut)
+
+    stat_count = len(dut.stat_valid)
+
+    await tb.cycle_reset()
+
+    tb.set_backpressure_generator(backpressure_inserter)
+
+    strings = [bytearray() for x in range(stat_count)]
+    done_cnt = 0
+
+    while done_cnt < stat_count:
+        stat = await tb.stat_sink.recv()
+
+        print(stat)
+
+        val = stat.tdata[0]
+        index = stat.tid
+
+        ptr = (val & 0x7)*2
+        b = bytearray()
+        for k in range(2):
+            c = (val >> (k*6 + 4)) & 0x3f
+            if c & 0x20:
+                c = (c & 0x1f) | 0x40
+            else:
+                c = (c & 0x1f) | 0x20
+            b.append(c)
+        if len(strings[index]) == ptr:
+            strings[index].extend(b)
+
+        if ptr == 14:
+            done_cnt += 1
+
+    print(strings)
+
+    for i, s in enumerate(strings):
+        s = (s[0:8].strip() + b"." + s[8:].strip()).decode('ascii')
+        print(s)
+
+        assert s == f'BLK.STR_{i}'
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -203,9 +258,10 @@ async def run_stress_test(dut, backpressure_inserter=None):
     while not tb.stat_sink.empty():
         stat = await tb.stat_sink.recv()
 
-        assert stat.tdata[0] != 0
+        if not stat.tuser:
+            assert stat.tdata[0] != 0
 
-        data[stat.tid] += stat.tdata[0]
+            data[stat.tid] += stat.tdata[0]
 
     print(data)
 
@@ -224,6 +280,7 @@ if cocotb.SIM_NAME:
     for test in [
                 run_test_acc,
                 run_test_max,
+                run_test_str,
                 run_stress_test,
             ]:
 
@@ -270,6 +327,8 @@ def test_taxi_stats_collect(request):
     parameters['INC_W'] = 8
     parameters['ID_BASE'] = 0
     parameters['UPDATE_PERIOD'] = 128
+    parameters['STR_EN'] = 1
+    parameters['PREFIX_STR'] = "\"BLK\""
     parameters['STAT_INC_W'] = 16
     parameters['STAT_ID_W'] = (parameters['CNT']-1).bit_length()
 
