@@ -239,12 +239,13 @@ localparam STAT_RX_CNT = STAT_RX_LEVEL == 0 ? 8 : (STAT_RX_LEVEL == 1 ? 16: 32);
 
 taxi_axis_if #(
     .DATA_W(m_axis_stat.DATA_W),
-    .KEEP_W(1),
-    .LAST_EN(0),
-    .ID_W(m_axis_stat.ID_W),
+    .KEEP_EN(m_axis_stat.KEEP_EN),
+    .KEEP_W(m_axis_stat.KEEP_W),
+    .LAST_EN(m_axis_stat.LAST_EN),
     .ID_EN(m_axis_stat.ID_EN),
-    .USER_W(1),
-    .USER_EN(1)
+    .ID_W(m_axis_stat.ID_W),
+    .USER_EN(m_axis_stat.USER_EN),
+    .USER_W(m_axis_stat.USER_W)
 )
 axis_stat_int[CNT]();
 
