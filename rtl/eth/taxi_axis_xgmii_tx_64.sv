@@ -137,7 +137,7 @@ logic frame_reg = 1'b0, frame_next;
 logic frame_error_reg = 1'b0, frame_error_next;
 logic frame_oversize_reg = 1'b0, frame_oversize_next;
 logic [MIN_LEN_W-1:0] frame_min_count_reg = '0, frame_min_count_next;
-logic [0:0] hdr_ptr_reg = '0, hdr_ptr_next;
+logic [1:0] hdr_ptr_reg = '0, hdr_ptr_next;
 logic is_mcast_reg = 1'b0, is_mcast_next;
 logic is_bcast_reg = 1'b0, is_bcast_next;
 logic is_8021q_reg = 1'b0, is_8021q_next;
@@ -386,11 +386,11 @@ always_comb begin
     end
 
     case (hdr_ptr_reg)
-        1'd0: begin
+        2'd0: begin
             is_mcast_next = s_tdata_reg[0];
             is_bcast_next = &s_tdata_reg[47:0];
         end
-        1'd1: is_8021q_next = {s_tdata_reg[39:32], s_tdata_reg[47:40]} == 16'h8100;
+        2'd1: is_8021q_next = {s_tdata_reg[39:32], s_tdata_reg[47:40]} == 16'h8100;
         default: begin
             // do nothing
         end

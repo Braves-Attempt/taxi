@@ -127,7 +127,7 @@ logic xgmii_start_d1 = 1'b0;
 
 logic frame_oversize_reg = 1'b0, frame_oversize_next;
 logic pre_ok_reg = 1'b0, pre_ok_next;
-logic [0:0] hdr_ptr_reg = '0, hdr_ptr_next;
+logic [1:0] hdr_ptr_reg = '0, hdr_ptr_next;
 logic is_mcast_reg = 1'b0, is_mcast_next;
 logic is_bcast_reg = 1'b0, is_bcast_next;
 logic is_8021q_reg = 1'b0, is_8021q_next;
@@ -298,11 +298,11 @@ always_comb begin
     end
 
     case (hdr_ptr_reg)
-        1'd0: begin
+        2'd0: begin
             is_mcast_next = xgmii_rxd_d1[0];
             is_bcast_next = &xgmii_rxd_d1[47:0];
         end
-        1'd1: is_8021q_next = {xgmii_rxd_d1[39:32], xgmii_rxd_d1[47:40]} == 16'h8100;
+        2'd1: is_8021q_next = {xgmii_rxd_d1[39:32], xgmii_rxd_d1[47:40]} == 16'h8100;
         default: begin
             // do nothing
         end
