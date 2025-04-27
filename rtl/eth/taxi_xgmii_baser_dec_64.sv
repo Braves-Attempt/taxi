@@ -211,7 +211,7 @@ always_comb begin
             BLOCK_TYPE_OS_START[7:4]: begin
                 // D7 D6 D5    O0 D3 D2 D1 BT
                 xgmii_rxd_next[31:8] = encoded_rx_data[31:8];
-                xgmii_rxc_next[3:0] = 4'hf;
+                xgmii_rxc_next[3:0] = 4'h1;
                 if (encoded_rx_data[35:32] == O_SEQ_OS) begin
                     xgmii_rxd_next[7:0] = XGMII_SEQ_OS;
                     rx_bad_block_next = 1'b0;
