@@ -668,6 +668,8 @@ async def run_test_pfc(dut, ifg=12):
             test_frame = XgmiiFrame.from_payload(bytes(test_pkt))
             await tb.serdes_source.send(test_frame)
 
+    dut.rx_pfc_ack.value = 0xff
+
     for i in range(8):
         for k in range(200):
             await RisingEdge(dut.tx_clk)

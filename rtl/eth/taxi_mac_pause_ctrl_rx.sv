@@ -81,8 +81,11 @@ if (MCF_PARAMS_SIZE < (PFC_EN ? 18 : 2))
 logic lfc_req_reg = 1'b0, lfc_req_next;
 logic [7:0] pfc_req_reg = 8'd0, pfc_req_next;
 
-logic [QW+QFB-1:0] lfc_quanta_reg = '0, lfc_quanta_next;
-logic [QW+QFB-1:0] pfc_quanta_reg[0:7], pfc_quanta_next[0:7];
+logic [QFB-1:0] quanta_cnt_reg = '0, quanta_cnt_next;
+logic [1:0] quanta_inc_reg = '0, quanta_inc_next;
+
+logic [QW-1:0] lfc_quanta_reg = '0, lfc_quanta_next;
+logic [QW-1:0] pfc_quanta_reg[8], pfc_quanta_next[8];
 
 logic stat_rx_lfc_pkt_reg = 1'b0, stat_rx_lfc_pkt_next;
 logic stat_rx_lfc_xon_reg = 1'b0, stat_rx_lfc_xon_next;
@@ -117,9 +120,15 @@ always_comb begin
     stat_rx_pfc_xon_next = '0;
     stat_rx_pfc_xoff_next = '0;
 
-    if (cfg_quanta_clk_en && rx_lfc_ack) begin
-        if (lfc_quanta_reg > (QW+QFB)'(cfg_quanta_step)) begin
-            lfc_quanta_next = lfc_quanta_reg - (QW+QFB)'(cfg_quanta_step);
+    quanta_cnt_next = quanta_cnt_reg;
+    quanta_inc_next = 0;
+    if (cfg_quanta_clk_en) begin
+        {quanta_inc_next, quanta_cnt_next} = (2+QFB)'(quanta_cnt_reg) + cfg_quanta_step;
+    end
+
+    if (rx_lfc_ack) begin
+        if (lfc_quanta_reg >= QW'(quanta_inc_reg)) begin
+            lfc_quanta_next = lfc_quanta_reg - QW'(quanta_inc_reg);
         end else begin
             lfc_quanta_next = '0;
         end
@@ -130,9 +139,9 @@ always_comb begin
     lfc_req_next = (lfc_quanta_reg != 0) && rx_lfc_en && cfg_rx_lfc_en;
 
     for (integer k = 0; k < 8; k = k + 1) begin
-        if (cfg_quanta_clk_en && rx_pfc_ack[k]) begin
-            if (pfc_quanta_reg[k] > (QW+QFB)'(cfg_quanta_step)) begin
-                pfc_quanta_next[k] = pfc_quanta_reg[k] - (QW+QFB)'(cfg_quanta_step);
+        if (rx_pfc_ack[k]) begin
+            if (pfc_quanta_reg[k] >= QW'(quanta_inc_reg)) begin
+                pfc_quanta_next[k] = pfc_quanta_reg[k] - QW'(quanta_inc_reg);
             end else begin
                 pfc_quanta_next[k] = '0;
             end
@@ -148,14 +157,14 @@ always_comb begin
             stat_rx_lfc_pkt_next = 1'b1;
             stat_rx_lfc_xon_next = {mcf_params[7:0], mcf_params[15:8]} == 0;
             stat_rx_lfc_xoff_next = {mcf_params[7:0], mcf_params[15:8]} != 0;
-            lfc_quanta_next = {mcf_params[7:0], mcf_params[15:8], {QFB{1'b0}}};
+            lfc_quanta_next = {mcf_params[7:0], mcf_params[15:8]};
         end else if (PFC_EN && mcf_opcode == cfg_rx_pfc_opcode && cfg_rx_pfc_en) begin
             stat_rx_pfc_pkt_next = 1'b1;
             for (integer k = 0; k < 8; k = k + 1) begin
                 if (mcf_params[k+8]) begin
                     stat_rx_pfc_xon_next[k] = {mcf_params[16+(k*QW)+0 +: 8], mcf_params[16+(k*QW)+8 +: 8]} == 0;
                     stat_rx_pfc_xoff_next[k] = {mcf_params[16+(k*QW)+0 +: 8], mcf_params[16+(k*QW)+8 +: 8]} != 0;
-                    pfc_quanta_next[k] = {mcf_params[16+(k*QW)+0 +: 8], mcf_params[16+(k*QW)+8 +: 8], {QFB{1'b0}}};
+                    pfc_quanta_next[k] = {mcf_params[16+(k*QW)+0 +: 8], mcf_params[16+(k*QW)+8 +: 8]};
                 end
             end
         end
@@ -165,6 +174,9 @@ end
 always_ff @(posedge clk) begin
     lfc_req_reg <= lfc_req_next;
     pfc_req_reg <= pfc_req_next;
+
+    quanta_cnt_reg <= quanta_cnt_next;
+    quanta_inc_reg <= quanta_inc_next;
 
     lfc_quanta_reg <= lfc_quanta_next;
     for (integer k = 0; k < 8; k = k + 1) begin

@@ -451,7 +451,7 @@ async def run_test_pfc(dut, ifg=12, speed=1000e6):
     dut.tx_pfc_req.value = 0x00
     dut.tx_pfc_resend.value = 0
     dut.rx_pfc_en.value = 0xff
-    dut.rx_pfc_ack.value = 0
+    dut.rx_pfc_ack.value = 0x00
 
     dut.tx_lfc_pause_en.value = 0
     dut.tx_pause_req.value = 0
@@ -509,6 +509,8 @@ async def run_test_pfc(dut, ifg=12, speed=1000e6):
 
             test_frame = GmiiFrame.from_payload(bytes(test_pkt))
             await tb.mii_phy.rx.send(test_frame)
+
+    dut.rx_pfc_ack.value = 0xff
 
     for i in range(8):
         for k in range(500):

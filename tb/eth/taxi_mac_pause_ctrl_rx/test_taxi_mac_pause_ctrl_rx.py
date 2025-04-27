@@ -121,7 +121,7 @@ async def run_test_lfc(dut):
     tb.log.info("pause time   : %g s", pause_time)
     tb.log.info("pause quanta : %f", pause_quanta)
 
-    assert round(pause_quanta) == 100
+    assert round(pause_quanta/4) == 100//4
 
     tb.log.info("Test release time accuracy (with refresh)")
     eth = Ether(src='5A:51:52:53:54:55', dst='01:80:C2:00:00:01', type=0x8808)
@@ -151,7 +151,7 @@ async def run_test_lfc(dut):
     tb.log.info("pause time   : %g s", pause_time)
     tb.log.info("pause quanta : %f", pause_quanta)
 
-    assert round(pause_quanta) == 100
+    assert round(pause_quanta/4) == 100//4
 
     tb.log.info("Test explicit release")
     eth = Ether(src='5A:51:52:53:54:55', dst='01:80:C2:00:00:01', type=0x8808)
@@ -230,7 +230,7 @@ async def run_test_pfc(dut):
     tb.log.info("pause time   : %g s", pause_time)
     tb.log.info("pause quanta : %f", pause_quanta)
 
-    assert round(pause_quanta) == 100
+    assert round(pause_quanta/4) == 100//4
 
     tb.log.info("Test release time accuracy (with refresh)")
     eth = Ether(src='5A:51:52:53:54:55', dst='01:80:C2:00:00:01', type=0x8808)
@@ -260,7 +260,7 @@ async def run_test_pfc(dut):
     tb.log.info("pause time   : %g s", pause_time)
     tb.log.info("pause quanta : %f", pause_quanta)
 
-    assert round(pause_quanta) == 100
+    assert round(pause_quanta/4) == 100//4
 
     tb.log.info("Test explicit release")
     eth = Ether(src='5A:51:52:53:54:55', dst='01:80:C2:00:00:01', type=0x8808)
@@ -316,7 +316,7 @@ async def run_test_pfc(dut):
         tb.log.info("pause time   : %g s", pause_time)
         tb.log.info("pause quanta : %f", pause_quanta)
 
-        assert round(pause_quanta) == (k+1)*10
+        assert round(pause_quanta/4) == (k+1)*10//4
 
     dut.rx_pfc_ack.value = 0
 
@@ -358,7 +358,7 @@ async def run_test_pfc(dut):
     tb.log.info("pause time   : %g s", pause_time)
     tb.log.info("pause quanta : %f", pause_quanta)
 
-    assert round(pause_quanta) == 100
+    assert round(pause_quanta/4) == 100//4
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)

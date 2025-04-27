@@ -143,7 +143,7 @@ async def run_test_lfc(dut):
             tb.log.info("refresh time   : %g s", refresh_time)
             tb.log.info("refresh quanta : %f", refresh_quanta)
 
-            assert round(refresh_quanta) == 100
+            assert round(refresh_quanta/4) == 100//4
 
         start_time = get_sim_time('sec')
 
@@ -216,7 +216,7 @@ async def run_test_pfc(dut):
             tb.log.info("refresh time   : %g s", refresh_time)
             tb.log.info("refresh quanta : %f", refresh_quanta)
 
-            assert round(refresh_quanta) == 100
+            assert round(refresh_quanta/4) == 100//4
 
         start_time = get_sim_time('sec')
 
@@ -248,7 +248,7 @@ async def run_test_pfc(dut):
                 tb.log.info("refresh time   : %g s", refresh_time)
                 tb.log.info("refresh quanta : %f", refresh_quanta)
 
-                assert round(refresh_quanta) == 100
+                assert round(refresh_quanta/4) == 100//4
 
             start_time = get_sim_time('sec')
 
@@ -301,7 +301,7 @@ async def run_test_pfc(dut):
             tb.log.info("refresh time   : %g s", refresh_time)
             tb.log.info("refresh quanta : %f", refresh_quanta)
 
-            assert round(refresh_quanta) == 100
+            assert round(refresh_quanta/4) == 100//4
 
         start_time = get_sim_time('sec')
 

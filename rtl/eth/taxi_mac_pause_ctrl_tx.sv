@@ -95,8 +95,11 @@ logic [7:0] pfc_act_reg = 8'd0, pfc_act_next;
 logic [7:0] pfc_en_reg = 8'd0, pfc_en_next;
 logic pfc_send_reg = 1'b0, pfc_send_next;
 
-logic [QW+QFB-1:0] lfc_refresh_reg = '0, lfc_refresh_next;
-logic [QW+QFB-1:0] pfc_refresh_reg[0:7], pfc_refresh_next[0:7];
+logic [QFB-1:0] quanta_cnt_reg = '0, quanta_cnt_next;
+logic [1:0] quanta_inc_reg = '0, quanta_inc_next;
+
+logic [QW-1:0] lfc_refresh_reg = '0, lfc_refresh_next;
+logic [QW-1:0] pfc_refresh_reg[8], pfc_refresh_next[8];
 
 logic stat_tx_lfc_pkt_reg = 1'b0, stat_tx_lfc_pkt_next;
 logic stat_tx_lfc_xon_reg = 1'b0, stat_tx_lfc_xon_next;
@@ -168,31 +171,29 @@ always_comb begin
     stat_tx_pfc_xon_next = '0;
     stat_tx_pfc_xoff_next = '0;
 
+    quanta_cnt_next = quanta_cnt_reg;
+    quanta_inc_next = 0;
     if (cfg_quanta_clk_en) begin
-        if (lfc_refresh_reg > (QW+QFB)'(cfg_quanta_step)) begin
-            lfc_refresh_next = lfc_refresh_reg - (QW+QFB)'(cfg_quanta_step);
-        end else begin
-            lfc_refresh_next = '0;
-            if (lfc_req_reg) begin
-                lfc_send_next = 1'b1;
-            end
-        end
+        {quanta_inc_next, quanta_cnt_next} = (2+QFB)'(quanta_cnt_reg) + cfg_quanta_step;
+    end
+
+    if (lfc_refresh_reg >= QW'(quanta_inc_reg)) begin
+        lfc_refresh_next = lfc_refresh_reg - QW'(quanta_inc_reg);
     end else begin
-        lfc_refresh_next = lfc_refresh_reg;
+        lfc_refresh_next = '0;
+        if (lfc_req_reg) begin
+            lfc_send_next = 1'b1;
+        end
     end
 
     for (integer k = 0; k < 8; k = k + 1) begin
-        if (cfg_quanta_clk_en) begin
-            if (pfc_refresh_reg[k] > (QW+QFB)'(cfg_quanta_step)) begin
-                pfc_refresh_next[k] = pfc_refresh_reg[k] - (QW+QFB)'(cfg_quanta_step);
-            end else begin
-                pfc_refresh_next[k] = 0;
-                if (pfc_req_reg[k]) begin
-                    pfc_send_next = 1'b1;
-                end
-            end
+        if (pfc_refresh_reg[k] >= QW'(quanta_inc_reg)) begin
+            pfc_refresh_next[k] = pfc_refresh_reg[k] - QW'(quanta_inc_reg);
         end else begin
-            pfc_refresh_next[k] = pfc_refresh_reg[k];
+            pfc_refresh_next[k] = '0;
+            if (pfc_req_reg[k]) begin
+                pfc_send_next = 1'b1;
+            end
         end
     end
 
@@ -208,7 +209,7 @@ always_comb begin
                 mcf_pfc_sel_next = 1'b0;
                 mcf_valid_next = lfc_act_reg;
                 lfc_act_next = lfc_req_reg;
-                lfc_refresh_next = lfc_req_reg ? {cfg_tx_lfc_refresh, {QFB{1'b0}}} : '0;
+                lfc_refresh_next = lfc_req_reg ? cfg_tx_lfc_refresh : '0;
                 lfc_send_next = 1'b0;
 
                 stat_tx_lfc_pkt_next = lfc_act_reg;
@@ -232,7 +233,7 @@ always_comb begin
                 pfc_en_next = pfc_act_reg;
                 pfc_act_next = pfc_req_reg;
                 for (integer k = 0; k < 8; k = k + 1) begin
-                    pfc_refresh_next[k] = pfc_req_reg[k] ? {cfg_tx_pfc_refresh[k], {QFB{1'b0}}} : '0;
+                    pfc_refresh_next[k] = pfc_req_reg[k] ? cfg_tx_pfc_refresh[k] : '0;
                 end
                 pfc_send_next = 1'b0;
 
@@ -255,6 +256,9 @@ always_ff @(posedge clk) begin
 
     mcf_pfc_sel_reg <= mcf_pfc_sel_next;
     mcf_valid_reg <= mcf_valid_next;
+
+    quanta_cnt_reg <= quanta_cnt_next;
+    quanta_inc_reg <= quanta_inc_next;
 
     lfc_refresh_reg <= lfc_refresh_next;
     for (integer k = 0; k < 8; k = k + 1) begin
