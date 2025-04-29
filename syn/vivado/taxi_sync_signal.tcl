@@ -11,6 +11,5 @@
 foreach inst [get_cells -hier -filter {(ORIG_REF_NAME == taxi_sync_signal || REF_NAME == taxi_sync_signal)}] {
     puts "Inserting timing constraints for taxi_sync_signal instance $inst"
 
-    set_property ASYNC_REG TRUE [get_cells -hier "sync_reg_reg[*][*]" -filter "PARENT == $inst"]
     set_false_path -to [get_cells -hier "sync_reg_reg[0][*]" -filter "PARENT == $inst"]
 }

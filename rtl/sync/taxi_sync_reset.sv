@@ -28,7 +28,7 @@ module taxi_sync_reset #
     output wire logic  out
 );
 
-(* srl_style = "register" *)
+(* async_reg="true", srl_style="register", shreg_extract="no" *)
 logic [N-1:0] sync_reg = '1;
 
 assign out = sync_reg[N-1];

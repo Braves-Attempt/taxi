@@ -29,7 +29,7 @@ module taxi_sync_signal #(
     output wire logic [WIDTH-1:0]  out
 );
 
-(* srl_style = "register" *)
+(* async_reg="true", srl_style="register", shreg_extract="no" *)
 logic [WIDTH-1:0] sync_reg[N-1:0];
 
 assign out = sync_reg[N-1];

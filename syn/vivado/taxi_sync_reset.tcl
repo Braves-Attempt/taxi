@@ -14,6 +14,5 @@ foreach inst [get_cells -hier -filter {(ORIG_REF_NAME == taxi_sync_reset || REF_
     # reset synchronization
     set reset_ffs [get_cells -quiet -hier "sync_reg_reg[*]" -filter "PARENT == $inst"]
 
-    set_property ASYNC_REG TRUE $reset_ffs
     set_false_path -to [get_pins -of_objects $reset_ffs -filter {IS_PRESET || IS_RESET}]
 }
