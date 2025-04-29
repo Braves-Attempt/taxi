@@ -77,11 +77,11 @@ class TB:
             cocotb.start_soon(Clock(dut.sfp_mgt_refclk_0_p, 6.4, units="ns").start())
 
             for ch in dut.sfp_mac.sfp_mac_inst.ch:
-                cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 6.4, units="ns").start())
-                cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 6.4, units="ns").start())
+                cocotb.start_soon(Clock(ch.ch_inst.gt_inst.tx_clk, 6.4, units="ns").start())
+                cocotb.start_soon(Clock(ch.ch_inst.gt_inst.rx_clk, 6.4, units="ns").start())
 
-                self.sfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
-                self.sfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True))
+                self.sfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.gt_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
+                self.sfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.gt_inst.tx_clk, reverse=True))
 
         self.uart_source = UartSource(dut.uart_rxd, baud=2000000, bits=8, stop_bits=1)
         self.uart_sink = UartSink(dut.uart_txd, baud=2000000, bits=8, stop_bits=1)

@@ -60,11 +60,11 @@ class TB:
 
             ch = dut.sfp_mac.sfp_mac_inst.ch[0]
 
-            cocotb.start_soon(Clock(ch.ch_inst.tx_clk, 6.4, units="ns").start())
-            cocotb.start_soon(Clock(ch.ch_inst.rx_clk, 6.4, units="ns").start())
+            cocotb.start_soon(Clock(ch.ch_inst.gt_inst.tx_clk, 6.4, units="ns").start())
+            cocotb.start_soon(Clock(ch.ch_inst.gt_inst.rx_clk, 6.4, units="ns").start())
 
-            self.sfp_source = BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True)
-            self.sfp_sink = BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.tx_clk, reverse=True)
+            self.sfp_source = BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.gt_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True)
+            self.sfp_sink = BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.gt_inst.tx_clk, reverse=True)
 
         cocotb.start_soon(self._run_clk())
 

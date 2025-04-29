@@ -27,7 +27,7 @@ XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_reset.tcl
 XDC_FILES += ../lib/taxi/syn/vivado/taxi_sync_signal.tcl
 
 # IP
-IP_TCL_FILES = ../lib/taxi/rtl/eth/us/taxi_eth_mac_25g_us_gty_25g_161.tcl
+IP_TCL_FILES = ../lib/taxi/rtl/eth/us/taxi_eth_phy_25g_us_gty_25g_161.tcl
 
 # Configuration
 # CONFIG_TCL_FILES = ./config.tcl
