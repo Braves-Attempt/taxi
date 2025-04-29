@@ -6,7 +6,7 @@
 # - Alex Forencich
 #
 
-set base_name {taxi_eth_mac_25g_us_gty}
+set base_name {taxi_eth_phy_25g_us_gty}
 
 set preset {GTY-10GBASE-R}
 

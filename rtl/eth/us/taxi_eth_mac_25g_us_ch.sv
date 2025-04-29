@@ -244,19 +244,10 @@ module taxi_eth_mac_25g_us_ch #
     input  wire logic                 cfg_rx_pfc_en = 1'b0
 );
 
-localparam GT_USP = FAMILY == "kintexuplus" || FAMILY == "virtexuplus" || FAMILY == "virtexuplusHBM"
-    || FAMILY == "virtexuplus58G" || FAMILY == "zynquplus" || FAMILY == "zynquplusRFSOC";
-
 localparam DATA_W = 64;
 localparam HDR_W = 2;
 
 wire rx_reset_req;
-
-wire gt_reset_tx_datapath = tx_rst_in;
-wire gt_reset_rx_datapath = rx_rst_in || rx_reset_req;
-
-wire gt_reset_tx_done;
-wire gt_reset_rx_done;
 
 wire [5:0] gt_txheader;
 wire [63:0] gt_txdata;
@@ -266,438 +257,68 @@ wire [1:0] gt_rxheadervalid;
 wire [63:0] gt_rxdata;
 wire [1:0] gt_rxdatavalid;
 
-if (SIM) begin : xcvr
-    // simulation (no GT core)
-
-    assign xcvr_gtpowergood_out = 1'b1;
-
-    assign xcvr_qpll0lock_out = 1'b1;
-    assign xcvr_qpll0clk_out = 1'b0;
-    assign xcvr_qpll0refclk_out = 1'b0;
-
-    assign gt_reset_tx_done = !xcvr_ctrl_rst;
-    assign gt_reset_rx_done = !xcvr_ctrl_rst;
-
-end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
-    // UltraScale+ GTY (with common)
-
-    taxi_eth_mac_25g_us_gty_full
-    taxi_eth_mac_25g_us_gty_full_inst (
-        // Common
-        .gtwiz_reset_clk_freerun_in(xcvr_ctrl_clk),
-        .gtwiz_reset_all_in(xcvr_ctrl_rst),
-        .gtpowergood_out(xcvr_gtpowergood_out),
-
-        // PLL
-        .gtrefclk00_in(xcvr_gtrefclk00_in),
-        .qpll0lock_out(xcvr_qpll0lock_out),
-        .qpll0outclk_out(xcvr_qpll0clk_out),
-        .qpll0outrefclk_out(xcvr_qpll0refclk_out),
-
-        // Serial data
-        .gtytxp_out(xcvr_txp),
-        .gtytxn_out(xcvr_txn),
-        .gtyrxp_in(xcvr_rxp),
-        .gtyrxn_in(xcvr_rxn),
-
-        // Transmit
-        .gtwiz_userclk_tx_reset_in(1'b0),
-        .gtwiz_userclk_tx_srcclk_out(),
-        .gtwiz_userclk_tx_usrclk_out(),
-        .gtwiz_userclk_tx_usrclk2_out(tx_clk),
-        .gtwiz_userclk_tx_active_out(),
-        .gtwiz_reset_tx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_tx_datapath_in(gt_reset_tx_datapath),
-        .gtwiz_reset_tx_done_out(gt_reset_tx_done),
-        .txpmaresetdone_out(),
-        .txprgdivresetdone_out(),
-
-        .txpolarity_in(GT_TX_POLARITY),
-
-        .gtwiz_userdata_tx_in(gt_txdata),
-        .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
-
-        // Receive
-        .gtwiz_userclk_rx_reset_in(1'b0),
-        .gtwiz_userclk_rx_srcclk_out(),
-        .gtwiz_userclk_rx_usrclk_out(),
-        .gtwiz_userclk_rx_usrclk2_out(rx_clk),
-        .gtwiz_userclk_rx_active_out(),
-        .gtwiz_reset_rx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_rx_datapath_in(gt_reset_rx_datapath),
-        .gtwiz_reset_rx_cdr_stable_out(),
-        .gtwiz_reset_rx_done_out(gt_reset_rx_done),
-        .rxpmaresetdone_out(),
-        .rxprgdivresetdone_out(),
-
-        .rxpolarity_in(GT_RX_POLARITY),
-
-        .rxgearboxslip_in(gt_rxgearboxslip),
-        .gtwiz_userdata_rx_out(gt_rxdata),
-        .rxdatavalid_out(gt_rxdatavalid),
-        .rxheader_out(gt_rxheader),
-        .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
-    );
-
-    assign xcvr_qpll0reset_out = 1'b0;
-
-end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
-    // UltraScale+ GTH (with common)
-
-    taxi_eth_mac_25g_us_gth_full
-    taxi_eth_mac_25g_us_gth_full_inst (
-        // Common
-        .gtwiz_reset_clk_freerun_in(xcvr_ctrl_clk),
-        .gtwiz_reset_all_in(xcvr_ctrl_rst),
-        .gtpowergood_out(xcvr_gtpowergood_out),
-
-        // PLL
-        .gtrefclk00_in(xcvr_gtrefclk00_in),
-        .qpll0lock_out(xcvr_qpll0lock_out),
-        .qpll0outclk_out(xcvr_qpll0clk_out),
-        .qpll0outrefclk_out(xcvr_qpll0refclk_out),
-
-        // Serial data
-        .gthtxp_out(xcvr_txp),
-        .gthtxn_out(xcvr_txn),
-        .gthrxp_in(xcvr_rxp),
-        .gthrxn_in(xcvr_rxn),
-
-        // Transmit
-        .gtwiz_userclk_tx_reset_in(1'b0),
-        .gtwiz_userclk_tx_srcclk_out(),
-        .gtwiz_userclk_tx_usrclk_out(),
-        .gtwiz_userclk_tx_usrclk2_out(tx_clk),
-        .gtwiz_userclk_tx_active_out(),
-        .gtwiz_reset_tx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_tx_datapath_in(gt_reset_tx_datapath),
-        .gtwiz_reset_tx_done_out(gt_reset_tx_done),
-        .txpmaresetdone_out(),
-        .txprgdivresetdone_out(),
-
-        .txpolarity_in(GT_TX_POLARITY),
-
-        .gtwiz_userdata_tx_in(gt_txdata),
-        .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
-
-        // Receive
-        .gtwiz_userclk_rx_reset_in(1'b0),
-        .gtwiz_userclk_rx_srcclk_out(),
-        .gtwiz_userclk_rx_usrclk_out(),
-        .gtwiz_userclk_rx_usrclk2_out(rx_clk),
-        .gtwiz_userclk_rx_active_out(),
-        .gtwiz_reset_rx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_rx_datapath_in(gt_reset_rx_datapath),
-        .gtwiz_reset_rx_cdr_stable_out(),
-        .gtwiz_reset_rx_done_out(gt_reset_rx_done),
-        .rxpmaresetdone_out(),
-        .rxprgdivresetdone_out(),
-
-        .rxpolarity_in(GT_RX_POLARITY),
-
-        .rxgearboxslip_in(gt_rxgearboxslip),
-        .gtwiz_userdata_rx_out(gt_rxdata),
-        .rxdatavalid_out(gt_rxdatavalid),
-        .rxheader_out(gt_rxheader),
-        .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
-    );
-
-    assign xcvr_qpll0reset_out = 1'b0;
-
-end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
-    // UltraScale GTY (with common)
-
-    taxi_eth_mac_25g_us_gty_full
-    taxi_eth_mac_25g_us_gty_full_inst (
-        // Common
-        .gtwiz_reset_clk_freerun_in(xcvr_ctrl_clk),
-        .gtwiz_reset_all_in(xcvr_ctrl_rst),
-        .gtpowergood_out(xcvr_gtpowergood_out),
-
-        // PLL
-        .gtrefclk00_in(xcvr_gtrefclk00_in),
-        .qpll0lock_out(xcvr_qpll0lock_out),
-        .qpll0outclk_out(xcvr_qpll0clk_out),
-        .qpll0outrefclk_out(xcvr_qpll0refclk_out),
-
-        // Serial data
-        .gtytxp_out(xcvr_txp),
-        .gtytxn_out(xcvr_txn),
-        .gtyrxp_in(xcvr_rxp),
-        .gtyrxn_in(xcvr_rxn),
-
-        // Transmit
-        .gtwiz_userclk_tx_reset_in(1'b0),
-        .gtwiz_userclk_tx_srcclk_out(),
-        .gtwiz_userclk_tx_usrclk_out(),
-        .gtwiz_userclk_tx_usrclk2_out(tx_clk),
-        .gtwiz_userclk_tx_active_out(),
-        .gtwiz_reset_tx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_tx_datapath_in(gt_reset_tx_datapath),
-        .gtwiz_reset_tx_done_out(gt_reset_tx_done),
-        .txpmaresetdone_out(),
-        .txprgdivresetdone_out(),
-
-        .txpolarity_in(GT_TX_POLARITY),
-
-        .gtwiz_userdata_tx_in(gt_txdata),
-        .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
-
-        // Receive
-        .gtwiz_userclk_rx_reset_in(1'b0),
-        .gtwiz_userclk_rx_srcclk_out(),
-        .gtwiz_userclk_rx_usrclk_out(),
-        .gtwiz_userclk_rx_usrclk2_out(rx_clk),
-        .gtwiz_userclk_rx_active_out(),
-        .gtwiz_reset_rx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_rx_datapath_in(gt_reset_rx_datapath),
-        .gtwiz_reset_rx_cdr_stable_out(),
-        .gtwiz_reset_rx_done_out(gt_reset_rx_done),
-        .rxpmaresetdone_out(),
-        .rxprgdivresetdone_out(),
-
-        .rxpolarity_in(GT_RX_POLARITY),
-
-        .rxgearboxslip_in(gt_rxgearboxslip),
-        .gtwiz_userdata_rx_out(gt_rxdata),
-        .rxdatavalid_out(gt_rxdatavalid),
-        .rxheader_out(gt_rxheader),
-        .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
-    );
-
-    assign xcvr_qpll0reset_out = 1'b0;
-
-end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
-    // UltraScale GTH (with common)
-
-    taxi_eth_mac_25g_us_gth_full
-    taxi_eth_mac_25g_us_gth_full_inst (
-        // Common
-        .gtwiz_reset_clk_freerun_in(xcvr_ctrl_clk),
-        .gtwiz_reset_all_in(xcvr_ctrl_rst),
-        .gtpowergood_out(xcvr_gtpowergood_out),
-
-        // PLL
-        .gtrefclk00_in(xcvr_gtrefclk00_in),
-        .qpll0lock_out(xcvr_qpll0lock_out),
-        .qpll0outclk_out(xcvr_qpll0clk_out),
-        .qpll0outrefclk_out(xcvr_qpll0refclk_out),
-
-        // Serial data
-        .gthtxp_out(xcvr_txp),
-        .gthtxn_out(xcvr_txn),
-        .gthrxp_in(xcvr_rxp),
-        .gthrxn_in(xcvr_rxn),
-
-        // Transmit
-        .gtwiz_userclk_tx_reset_in(1'b0),
-        .gtwiz_userclk_tx_srcclk_out(),
-        .gtwiz_userclk_tx_usrclk_out(),
-        .gtwiz_userclk_tx_usrclk2_out(tx_clk),
-        .gtwiz_userclk_tx_active_out(),
-        .gtwiz_reset_tx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_tx_datapath_in(gt_reset_tx_datapath),
-        .gtwiz_reset_tx_done_out(gt_reset_tx_done),
-        .txpmaresetdone_out(),
-        .txprgdivresetdone_out(),
-
-        .txpolarity_in(GT_TX_POLARITY),
-
-        .gtwiz_userdata_tx_in(gt_txdata),
-        .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
-
-        // Receive
-        .gtwiz_userclk_rx_reset_in(1'b0),
-        .gtwiz_userclk_rx_srcclk_out(),
-        .gtwiz_userclk_rx_usrclk_out(),
-        .gtwiz_userclk_rx_usrclk2_out(rx_clk),
-        .gtwiz_userclk_rx_active_out(),
-        .gtwiz_reset_rx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_rx_datapath_in(gt_reset_rx_datapath),
-        .gtwiz_reset_rx_cdr_stable_out(),
-        .gtwiz_reset_rx_done_out(gt_reset_rx_done),
-        .rxpmaresetdone_out(),
-        .rxprgdivresetdone_out(),
-
-        .rxpolarity_in(GT_RX_POLARITY),
-
-        .rxgearboxslip_in(gt_rxgearboxslip),
-        .gtwiz_userdata_rx_out(gt_rxdata),
-        .rxdatavalid_out(gt_rxdatavalid),
-        .rxheader_out(gt_rxheader),
-        .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
-    );
-
-    assign xcvr_qpll0reset_out = 1'b0;
-
-end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
-    // UltraScale/UltraScale+ GTY (channel only)
-
-    taxi_eth_mac_25g_us_gty_channel
-    taxi_eth_mac_25g_us_gty_channel_inst (
-        // Common
-        .gtwiz_reset_clk_freerun_in(xcvr_ctrl_clk),
-        .gtwiz_reset_all_in(xcvr_ctrl_rst),
-        .gtpowergood_out(xcvr_gtpowergood_out),
-
-        // PLL
-        .gtwiz_reset_qpll0lock_in(xcvr_qpll0lock_in),
-        .gtwiz_reset_qpll0reset_out(xcvr_qpll0reset_out),
-        .qpll0clk_in(xcvr_qpll0clk_in),
-        .qpll0refclk_in(xcvr_qpll0refclk_in),
-        .qpll1clk_in(1'b0),
-        .qpll1refclk_in(1'b0),
-
-        // Serial data
-        .gtytxp_out(xcvr_txp),
-        .gtytxn_out(xcvr_txn),
-        .gtyrxp_in(xcvr_rxp),
-        .gtyrxn_in(xcvr_rxn),
-
-        // Transmit
-        .gtwiz_userclk_tx_reset_in(1'b0),
-        .gtwiz_userclk_tx_srcclk_out(),
-        .gtwiz_userclk_tx_usrclk_out(),
-        .gtwiz_userclk_tx_usrclk2_out(tx_clk),
-        .gtwiz_userclk_tx_active_out(),
-        .gtwiz_reset_tx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_tx_datapath_in(gt_reset_tx_datapath),
-        .gtwiz_reset_tx_done_out(gt_reset_tx_done),
-        .txpmaresetdone_out(),
-        .txprgdivresetdone_out(),
-
-        .txpolarity_in(GT_TX_POLARITY),
-
-        .gtwiz_userdata_tx_in(gt_txdata),
-        .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
-
-        // Receive
-        .gtwiz_userclk_rx_reset_in(1'b0),
-        .gtwiz_userclk_rx_srcclk_out(),
-        .gtwiz_userclk_rx_usrclk_out(),
-        .gtwiz_userclk_rx_usrclk2_out(rx_clk),
-        .gtwiz_userclk_rx_active_out(),
-        .gtwiz_reset_rx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_rx_datapath_in(gt_reset_rx_datapath),
-        .gtwiz_reset_rx_cdr_stable_out(),
-        .gtwiz_reset_rx_done_out(gt_reset_rx_done),
-        .rxpmaresetdone_out(),
-        .rxprgdivresetdone_out(),
-
-        .rxpolarity_in(GT_RX_POLARITY),
-
-        .rxgearboxslip_in(gt_rxgearboxslip),
-        .gtwiz_userdata_rx_out(gt_rxdata),
-        .rxdatavalid_out(gt_rxdatavalid),
-        .rxheader_out(gt_rxheader),
-        .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
-    );
-
-    assign xcvr_qpll0lock_out = 1'b0;
-    assign xcvr_qpll0clk_out = 1'b0;
-    assign xcvr_qpll0refclk_out = 1'b0;
-
-end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
-    // UltraScale/UltraScale+ GTY (channel only)
-
-    taxi_eth_mac_25g_us_gth_channel
-    taxi_eth_mac_25g_us_gth_channel_inst (
-        // Common
-        .gtwiz_reset_clk_freerun_in(xcvr_ctrl_clk),
-        .gtwiz_reset_all_in(xcvr_ctrl_rst),
-        .gtpowergood_out(xcvr_gtpowergood_out),
-
-        // PLL
-        .gtwiz_reset_qpll0lock_in(xcvr_qpll0lock_in),
-        .gtwiz_reset_qpll0reset_out(xcvr_qpll0reset_out),
-        .qpll0clk_in(xcvr_qpll0clk_in),
-        .qpll0refclk_in(xcvr_qpll0refclk_in),
-        .qpll1clk_in(1'b0),
-        .qpll1refclk_in(1'b0),
-
-        // Serial data
-        .gthtxp_out(xcvr_txp),
-        .gthtxn_out(xcvr_txn),
-        .gthrxp_in(xcvr_rxp),
-        .gthrxn_in(xcvr_rxn),
-
-        // Transmit
-        .gtwiz_userclk_tx_reset_in(1'b0),
-        .gtwiz_userclk_tx_srcclk_out(),
-        .gtwiz_userclk_tx_usrclk_out(),
-        .gtwiz_userclk_tx_usrclk2_out(tx_clk),
-        .gtwiz_userclk_tx_active_out(),
-        .gtwiz_reset_tx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_tx_datapath_in(gt_reset_tx_datapath),
-        .gtwiz_reset_tx_done_out(gt_reset_tx_done),
-        .txpmaresetdone_out(),
-        .txprgdivresetdone_out(),
-
-        .txpolarity_in(GT_TX_POLARITY),
-
-        .gtwiz_userdata_tx_in(gt_txdata),
-        .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
-
-        // Receive
-        .gtwiz_userclk_rx_reset_in(1'b0),
-        .gtwiz_userclk_rx_srcclk_out(),
-        .gtwiz_userclk_rx_usrclk_out(),
-        .gtwiz_userclk_rx_usrclk2_out(rx_clk),
-        .gtwiz_userclk_rx_active_out(),
-        .gtwiz_reset_rx_pll_and_datapath_in(1'b0),
-        .gtwiz_reset_rx_datapath_in(gt_reset_rx_datapath),
-        .gtwiz_reset_rx_cdr_stable_out(),
-        .gtwiz_reset_rx_done_out(gt_reset_rx_done),
-        .rxpmaresetdone_out(),
-        .rxprgdivresetdone_out(),
-
-        .rxpolarity_in(GT_RX_POLARITY),
-
-        .rxgearboxslip_in(gt_rxgearboxslip),
-        .gtwiz_userdata_rx_out(gt_rxdata),
-        .rxdatavalid_out(gt_rxdatavalid),
-        .rxheader_out(gt_rxheader),
-        .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
-    );
-
-    assign xcvr_qpll0lock_out = 1'b0;
-    assign xcvr_qpll0clk_out = 1'b0;
-    assign xcvr_qpll0refclk_out = 1'b0;
-
-end else begin
-
-    $fatal(0, "Error: invalid configuration (%m)");
-
-end
-
-taxi_sync_reset #(
-    .N(4)
+taxi_eth_phy_25g_us_gt #(
+    .SIM(SIM),
+    .VENDOR(VENDOR),
+    .FAMILY(FAMILY),
+    .HAS_COMMON(HAS_COMMON),
+    .GT_TYPE(GT_TYPE),
+    .GT_TX_POLARITY(GT_TX_POLARITY),
+    .GT_RX_POLARITY(GT_RX_POLARITY)
 )
-tx_reset_sync_inst (
-    .clk(tx_clk),
-    .rst(!gt_reset_tx_done || tx_rst_in),
-    .out(tx_rst_out)
-);
+gt_inst (
+    .xcvr_ctrl_clk(xcvr_ctrl_clk),
+    .xcvr_ctrl_rst(xcvr_ctrl_rst),
 
-taxi_sync_reset #(
-    .N(4)
-)
-rx_reset_sync_inst (
-    .clk(rx_clk),
-    .rst(!gt_reset_rx_done || rx_rst_in),
-    .out(rx_rst_out)
+    /*
+     * Common
+     */
+    .xcvr_gtpowergood_out(xcvr_gtpowergood_out),
+
+    /*
+     * PLL out
+     */
+    .xcvr_gtrefclk00_in(xcvr_gtrefclk00_in),
+    .xcvr_qpll0lock_out(xcvr_qpll0lock_out),
+    .xcvr_qpll0clk_out(xcvr_qpll0clk_out),
+    .xcvr_qpll0refclk_out(xcvr_qpll0refclk_out),
+
+    /*
+     * PLL in
+     */
+    .xcvr_qpll0lock_in(xcvr_qpll0lock_in),
+    .xcvr_qpll0reset_out(xcvr_qpll0reset_out),
+    .xcvr_qpll0clk_in(xcvr_qpll0clk_in),
+    .xcvr_qpll0refclk_in(xcvr_qpll0refclk_in),
+
+    /*
+     * Serial data
+     */
+    .xcvr_txp(xcvr_txp),
+    .xcvr_txn(xcvr_txn),
+    .xcvr_rxp(xcvr_rxp),
+    .xcvr_rxn(xcvr_rxn),
+
+    /*
+     * GT user clocks
+     */
+    .rx_clk(rx_clk),
+    .rx_rst_in(rx_rst_in || rx_reset_req),
+    .rx_rst_out(rx_rst_out),
+    .tx_clk(tx_clk),
+    .tx_rst_in(tx_rst_in),
+    .tx_rst_out(tx_rst_out),
+
+    /*
+     * Serdes interface
+     */
+    .gt_txheader(gt_txheader),
+    .gt_txdata(gt_txdata),
+    .gt_rxgearboxslip(gt_rxgearboxslip),
+    .gt_rxheader(gt_rxheader),
+    .gt_rxheadervalid(gt_rxheadervalid),
+    .gt_rxdata(gt_rxdata),
+    .gt_rxdatavalid(gt_rxdatavalid)
 );
 
 wire [DATA_W-1:0] serdes_tx_data;
