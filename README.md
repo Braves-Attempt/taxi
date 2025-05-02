@@ -118,6 +118,8 @@ To facilitate the dual-license model, contributions to the project can only be a
 Example designs are provided for several different FPGA boards, showcasing many of the capabilities of this library.  Building the example designs will require the appropriate vendor toolchain and may also require tool and IP licenses.
 
 *  Alpha Data ADM-PCIE-9V3 (Xilinx Virtex UltraScale+ XCVU3P)
+*  BittWare XUSP3S (Xilinx Virtex UltraScale XCVU095)
+*  BittWare XUP-P3R (Xilinx Virtex UltraScale+ XCVU9P)
 *  Cisco Nexus K35-S/ExaNIC X10 (Xilinx Kintex UltraScale XCKU035)
 *  Cisco Nexus K3P-S/ExaNIC X25 (Xilinx Kintex UltraScale+ XCKU3P)
 *  Cisco Nexus K3P-Q/ExaNIC X100 (Xilinx Kintex UltraScale+ XCKU3P)
