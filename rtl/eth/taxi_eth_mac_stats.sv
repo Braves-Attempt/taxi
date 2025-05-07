@@ -296,12 +296,12 @@ assign rx_str[3]  = "RX_FDRP";
 assign rx_inc[3]  = INC_W'(stat_rx_fifo_drop);
 assign rx_str[4]  = "RX_OVRSZ";
 assign rx_inc[4]  = INC_W'(stat_rx_err_oversize);
-assign rx_str[5]  = "RX_ERBLK";
-assign rx_inc[5]  = INC_W'(stat_rx_err_bad_block);
-assign rx_str[6]  = "RX_ERFRM";
-assign rx_inc[6]  = INC_W'(stat_rx_err_framing);
-assign rx_str[7]  = "";
-assign rx_inc[7]  = INC_W'(0);
+assign rx_str[5]  = "RX_CTRL";
+assign rx_inc[5]  = INC_W'(stat_rx_mcf);
+assign rx_str[6]  = "RX_ERBLK";
+assign rx_inc[6]  = INC_W'(stat_rx_err_bad_block);
+assign rx_str[7]  = "RX_ERFRM";
+assign rx_inc[7]  = INC_W'(stat_rx_err_framing);
 
 if (STAT_RX_LEVEL > 0) begin
     assign rx_str[8]  = "RX_PSM";
