@@ -86,8 +86,8 @@ xfcp_if_uart_inst (
     /*
      * UART interface
      */
-    .uart_rxd(uart_rxd),
-    .uart_txd(uart_txd),
+    .uart_rxd(uart_rxd[0]),
+    .uart_txd(uart_txd[0]),
 
     /*
      * XFCP downstream interface
