@@ -388,9 +388,19 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
          */
         .xcvr_gtpowergood_out(eth_gty_gtpowergood[n]),
         .xcvr_gtrefclk00_in(eth_gty_mgt_refclk[n]),
+        .xcvr_qpll0pd_in(1'b0),
+        .xcvr_qpll0reset_in(1'b0),
+        .xcvr_qpll0pcierate_in(3'd0),
         .xcvr_qpll0lock_out(),
         .xcvr_qpll0clk_out(),
         .xcvr_qpll0refclk_out(),
+        .xcvr_gtrefclk01_in(eth_gty_mgt_refclk[n]),
+        .xcvr_qpll1pd_in(1'b0),
+        .xcvr_qpll1reset_in(1'b0),
+        .xcvr_qpll1pcierate_in(3'd0),
+        .xcvr_qpll1lock_out(),
+        .xcvr_qpll1clk_out(),
+        .xcvr_qpll1refclk_out(),
 
         /*
          * Serial data

@@ -21,9 +21,34 @@ set user_data_width {64}
 set int_data_width $user_data_width
 set rx_eq_mode {DFE}
 set extra_ports [list]
-set extra_pll_ports [list {qpll0lock_out}]
+set extra_pll_ports [list]
+# PLL reset and power down
+lappend extra_pll_ports qpll0reset_in qpll1reset_in
+lappend extra_pll_ports qpll0pd_in qpll1pd_in
+# PLL clocking
+lappend extra_pll_ports gtrefclk00_in qpll0lock_out qpll0outclk_out qpll0outrefclk_out
+lappend extra_pll_ports gtrefclk01_in qpll1lock_out qpll1outclk_out qpll1outrefclk_out
+# PCIe
+if {[string first uplus [get_property FAMILY [get_property PART [current_project]]]] != -1} {
+    lappend extra_pll_ports pcierateqpll0_in pcierateqpll1_in
+} else {
+    lappend extra_pll_ports qpllrsvd2_in qpllrsvd3_in
+}
+# channel reset
+lappend extra_ports gttxreset_in txuserrdy_in txpmareset_in txpcsreset_in txresetdone_out txpmaresetdone_out
+lappend extra_ports gtrxreset_in rxuserrdy_in rxpmareset_in rxdfelpmreset_in eyescanreset_in rxpcsreset_in rxresetdone_out rxpmaresetdone_out
+# channel power down
+lappend extra_ports txpd_in txpdelecidlemode_in rxpd_in
+# channel clock selection
+lappend extra_ports txsysclksel_in txpllclksel_in rxsysclksel_in rxpllclksel_in
 # channel polarity
 lappend extra_ports txpolarity_in rxpolarity_in
+# channel TX driver
+lappend extra_ports txelecidle_in txinhibit_in txdiffctrl_in txmaincursor_in txprecursor_in txpostcursor_in
+# channel CDR
+lappend extra_ports rxcdrlock_out rxcdrhold_in rxcdrovrden_in
+# channel EQ
+lappend extra_ports rxlpmen_in
 
 set config [dict create]
 
@@ -48,7 +73,7 @@ if {$sec_line_rate != 0} {
 }
 dict set config ENABLE_OPTIONAL_PORTS $extra_ports
 dict set config LOCATE_COMMON {CORE}
-dict set config LOCATE_RESET_CONTROLLER {CORE}
+dict set config LOCATE_RESET_CONTROLLER {EXAMPLE_DESIGN}
 dict set config LOCATE_TX_USER_CLOCKING {CORE}
 dict set config LOCATE_RX_USER_CLOCKING {CORE}
 dict set config LOCATE_USER_DATA_WIDTH_SIZING {CORE}

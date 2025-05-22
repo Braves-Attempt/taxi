@@ -141,6 +141,10 @@ async def mac_test(tb, source, sink):
 async def mac_test_25g(tb, source, sink):
     tb.log.info("Test MAC")
 
+    tb.log.info("Wait for block lock")
+    for k in range(1200):
+        await RisingEdge(tb.dut.clk_125mhz)
+
     tb.log.info("Multiple small packets")
 
     count = 64

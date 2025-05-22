@@ -26,8 +26,25 @@ module taxi_eth_mac_25g_us #
     // GT type
     parameter string GT_TYPE = "GTY",
 
+    // PLL parameters
+    parameter logic QPLL0_PD = 1'b0,
+    parameter logic QPLL1_PD = 1'b1,
+    parameter logic QPLL0_EXT_CTRL = 1'b0,
+    parameter logic QPLL1_EXT_CTRL = 1'b0,
+
     // GT parameters
+    parameter logic [CNT-1:0] GT_TX_PD = '0,
+    parameter logic [CNT-1:0] GT_TX_QPLL_SEL = '0,
     parameter logic [CNT-1:0] GT_TX_POLARITY = '0,
+    parameter logic [CNT-1:0] GT_TX_ELECIDLE = '0,
+    parameter logic [CNT-1:0] GT_TX_INHIBIT = '0,
+    parameter logic [CNT-1:0][4:0] GT_TX_DIFFCTRL = '{CNT{5'd16}},
+    parameter logic [CNT-1:0][6:0] GT_TX_MAINCURSOR = '{CNT{7'd64}},
+    parameter logic [CNT-1:0][4:0] GT_TX_POSTCURSOR = '{CNT{5'd0}},
+    parameter logic [CNT-1:0][4:0] GT_TX_PRECURSOR = '{CNT{5'd0}},
+    parameter logic [CNT-1:0] GT_RX_PD = '0,
+    parameter logic [CNT-1:0] GT_RX_QPLL_SEL = '0,
+    parameter logic [CNT-1:0] GT_RX_LPM_EN = '0,
     parameter logic [CNT-1:0] GT_RX_POLARITY = '0,
 
     // MAC/PHY parameters
@@ -59,10 +76,20 @@ module taxi_eth_mac_25g_us #
      * Common
      */
     output wire logic                 xcvr_gtpowergood_out,
-    input  wire logic                 xcvr_gtrefclk00_in,
+    input  wire logic                 xcvr_gtrefclk00_in = 1'b0,
+    input  wire logic                 xcvr_qpll0pd_in = 1'b0,
+    input  wire logic                 xcvr_qpll0reset_in = 1'b0,
+    input  wire logic [2:0]           xcvr_qpll0pcierate_in = 3'd0,
     output wire logic                 xcvr_qpll0lock_out,
     output wire logic                 xcvr_qpll0clk_out,
     output wire logic                 xcvr_qpll0refclk_out,
+    input  wire logic                 xcvr_gtrefclk01_in = 1'b0,
+    input  wire logic                 xcvr_qpll1pd_in = 1'b0,
+    input  wire logic                 xcvr_qpll1reset_in = 1'b0,
+    input  wire logic [2:0]           xcvr_qpll1pcierate_in = 3'd0,
+    output wire logic                 xcvr_qpll1lock_out,
+    output wire logic                 xcvr_qpll1clk_out,
+    output wire logic                 xcvr_qpll1refclk_out,
 
     /*
      * Serial data
@@ -76,12 +103,12 @@ module taxi_eth_mac_25g_us #
      * MAC clocks
      */
     output wire logic [CNT-1:0]       rx_clk,
-    input  wire logic [CNT-1:0]       rx_rst_in,
+    input  wire logic [CNT-1:0]       rx_rst_in = '0,
     output wire logic [CNT-1:0]       rx_rst_out,
     output wire logic [CNT-1:0]       tx_clk,
-    input  wire logic [CNT-1:0]       tx_rst_in,
+    input  wire logic [CNT-1:0]       tx_rst_in = '0,
     output wire logic [CNT-1:0]       tx_rst_out,
-    input  wire logic [CNT-1:0]       ptp_sample_clk,
+    input  wire logic [CNT-1:0]       ptp_sample_clk = '0,
 
     /*
      * Transmit interface (AXI stream)
@@ -283,6 +310,9 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
     wire ch_qpll0lock_out;
     wire ch_qpll0clk_out;
     wire ch_qpll0refclk_out;
+    wire ch_qpll1lock_out;
+    wire ch_qpll1clk_out;
+    wire ch_qpll1refclk_out;
 
     if (HAS_COMMON) begin
         // drive outputs from common
@@ -291,6 +321,9 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         assign xcvr_qpll0lock_out = ch_qpll0lock_out;
         assign xcvr_qpll0clk_out = ch_qpll0clk_out;
         assign xcvr_qpll0refclk_out = ch_qpll0refclk_out;
+        assign xcvr_qpll1lock_out = ch_qpll1lock_out;
+        assign xcvr_qpll1clk_out = ch_qpll1clk_out;
+        assign xcvr_qpll1refclk_out = ch_qpll1refclk_out;
     end
 
     taxi_eth_mac_25g_us_ch #(
@@ -303,8 +336,25 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         // GT type
         .GT_TYPE(GT_TYPE),
 
+        // PLL parameters
+        .QPLL0_PD(QPLL0_PD),
+        .QPLL1_PD(QPLL1_PD),
+        .QPLL0_EXT_CTRL(QPLL0_EXT_CTRL),
+        .QPLL1_EXT_CTRL(QPLL1_EXT_CTRL),
+
         // GT parameters
+        .GT_TX_PD(GT_TX_PD[n]),
+        .GT_TX_QPLL_SEL(GT_TX_QPLL_SEL[n]),
         .GT_TX_POLARITY(GT_TX_POLARITY[n]),
+        .GT_TX_ELECIDLE(GT_TX_ELECIDLE[n]),
+        .GT_TX_INHIBIT(GT_TX_INHIBIT[n]),
+        .GT_TX_DIFFCTRL(GT_TX_DIFFCTRL[n]),
+        .GT_TX_MAINCURSOR(GT_TX_MAINCURSOR[n]),
+        .GT_TX_POSTCURSOR(GT_TX_POSTCURSOR[n]),
+        .GT_TX_PRECURSOR(GT_TX_PRECURSOR[n]),
+        .GT_RX_PD(GT_RX_PD[n]),
+        .GT_RX_QPLL_SEL(GT_RX_QPLL_SEL[n]),
+        .GT_RX_LPM_EN(GT_RX_LPM_EN[n]),
         .GT_RX_POLARITY(GT_RX_POLARITY[n]),
 
         // MAC/PHY parameters
@@ -341,17 +391,29 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
          * PLL out
          */
         .xcvr_gtrefclk00_in(xcvr_gtrefclk00_in),
+        .xcvr_qpll0pd_in(xcvr_qpll0pd_in),
+        .xcvr_qpll0reset_in(xcvr_qpll0reset_in),
+        .xcvr_qpll0pcierate_in(xcvr_qpll0pcierate_in),
         .xcvr_qpll0lock_out(ch_qpll0lock_out),
         .xcvr_qpll0clk_out(ch_qpll0clk_out),
         .xcvr_qpll0refclk_out(ch_qpll0refclk_out),
+        .xcvr_gtrefclk01_in(xcvr_gtrefclk01_in),
+        .xcvr_qpll1pd_in(xcvr_qpll1pd_in),
+        .xcvr_qpll1reset_in(xcvr_qpll1reset_in),
+        .xcvr_qpll1pcierate_in(xcvr_qpll1pcierate_in),
+        .xcvr_qpll1lock_out(ch_qpll1lock_out),
+        .xcvr_qpll1clk_out(ch_qpll1clk_out),
+        .xcvr_qpll1refclk_out(ch_qpll1refclk_out),
 
         /*
          * PLL in
          */
         .xcvr_qpll0lock_in(xcvr_qpll0lock_out),
-        .xcvr_qpll0reset_out(),
         .xcvr_qpll0clk_in(xcvr_qpll0clk_out),
         .xcvr_qpll0refclk_in(xcvr_qpll0refclk_out),
+        .xcvr_qpll1lock_in(xcvr_qpll1lock_out),
+        .xcvr_qpll1clk_in(xcvr_qpll1clk_out),
+        .xcvr_qpll1refclk_in(xcvr_qpll1refclk_out),
 
         /*
          * Serial data

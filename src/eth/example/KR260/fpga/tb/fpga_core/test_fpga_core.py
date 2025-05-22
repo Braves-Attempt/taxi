@@ -143,8 +143,12 @@ async def mac_test(tb, source, sink):
     tb.log.info("MAC test done")
 
 
-async def mac_test_25g(tb, source, sink):
+async def mac_test_10g(tb, source, sink):
     tb.log.info("Test MAC")
+
+    tb.log.info("Wait for block lock")
+    for k in range(1200):
+        await RisingEdge(tb.dut.clk)
 
     tb.log.info("Multiple small packets")
 
@@ -205,7 +209,7 @@ async def run_test(dut):
         tests.append(cocotb.start_soon(mac_test(tb, tb.sfp_source, tb.sfp_sink)))
     else:
         tb.log.info("Start 10G SFP MAC loopback test")
-        tests.append(cocotb.start_soon(mac_test_25g(tb, tb.sfp_source, tb.sfp_sink)))
+        tests.append(cocotb.start_soon(mac_test_10g(tb, tb.sfp_source, tb.sfp_sink)))
 
     await Combine(*tests)
 
