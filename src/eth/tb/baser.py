@@ -24,10 +24,10 @@ from cocotbext.eth import XgmiiFrame
 
 class BaseRSerdesSource():
 
-    def __init__(self, data, header, clock, enable=None, slip=None, scramble=True, reverse=False, *args, **kwargs):
+    def __init__(self, data, hdr, clock, enable=None, slip=None, scramble=True, reverse=False, *args, **kwargs):
         self.log = logging.getLogger(f"cocotb.{data._path}")
         self.data = data
-        self.header = header
+        self.hdr = hdr
         self.clock = clock
         self.enable = enable
         self.slip = slip
@@ -72,7 +72,7 @@ class BaseRSerdesSource():
         self.log.info("  Bit reverse: %s", self.reverse)
 
         self.data.setimmediatevalue(0)
-        self.header.setimmediatevalue(0)
+        self.hdr.setimmediatevalue(0)
 
         self._run_cr = cocotb.start_soon(self._run())
 
@@ -218,11 +218,11 @@ class BaseRSerdesSource():
 
                     if not any(cl):
                         # data
-                        header = BaseRSync.DATA
+                        hdr = BaseRSync.DATA
                         data = int.from_bytes(dl, 'little')
                     else:
                         # control
-                        header = BaseRSync.CTRL
+                        hdr = BaseRSync.CTRL
                         if cl[0] and dl[0] == XgmiiCtrl.START and not any(cl[1:]):
                             # start in lane 0
                             data = BaseRBlockType.START_0
@@ -310,7 +310,7 @@ class BaseRSerdesSource():
                             data = BaseRBlockType.CTRL | ctrl << 8
                 else:
                     data = BaseRBlockType.CTRL
-                    header = BaseRSync.CTRL
+                    hdr = BaseRSync.CTRL
                     self.active = False
                     self.idle_event.set()
 
@@ -331,30 +331,30 @@ class BaseRSerdesSource():
                 self.bit_offset = max(0, self.bit_offset) % 66
 
                 if self.bit_offset != 0:
-                    d = data << 2 | header
+                    d = data << 2 | hdr
 
                     out_d = ((last_d | d << 66) >> 66-self.bit_offset) & 0x3ffffffffffffffff
 
                     last_d = d
 
                     data = out_d >> 2
-                    header = out_d & 3
+                    hdr = out_d & 3
 
                 if self.reverse:
                     # bit reverse
                     data = sum(1 << (63-i) for i in range(64) if (data >> i) & 1)
-                    header = sum(1 << (1-i) for i in range(2) if (header >> i) & 1)
+                    hdr = sum(1 << (1-i) for i in range(2) if (hdr >> i) & 1)
 
                 self.data.value = data
-                self.header.value = header
+                self.hdr.value = hdr
 
 
 class BaseRSerdesSink:
 
-    def __init__(self, data, header, clock, enable=None, scramble=True, reverse=False, *args, **kwargs):
+    def __init__(self, data, hdr, clock, enable=None, scramble=True, reverse=False, *args, **kwargs):
         self.log = logging.getLogger(f"cocotb.{data._path}")
         self.data = data
-        self.header = header
+        self.hdr = hdr
         self.clock = clock
         self.enable = enable
         self.scramble = scramble
@@ -438,12 +438,12 @@ class BaseRSerdesSink:
 
             if self.enable is None or self.enable.value:
                 data = self.data.value.integer
-                header = self.header.value.integer
+                hdr = self.hdr.value.integer
 
                 if self.reverse:
                     # bit reverse
                     data = sum(1 << (63-i) for i in range(64) if (data >> i) & 1)
-                    header = sum(1 << (1-i) for i in range(2) if (header >> i) & 1)
+                    hdr = sum(1 << (1-i) for i in range(2) if (hdr >> i) & 1)
 
                 if self.scramble:
                     # 64b/66b descrambler
@@ -463,11 +463,11 @@ class BaseRSerdesSink:
 
                 dl = bytearray()
                 cl = []
-                if header == BaseRSync.DATA:
+                if hdr == BaseRSync.DATA:
                     # data
                     dl = data
                     cl = [0]*8
-                elif header == BaseRSync.CTRL:
+                elif hdr == BaseRSync.CTRL:
                     if data[0] == BaseRBlockType.CTRL:
                         # C7 C6 C5 C4 C3 C2 C1 C0 BT
                         dl = ctrl
