@@ -18,6 +18,7 @@ Authors:
 module taxi_eth_phy_10g_rx_ber_mon #
 (
     parameter HDR_W = 2,
+    parameter logic GBX_IF_EN = 1'b0,
     parameter COUNT_125US = 125000/6.4
 )
 (
@@ -28,6 +29,7 @@ module taxi_eth_phy_10g_rx_ber_mon #
      * SERDES interface
      */
     input  wire logic [HDR_W-1:0]  serdes_rx_hdr,
+    input  wire logic              serdes_rx_hdr_valid,
 
     /*
      * Status
@@ -63,7 +65,9 @@ always_comb begin
 
     rx_high_ber_next = rx_high_ber_reg;
 
-    if (serdes_rx_hdr == SYNC_CTRL || serdes_rx_hdr == SYNC_DATA) begin
+    if (GBX_IF_EN && !serdes_rx_hdr_valid) begin
+        // wait for header
+    end else if (serdes_rx_hdr == SYNC_CTRL || serdes_rx_hdr == SYNC_DATA) begin
         // valid header
         if (ber_count_reg != 4'd15) begin
             if (time_count_reg == 0) begin

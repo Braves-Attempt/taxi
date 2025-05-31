@@ -35,7 +35,7 @@ except ImportError:
 
 
 class TB:
-    def __init__(self, dut):
+    def __init__(self, dut, gbx_cfg=None):
         self.dut = dut
 
         self.log = logging.getLogger("cocotb.tb")
@@ -47,8 +47,26 @@ class TB:
         self.xgmii_source = XgmiiSource(dut.xgmii_txd, dut.xgmii_txc, dut.tx_clk, dut.tx_rst)
         self.xgmii_sink = XgmiiSink(dut.xgmii_rxd, dut.xgmii_rxc, dut.rx_clk, dut.rx_rst)
 
-        self.serdes_source = BaseRSerdesSource(dut.serdes_rx_data, dut.serdes_rx_hdr, dut.rx_clk, slip=dut.serdes_rx_bitslip)
-        self.serdes_sink = BaseRSerdesSink(dut.serdes_tx_data, dut.serdes_tx_hdr, dut.tx_clk)
+        self.serdes_source = BaseRSerdesSource(
+            data=dut.serdes_rx_data,
+            data_valid=dut.serdes_rx_data_valid,
+            hdr=dut.serdes_rx_hdr,
+            hdr_valid=dut.serdes_rx_hdr_valid,
+            clock=dut.rx_clk,
+            slip=dut.serdes_rx_bitslip,
+            gbx_cfg=gbx_cfg
+        )
+        self.serdes_sink = BaseRSerdesSink(
+            data=dut.serdes_tx_data,
+            data_valid=dut.serdes_tx_data_valid,
+            hdr=dut.serdes_tx_hdr,
+            hdr_valid=dut.serdes_tx_hdr_valid,
+            gbx_req_start=dut.serdes_tx_gbx_req_start,
+            gbx_req_stall=dut.serdes_tx_gbx_req_stall,
+            gbx_start=dut.serdes_tx_gbx_start,
+            clock=dut.tx_clk,
+            gbx_cfg=gbx_cfg
+        )
 
         dut.cfg_tx_prbs31_enable.setimmediatevalue(0)
         dut.cfg_rx_prbs31_enable.setimmediatevalue(0)
@@ -231,6 +249,8 @@ def test_taxi_eth_phy_10g(request):
     parameters['DATA_W'] = 64
     parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['HDR_W'] = 2
+    parameters['TX_GBX_IF_EN'] = 0
+    parameters['RX_GBX_IF_EN'] = parameters['TX_GBX_IF_EN']
     parameters['BIT_REVERSE'] = "1'b0"
     parameters['SCRAMBLER_DISABLE'] = "1'b0"
     parameters['PRBS31_EN'] = "1'b1"

@@ -20,6 +20,7 @@ module test_taxi_axis_baser_rx_64 #
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 64,
     parameter HDR_W = 2,
+    parameter logic GBX_IF_EN = 1'b0,
     parameter logic PTP_TS_EN = 1'b0,
     parameter logic PTP_TS_FMT_TOD = 1'b1,
     parameter PTP_TS_W = PTP_TS_FMT_TOD ? 96 : 64
@@ -33,7 +34,9 @@ logic clk;
 logic rst;
 
 logic [DATA_W-1:0] encoded_rx_data;
+logic encoded_rx_data_valid;
 logic [HDR_W-1:0] encoded_rx_hdr;
+logic encoded_rx_hdr_valid;
 
 taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(USER_W)) m_axis_rx();
 
@@ -62,6 +65,7 @@ logic stat_rx_err_preamble;
 taxi_axis_baser_rx_64 #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .PTP_TS_EN(PTP_TS_EN),
     .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
     .PTP_TS_W(PTP_TS_W)
@@ -74,7 +78,9 @@ uut (
      * 10GBASE-R encoded input
      */
     .encoded_rx_data(encoded_rx_data),
+    .encoded_rx_data_valid(encoded_rx_data_valid),
     .encoded_rx_hdr(encoded_rx_hdr),
+    .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
 
     /*
      * AXI4-Stream output (source)

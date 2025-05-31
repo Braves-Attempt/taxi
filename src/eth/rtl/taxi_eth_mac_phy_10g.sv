@@ -19,6 +19,8 @@ module taxi_eth_mac_phy_10g #
 (
     parameter DATA_W = 64,
     parameter HDR_W = (DATA_W/32),
+    parameter logic TX_GBX_IF_EN = 1'b0,
+    parameter logic RX_GBX_IF_EN = TX_GBX_IF_EN,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -64,9 +66,16 @@ module taxi_eth_mac_phy_10g #
      * SERDES interface
      */
     output wire logic [DATA_W-1:0]    serdes_tx_data,
+    output wire logic                 serdes_tx_data_valid,
     output wire logic [HDR_W-1:0]     serdes_tx_hdr,
+    output wire logic                 serdes_tx_hdr_valid,
+    input  wire logic                 serdes_tx_gbx_req_start = 1'b0,
+    input  wire logic                 serdes_tx_gbx_req_stall = 1'b0,
+    output wire logic                 serdes_tx_gbx_start,
     input  wire logic [DATA_W-1:0]    serdes_rx_data,
+    input  wire logic                 serdes_rx_data_valid = 1'b1,
     input  wire logic [HDR_W-1:0]     serdes_rx_hdr,
+    input  wire logic                 serdes_rx_hdr_valid = 1'b1,
     output wire logic                 serdes_rx_bitslip,
     output wire logic                 serdes_rx_reset_req,
 
@@ -220,6 +229,7 @@ taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(RX_USER_W)) axis_rx_int();
 taxi_eth_mac_phy_10g_rx #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .GBX_IF_EN(RX_GBX_IF_EN),
     .PTP_TS_EN(PTP_TS_EN),
     .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
     .PTP_TS_W(PTP_TS_W),
@@ -244,7 +254,9 @@ eth_mac_phy_10g_rx_inst (
      * SERDES interface
      */
     .serdes_rx_data(serdes_rx_data),
+    .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
     .serdes_rx_bitslip(serdes_rx_bitslip),
     .serdes_rx_reset_req(serdes_rx_reset_req),
 
@@ -288,6 +300,7 @@ eth_mac_phy_10g_rx_inst (
 taxi_eth_mac_phy_10g_tx #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .GBX_IF_EN(TX_GBX_IF_EN),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -314,7 +327,12 @@ eth_mac_phy_10g_tx_inst (
      * SERDES interface
      */
     .serdes_tx_data(serdes_tx_data),
+    .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
+    .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+    .serdes_tx_gbx_start(serdes_tx_gbx_start),
 
     /*
      * PTP
@@ -635,7 +653,7 @@ if (MAC_CTRL_EN) begin : mac_ctrl
         .cfg_tx_pfc_quanta(cfg_tx_pfc_quanta),
         .cfg_tx_pfc_refresh(cfg_tx_pfc_refresh),
         .cfg_quanta_step(10'((DATA_W*256)/512)),
-        .cfg_quanta_clk_en(1'b1),
+        .cfg_quanta_clk_en(!RX_GBX_IF_EN || serdes_tx_data_valid),
 
         /*
          * Status
@@ -690,7 +708,7 @@ if (MAC_CTRL_EN) begin : mac_ctrl
         .cfg_rx_pfc_opcode(cfg_rx_pfc_opcode),
         .cfg_rx_pfc_en(cfg_rx_pfc_en),
         .cfg_quanta_step(10'((DATA_W*256)/512)),
-        .cfg_quanta_clk_en(1'b1),
+        .cfg_quanta_clk_en(!RX_GBX_IF_EN || serdes_rx_data_valid),
 
         /*
          * Status

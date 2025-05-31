@@ -38,16 +38,32 @@ except ImportError:
 
 
 class TB:
-    def __init__(self, dut):
+    def __init__(self, dut, gbx_cfg=None):
         self.dut = dut
 
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.start_soon(Clock(dut.clk, 6.4, units="ns").start())
+        if gbx_cfg:
+            self.clk_period = 6.206
+        else:
+            self.clk_period = 6.4
+
+        cocotb.start_soon(Clock(dut.clk, self.clk_period, units="ns").start())
 
         self.source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.clk, dut.rst)
-        self.sink = BaseRSerdesSink(dut.encoded_tx_data, dut.encoded_tx_hdr, dut.clk, scramble=False)
+        self.sink = BaseRSerdesSink(
+            data=dut.encoded_tx_data,
+            data_valid=dut.encoded_tx_data_valid,
+            hdr=dut.encoded_tx_hdr,
+            hdr_valid=dut.encoded_tx_hdr_valid,
+            gbx_req_start=dut.tx_gbx_req_start,
+            gbx_req_stall=dut.tx_gbx_req_stall,
+            gbx_start=dut.tx_gbx_start,
+            clock=dut.clk,
+            scramble=False,
+            gbx_cfg=gbx_cfg
+        )
 
         self.ptp_clock = PtpClockSimTime(ts_tod=dut.ptp_ts, clock=dut.clk)
         self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.clk, dut.rst)
@@ -95,15 +111,19 @@ class TB:
                 self.stats[stat] += int(getattr(self.dut, stat).value)
 
 
-async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
+async def run_test(dut, gbx_cfg=None, payload_lengths=None, payload_data=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.dut.cfg_tx_max_pkt_len.value = 9218
     tb.dut.cfg_tx_ifg.value = ifg
-    tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
+
+    for k in range(100):
+        await RisingEdge(dut.clk)
+
+    tb.dut.cfg_tx_enable.value = 1
 
     test_frames = [payload_data(x) for x in payload_lengths()]
 
@@ -134,7 +154,8 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
         assert rx_frame.get_payload() == test_data
         assert rx_frame.check_fcs()
         assert rx_frame.ctrl is None
-        assert abs(rx_frame_sfd_ns - ptp_ts_ns - 12.8) < 0.01
+        if gbx_cfg is None:
+            assert abs(rx_frame_sfd_ns - ptp_ts_ns - 12.8) < 0.01
 
     assert tb.sink.empty()
 
@@ -153,23 +174,27 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
     assert tb.stats["stat_tx_err_user"] == 0
     assert tb.stats["stat_tx_err_underflow"] == 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
-async def run_test_alignment(dut, payload_data=None, ifg=12):
+async def run_test_alignment(dut, gbx_cfg=None, payload_data=None, ifg=12):
 
     enable_dic = int(dut.DIC_EN.value)
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     byte_width = tb.source.width // 8
 
     tb.dut.cfg_tx_max_pkt_len.value = 9218
     tb.dut.cfg_tx_ifg.value = ifg
-    tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
+
+    for k in range(100):
+        await RisingEdge(dut.clk)
+
+    tb.dut.cfg_tx_enable.value = 1
 
     total_bytes = 0
     total_pkts = 0
@@ -206,7 +231,8 @@ async def run_test_alignment(dut, payload_data=None, ifg=12):
             assert rx_frame.get_payload() == test_data
             assert rx_frame.check_fcs()
             assert rx_frame.ctrl is None
-            assert abs(rx_frame_sfd_ns - ptp_ts_ns - 12.8) < 0.01
+            if gbx_cfg is None:
+                assert abs(rx_frame_sfd_ns - ptp_ts_ns - 12.8) < 0.01
 
             start_lane.append(rx_frame.start_lane)
 
@@ -261,19 +287,23 @@ async def run_test_alignment(dut, payload_data=None, ifg=12):
     assert tb.stats["stat_tx_err_user"] == 0
     assert tb.stats["stat_tx_err_underflow"] == 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
-async def run_test_underrun(dut, ifg=12):
+async def run_test_underrun(dut, gbx_cfg=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.dut.cfg_tx_max_pkt_len.value = 9218
     tb.dut.cfg_tx_ifg.value = ifg
-    tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
+
+    for k in range(100):
+        await RisingEdge(dut.clk)
+
+    tb.dut.cfg_tx_enable.value = 1
 
     test_data = bytes(x for x in range(60))
 
@@ -319,19 +349,23 @@ async def run_test_underrun(dut, ifg=12):
     assert tb.stats["stat_tx_err_user"] == 0
     assert tb.stats["stat_tx_err_underflow"] == 1
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
-async def run_test_error(dut, ifg=12):
+async def run_test_error(dut, gbx_cfg=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.dut.cfg_tx_max_pkt_len.value = 9218
     tb.dut.cfg_tx_ifg.value = ifg
-    tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
+
+    for k in range(100):
+        await RisingEdge(dut.clk)
+
+    tb.dut.cfg_tx_enable.value = 1
 
     test_data = bytes(x for x in range(60))
 
@@ -369,19 +403,23 @@ async def run_test_error(dut, ifg=12):
     assert tb.stats["stat_tx_err_user"] == 1
     assert tb.stats["stat_tx_err_underflow"] == 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
-async def run_test_oversize(dut, ifg=12):
+async def run_test_oversize(dut, gbx_cfg=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.dut.cfg_tx_max_pkt_len.value = 1518
     tb.dut.cfg_tx_ifg.value = ifg
-    tb.dut.cfg_tx_enable.value = 1
 
     await tb.reset()
+
+    for k in range(100):
+        await RisingEdge(dut.clk)
+
+    tb.dut.cfg_tx_enable.value = 1
 
     for max_len in range(128-4-8, 128-4+9):
 
@@ -454,8 +492,8 @@ async def run_test_oversize(dut, ifg=12):
         assert tb.stats["stat_tx_err_user"] == 0
         assert tb.stats["stat_tx_err_underflow"] == 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
 def size_list():
@@ -472,15 +510,23 @@ def cycle_en():
 
 if cocotb.SIM_NAME:
 
+    gbx_cfgs = [None]
+
+    if cocotb.top.GBX_IF_EN.value:
+        gbx_cfgs.append((33, [32]))
+        gbx_cfgs.append((66, [64, 65]))
+
     factory = TestFactory(run_test)
     factory.add_option("payload_lengths", [size_list])
     factory.add_option("payload_data", [incrementing_payload])
     factory.add_option("ifg", [12])
+    factory.add_option("gbx_cfg", gbx_cfgs)
     factory.generate_tests()
 
     factory = TestFactory(run_test_alignment)
     factory.add_option("payload_data", [incrementing_payload])
     factory.add_option("ifg", [12])
+    factory.add_option("gbx_cfg", gbx_cfgs)
     factory.generate_tests()
 
     for test in [
@@ -491,6 +537,7 @@ if cocotb.SIM_NAME:
 
         factory = TestFactory(test)
         factory.add_option("ifg", [12])
+        factory.add_option("gbx_cfg", gbx_cfgs)
         factory.generate_tests()
 
 
@@ -516,7 +563,8 @@ def process_f_files(files):
 
 
 @pytest.mark.parametrize("dic_en", [1, 0])
-def test_taxi_axis_baser_tx_64(request, dic_en):
+@pytest.mark.parametrize("gbx_en", [1, 0])
+def test_taxi_axis_baser_tx_64(request, gbx_en, dic_en):
     dut = "taxi_axis_baser_tx_64"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = module
@@ -534,6 +582,8 @@ def test_taxi_axis_baser_tx_64(request, dic_en):
 
     parameters['DATA_W'] = 64
     parameters['HDR_W'] = 2
+    parameters['GBX_IF_EN'] = gbx_en
+    parameters['GBX_CNT'] = 1
     parameters['PADDING_EN'] = 1
     parameters['DIC_EN'] = dic_en
     parameters['MIN_FRAME_LEN'] = 64

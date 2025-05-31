@@ -299,6 +299,9 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
 
         .CNT(CNT),
 
+        // GT config
+        .CFG_LOW_LATENCY(1),
+
         // GT type
         .GT_TYPE("GTY"),
 

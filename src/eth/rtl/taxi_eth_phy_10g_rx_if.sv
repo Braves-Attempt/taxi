@@ -19,6 +19,7 @@ module taxi_eth_phy_10g_rx_if #
 (
     parameter DATA_W = 64,
     parameter HDR_W = 2,
+    parameter logic GBX_IF_EN = 1'b0,
     parameter logic BIT_REVERSE = 1'b0,
     parameter logic SCRAMBLER_DISABLE = 1'b0,
     parameter logic PRBS31_EN = 1'b0,
@@ -35,13 +36,17 @@ module taxi_eth_phy_10g_rx_if #
      * 10GBASE-R encoded interface
      */
     output wire logic [DATA_W-1:0]  encoded_rx_data,
+    output wire logic               encoded_rx_data_valid,
     output wire logic [HDR_W-1:0]   encoded_rx_hdr,
+    output wire logic               encoded_rx_hdr_valid,
 
     /*
      * SERDES interface
      */
     input  wire logic [DATA_W-1:0]  serdes_rx_data,
+    input  wire logic               serdes_rx_data_valid,
     input  wire logic [HDR_W-1:0]   serdes_rx_hdr,
+    input  wire logic               serdes_rx_hdr_valid,
     output wire logic               serdes_rx_bitslip,
     output wire logic               serdes_rx_reset_req,
 
@@ -69,7 +74,9 @@ if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
 
 wire [DATA_W-1:0] serdes_rx_data_rev, serdes_rx_data_int;
-wire [HDR_W-1:0]  serdes_rx_hdr_rev, serdes_rx_hdr_int;
+wire serdes_rx_data_valid_int;
+wire [HDR_W-1:0] serdes_rx_hdr_rev, serdes_rx_hdr_int;
+wire serdes_rx_hdr_valid_int;
 
 if (BIT_REVERSE) begin
     for (genvar n = 0; n < DATA_W; n = n + 1) begin
@@ -88,36 +95,50 @@ if (SERDES_PIPELINE > 0) begin
     (* srl_style = "register" *)
     logic [DATA_W-1:0] serdes_rx_data_pipe_reg[SERDES_PIPELINE-1:0];
     (* srl_style = "register" *)
-    logic [HDR_W-1:0]  serdes_rx_hdr_pipe_reg[SERDES_PIPELINE-1:0];
+    logic serdes_rx_data_valid_pipe_reg[SERDES_PIPELINE-1:0];
+    (* srl_style = "register" *)
+    logic [HDR_W-1:0] serdes_rx_hdr_pipe_reg[SERDES_PIPELINE-1:0];
+    (* srl_style = "register" *)
+    logic serdes_rx_hdr_valid_pipe_reg[SERDES_PIPELINE-1:0];
 
     for (genvar n = 0; n < SERDES_PIPELINE; n = n + 1) begin
         initial begin
             serdes_rx_data_pipe_reg[n] = '0;
+            serdes_rx_data_valid_pipe_reg[n] = '0;
             serdes_rx_hdr_pipe_reg[n] = '0;
+            serdes_rx_hdr_valid_pipe_reg[n] = '0;
         end
 
         always @(posedge clk) begin
             serdes_rx_data_pipe_reg[n] <= n == 0 ? serdes_rx_data_rev : serdes_rx_data_pipe_reg[n-1];
+            serdes_rx_data_valid_pipe_reg[n] <= n == 0 ? serdes_rx_data_valid : serdes_rx_data_valid_pipe_reg[n-1];
             serdes_rx_hdr_pipe_reg[n] <= n == 0 ? serdes_rx_hdr_rev : serdes_rx_hdr_pipe_reg[n-1];
+            serdes_rx_hdr_valid_pipe_reg[n] <= n == 0 ? serdes_rx_hdr_valid : serdes_rx_hdr_valid_pipe_reg[n-1];
         end
     end
 
     assign serdes_rx_data_int = serdes_rx_data_pipe_reg[SERDES_PIPELINE-1];
+    assign serdes_rx_data_valid_int = serdes_rx_data_valid_pipe_reg[SERDES_PIPELINE-1];
     assign serdes_rx_hdr_int = serdes_rx_hdr_pipe_reg[SERDES_PIPELINE-1];
+    assign serdes_rx_hdr_valid_int = serdes_rx_hdr_valid_pipe_reg[SERDES_PIPELINE-1];
 end else begin
     assign serdes_rx_data_int = serdes_rx_data_rev;
+    assign serdes_rx_data_valid_int = serdes_rx_data_valid;
     assign serdes_rx_hdr_int = serdes_rx_hdr_rev;
+    assign serdes_rx_hdr_valid_int = serdes_rx_hdr_valid;
 end
 
 wire [DATA_W-1:0] descrambled_rx_data;
 
 logic [DATA_W-1:0] encoded_rx_data_reg = '0;
+logic encoded_rx_data_valid_reg = 1'b0;
 logic [HDR_W-1:0] encoded_rx_hdr_reg = '0;
+logic encoded_rx_hdr_valid_reg = 1'b0;
 
-logic [57:0] scrambler_state_reg = {58{1'b1}};
+logic [57:0] scrambler_state_reg = '1;
 wire [57:0] scrambler_state;
 
-logic [30:0] prbs31_state_reg = 31'h7fffffff;
+logic [30:0] prbs31_state_reg = '1;
 wire [30:0] prbs31_state;
 wire [DATA_W+HDR_W-1:0] prbs31_data;
 logic [DATA_W+HDR_W-1:0] prbs31_data_reg = '0;
@@ -142,6 +163,12 @@ descrambler_inst (
     .data_out(descrambled_rx_data),
     .state_out(scrambler_state)
 );
+
+always_ff @(posedge clk) begin
+    if (!GBX_IF_EN || serdes_rx_data_valid_int) begin
+        scrambler_state_reg <= scrambler_state;
+    end
+end
 
 taxi_lfsr #(
     .LFSR_W(31),
@@ -171,13 +198,13 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    scrambler_state_reg <= scrambler_state;
-
     encoded_rx_data_reg <= SCRAMBLER_DISABLE ? serdes_rx_data_int : descrambled_rx_data;
+    encoded_rx_data_valid_reg <= serdes_rx_data_valid_int;
     encoded_rx_hdr_reg <= serdes_rx_hdr_int;
+    encoded_rx_hdr_valid_reg <= serdes_rx_hdr_valid_int;
 
     if (PRBS31_EN) begin
-        if (cfg_rx_prbs31_enable) begin
+        if (cfg_rx_prbs31_enable && (!GBX_IF_EN || serdes_rx_data_valid_int)) begin
             prbs31_state_reg <= prbs31_state;
             prbs31_data_reg <= prbs31_data;
         end else begin
@@ -193,7 +220,9 @@ always_ff @(posedge clk) begin
 end
 
 assign encoded_rx_data = encoded_rx_data_reg;
+assign encoded_rx_data_valid = GBX_IF_EN ? encoded_rx_data_valid_reg : 1'b1;
 assign encoded_rx_hdr = encoded_rx_hdr_reg;
+assign encoded_rx_hdr_valid = GBX_IF_EN ? encoded_rx_hdr_valid_reg : 1'b1;
 
 assign rx_error_count = rx_error_count_reg;
 
@@ -204,6 +233,7 @@ assign serdes_rx_reset_req = serdes_rx_reset_req_int && !(PRBS31_EN && cfg_rx_pr
 
 taxi_eth_phy_10g_rx_frame_sync #(
     .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
     .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES)
 )
@@ -211,6 +241,7 @@ eth_phy_10g_rx_frame_sync_inst (
     .clk(clk),
     .rst(rst),
     .serdes_rx_hdr(serdes_rx_hdr_int),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid_int),
     .serdes_rx_bitslip(serdes_rx_bitslip_int),
     .rx_block_lock(rx_block_lock)
 );
@@ -223,17 +254,20 @@ eth_phy_10g_rx_ber_mon_inst (
     .clk(clk),
     .rst(rst),
     .serdes_rx_hdr(serdes_rx_hdr_int),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid_int),
     .rx_high_ber(rx_high_ber)
 );
 
 taxi_eth_phy_10g_rx_watchdog #(
     .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .COUNT_125US(COUNT_125US)
 )
 eth_phy_10g_rx_watchdog_inst (
     .clk(clk),
     .rst(rst),
     .serdes_rx_hdr(serdes_rx_hdr_int),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid_int),
     .serdes_rx_reset_req(serdes_rx_reset_req_int),
     .rx_bad_block(rx_bad_block),
     .rx_sequence_error(rx_sequence_error),

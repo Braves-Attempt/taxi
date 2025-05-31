@@ -20,6 +20,7 @@ module taxi_eth_phy_10g_rx #
     parameter DATA_W = 64,
     parameter CTRL_W = (DATA_W/8),
     parameter HDR_W = 2,
+    parameter logic GBX_IF_EN = 1'b0,
     parameter logic BIT_REVERSE = 1'b0,
     parameter logic SCRAMBLER_DISABLE = 1'b0,
     parameter logic PRBS31_EN = 1'b0,
@@ -37,12 +38,15 @@ module taxi_eth_phy_10g_rx #
      */
     output wire logic [DATA_W-1:0]  xgmii_rxd,
     output wire logic [CTRL_W-1:0]  xgmii_rxc,
+    output wire logic               xgmii_rx_valid,
 
     /*
      * SERDES interface
      */
     input  wire logic [DATA_W-1:0]  serdes_rx_data,
+    input  wire logic               serdes_rx_data_valid = 1'b1,
     input  wire logic [HDR_W-1:0]   serdes_rx_hdr,
+    input  wire logic               serdes_rx_hdr_valid = 1'b1,
     output wire logic               serdes_rx_bitslip,
     output wire logic               serdes_rx_reset_req,
 
@@ -73,11 +77,14 @@ if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
 
 wire [DATA_W-1:0] encoded_rx_data;
-wire [HDR_W-1:0]  encoded_rx_hdr;
+wire encoded_rx_data_valid;
+wire [HDR_W-1:0] encoded_rx_hdr;
+wire encoded_rx_hdr_valid;
 
 taxi_eth_phy_10g_rx_if #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .BIT_REVERSE(BIT_REVERSE),
     .SCRAMBLER_DISABLE(SCRAMBLER_DISABLE),
     .PRBS31_EN(PRBS31_EN),
@@ -94,13 +101,17 @@ eth_phy_10g_rx_if_inst (
      * 10GBASE-R encoded interface
      */
     .encoded_rx_data(encoded_rx_data),
+    .encoded_rx_data_valid(encoded_rx_data_valid),
     .encoded_rx_hdr(encoded_rx_hdr),
+    .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
 
     /*
      * SERDES interface
      */
     .serdes_rx_data(serdes_rx_data),
+    .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
     .serdes_rx_bitslip(serdes_rx_bitslip),
     .serdes_rx_reset_req(serdes_rx_reset_req),
 
@@ -123,7 +134,8 @@ eth_phy_10g_rx_if_inst (
 taxi_xgmii_baser_dec_64 #(
     .DATA_W(DATA_W),
     .CTRL_W(CTRL_W),
-    .HDR_W(HDR_W)
+    .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN)
 )
 xgmii_baser_dec_inst (
     .clk(clk),
@@ -133,13 +145,16 @@ xgmii_baser_dec_inst (
      * 10GBASE-R encoded input
      */
     .encoded_rx_data(encoded_rx_data),
+    .encoded_rx_data_valid(encoded_rx_data_valid),
     .encoded_rx_hdr(encoded_rx_hdr),
+    .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
 
     /*
      * XGMII interface
      */
     .xgmii_rxd(xgmii_rxd),
     .xgmii_rxc(xgmii_rxc),
+    .xgmii_rx_valid(xgmii_rx_valid),
 
     /*
      * Status

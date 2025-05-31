@@ -34,6 +34,7 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 export PARAM_DATA_W := 64
 export PARAM_CTRL_W := $(shell expr $(PARAM_DATA_W) / 8 )
 export PARAM_HDR_W := 2
+export PARAM_GBX_IF_EN := 0
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

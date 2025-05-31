@@ -48,23 +48,52 @@ class TB:
         self.baset_phy3 = RgmiiPhy(dut.phy3_rgmii_txd, dut.phy3_rgmii_tx_ctl, dut.phy3_rgmii_tx_clk,
             dut.phy3_rgmii_rxd, dut.phy3_rgmii_rx_ctl, dut.phy3_rgmii_rx_clk, speed=speed)
 
+        self.sfp_sources = []
+        self.sfp_sinks = []
+
         if dut.SFP_RATE.value == 0:
             cocotb.start_soon(Clock(dut.sfp_gmii_clk, 8, units="ns").start())
 
-            self.sfp_source = GmiiSource(dut.sfp_gmii_rxd, dut.sfp_gmii_rx_er, dut.sfp_gmii_rx_dv,
-                dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en)
-            self.sfp_sink = GmiiSink(dut.sfp_gmii_txd, dut.sfp_gmii_tx_er, dut.sfp_gmii_tx_en,
-                dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en)
+            self.sfp_sources.append(GmiiSource(dut.sfp_gmii_rxd, dut.sfp_gmii_rx_er, dut.sfp_gmii_rx_dv,
+                dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en))
+            self.sfp_sinks.append(GmiiSink(dut.sfp_gmii_txd, dut.sfp_gmii_tx_er, dut.sfp_gmii_tx_en,
+                dut.sfp_gmii_clk, dut.sfp_gmii_rst, dut.sfp_gmii_clk_en))
         else:
             cocotb.start_soon(Clock(dut.sfp_mgt_refclk_p, 6.4, units="ns").start())
 
             ch = dut.sfp_mac.sfp_mac_inst.ch[0]
+            gt_inst = ch.ch_inst.gt.gt_inst
 
-            cocotb.start_soon(Clock(ch.ch_inst.gt_inst.tx_clk, 6.4, units="ns").start())
-            cocotb.start_soon(Clock(ch.ch_inst.gt_inst.rx_clk, 6.4, units="ns").start())
+            if ch.ch_inst.CFG_LOW_LATENCY.value:
+                clk = 6.206
+                gbx_cfg = (33, [32])
+            else:
+                clk = 6.4
+                gbx_cfg = None
 
-            self.sfp_source = BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.gt_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True)
-            self.sfp_sink = BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.gt_inst.tx_clk, reverse=True)
+            cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
+            cocotb.start_soon(Clock(gt_inst.rx_clk, clk, units="ns").start())
+
+            self.sfp_sources.append(BaseRSerdesSource(
+                data=gt_inst.serdes_rx_data,
+                data_valid=gt_inst.serdes_rx_data_valid,
+                hdr=gt_inst.serdes_rx_hdr,
+                hdr_valid=gt_inst.serdes_rx_hdr_valid,
+                clock=gt_inst.rx_clk,
+                slip=gt_inst.serdes_rx_bitslip,
+                reverse=True,
+                gbx_cfg=gbx_cfg
+            ))
+            self.sfp_sinks.append(BaseRSerdesSink(
+                data=gt_inst.serdes_tx_data,
+                data_valid=gt_inst.serdes_tx_data_valid,
+                hdr=gt_inst.serdes_tx_hdr,
+                hdr_valid=gt_inst.serdes_tx_hdr_valid,
+                gbx_start=gt_inst.serdes_tx_gbx_start,
+                clock=gt_inst.tx_clk,
+                reverse=True,
+                gbx_cfg=gbx_cfg
+            ))
 
         cocotb.start_soon(self._run_clk())
 
@@ -206,10 +235,10 @@ async def run_test(dut):
 
     if dut.SFP_RATE.value == 0:
         tb.log.info("Start 1G SFP MAC loopback test")
-        tests.append(cocotb.start_soon(mac_test(tb, tb.sfp_source, tb.sfp_sink)))
+        tests.append(cocotb.start_soon(mac_test(tb, tb.sfp_sources[0], tb.sfp_sinks[0])))
     else:
         tb.log.info("Start 10G SFP MAC loopback test")
-        tests.append(cocotb.start_soon(mac_test_10g(tb, tb.sfp_source, tb.sfp_sink)))
+        tests.append(cocotb.start_soon(mac_test_10g(tb, tb.sfp_sources[0], tb.sfp_sinks[0])))
 
     await Combine(*tests)
 

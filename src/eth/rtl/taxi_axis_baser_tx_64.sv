@@ -19,6 +19,8 @@ module taxi_axis_baser_tx_64 #
 (
     parameter DATA_W = 64,
     parameter HDR_W = 2,
+    parameter logic GBX_IF_EN = 1'b0,
+    parameter GBX_CNT = 1,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -41,7 +43,12 @@ module taxi_axis_baser_tx_64 #
      * 10GBASE-R encoded interface
      */
     output wire logic [DATA_W-1:0]    encoded_tx_data,
+    output wire logic                 encoded_tx_data_valid,
     output wire logic [HDR_W-1:0]     encoded_tx_hdr,
+    output wire logic                 encoded_tx_hdr_valid,
+    input  wire logic [GBX_CNT-1:0]   tx_gbx_req_start = '0,
+    input  wire logic                 tx_gbx_req_stall = '0,
+    output wire logic [GBX_CNT-1:0]   tx_gbx_start,
 
     /*
      * PTP
@@ -213,7 +220,10 @@ logic [31:0] crc_state_reg[7:0];
 wire [31:0] crc_state_next[7:0];
 
 logic [DATA_W-1:0] encoded_tx_data_reg = {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
+logic encoded_tx_data_valid_reg = 1'b0;
 logic [HDR_W-1:0] encoded_tx_hdr_reg = SYNC_CTRL;
+logic encoded_tx_hdr_valid_reg = 1'b0;
+logic [GBX_CNT-1:0] tx_gbx_start_reg = '0;
 
 logic [DATA_W-1:0] output_data_reg = '0, output_data_next;
 logic [3:0] output_type_reg = OUTPUT_TYPE_IDLE, output_type_next;
@@ -235,10 +245,13 @@ logic stat_tx_err_underflow_reg = 1'b0, stat_tx_err_underflow_next;
 logic [4+16-1:0] last_ts_reg = '0;
 logic [4+16-1:0] ts_inc_reg = '0;
 
-assign s_axis_tx.tready = s_axis_tx_tready_reg;
+assign s_axis_tx.tready = s_axis_tx_tready_reg && (!GBX_IF_EN || !tx_gbx_req_stall);
 
 assign encoded_tx_data = encoded_tx_data_reg;
+assign encoded_tx_data_valid = GBX_IF_EN ? encoded_tx_data_valid_reg : 1'b1;
 assign encoded_tx_hdr = encoded_tx_hdr_reg;
+assign encoded_tx_hdr_valid = GBX_IF_EN ? encoded_tx_hdr_valid_reg : 1'b1;
+assign tx_gbx_start = GBX_IF_EN ? tx_gbx_start_reg : '0;
 
 assign m_axis_tx_cpl.tdata = PTP_TS_EN ? ((!PTP_TS_FMT_TOD || m_axis_tx_cpl_ts_borrow_reg) ? m_axis_tx_cpl_ts_reg : m_axis_tx_cpl_ts_adj_reg) : '0;
 assign m_axis_tx_cpl.tkeep = 1'b1;
@@ -413,113 +426,126 @@ always_comb begin
         frame_next = !s_axis_tx.tlast;
     end
 
-    // counter for min frame length enforcement
-    if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
-        frame_min_count_next = MIN_LEN_W'(frame_min_count_reg - KEEP_W);
+    if (GBX_IF_EN && tx_gbx_req_stall) begin
+        // gearbox stall - hold state
+        state_next = state_reg;
+        frame_start_next = frame_start_reg;
+        s_axis_tx_tready_next = s_axis_tx_tready_reg;
     end else begin
-        frame_min_count_next = 0;
-    end
-
-    // counter to measure frame length
-    if (&frame_len_reg[15:3] == 0) begin
-        frame_len_next = frame_len_reg + 16'(KEEP_W);
-    end else begin
-        frame_len_next = '1;
-    end
-
-    // counter for max frame length enforcement
-    if (frame_len_lim_reg[15:3] != 0) begin
-        frame_len_lim_next = frame_len_lim_reg - 16'(KEEP_W);
-    end else begin
-        frame_len_lim_next = '0;
-    end
-
-    // address and ethertype checks
-    if (&hdr_ptr_reg == 0) begin
-        hdr_ptr_next = hdr_ptr_reg + 1;
-    end
-
-    case (hdr_ptr_reg)
-        2'd0: begin
-            is_mcast_next = s_tdata_reg[0];
-            is_bcast_next = &s_tdata_reg[47:0];
+        // counter for min frame length enforcement
+        if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
+            frame_min_count_next = MIN_LEN_W'(frame_min_count_reg - KEEP_W);
+        end else begin
+            frame_min_count_next = 0;
         end
-        2'd1: is_8021q_next = {s_tdata_reg[39:32], s_tdata_reg[47:40]} == 16'h8100;
-        default: begin
-            // do nothing
+
+        // counter to measure frame length
+        if (&frame_len_reg[15:3] == 0) begin
+            frame_len_next = frame_len_reg + 16'(KEEP_W);
+        end else begin
+            frame_len_next = '1;
         end
-    endcase
 
-    if (ifg_cnt_reg[7:3] != 0) begin
-        ifg_cnt_next = ifg_cnt_reg - 8'(KEEP_W);
-    end else begin
-        ifg_cnt_next = '0;
-    end
+        // counter for max frame length enforcement
+        if (frame_len_lim_reg[15:3] != 0) begin
+            frame_len_lim_next = frame_len_lim_reg - 16'(KEEP_W);
+        end else begin
+            frame_len_lim_next = '0;
+        end
 
-    case (state_reg)
-        STATE_IDLE: begin
-            // idle state - wait for data
-            frame_error_next = 1'b0;
-            frame_min_count_next = MIN_LEN_W'(MIN_FRAME_LEN-4-KEEP_W);
-            hdr_ptr_next = 0;
-            frame_len_next = 0;
-            frame_len_lim_next = cfg_tx_max_pkt_len;
-            reset_crc = 1'b1;
-            s_axis_tx_tready_next = 1'b1;
+        // address and ethertype checks
+        if (&hdr_ptr_reg == 0) begin
+            hdr_ptr_next = hdr_ptr_reg + 1;
+        end
 
-            output_data_next = s_tdata_reg;
-            output_type_next = OUTPUT_TYPE_IDLE;
+        case (hdr_ptr_reg)
+            2'd0: begin
+                is_mcast_next = s_tdata_reg[0];
+                is_bcast_next = &s_tdata_reg[47:0];
+            end
+            2'd1: is_8021q_next = {s_tdata_reg[39:32], s_tdata_reg[47:40]} == 16'h8100;
+            default: begin
+                // do nothing
+            end
+        endcase
 
-            s_tdata_next = s_axis_tx_tdata_masked;
-            s_empty_next = keep2empty(s_axis_tx.tkeep);
+        if (ifg_cnt_reg[7:3] != 0) begin
+            ifg_cnt_next = ifg_cnt_reg - 8'(KEEP_W);
+        end else begin
+            ifg_cnt_next = '0;
+        end
 
-            if (s_axis_tx.tvalid && cfg_tx_enable) begin
-                // Preamble and SFD
-                output_data_next = {ETH_SFD, {7{ETH_PRE}}};
-                output_type_next = OUTPUT_TYPE_START_0;
-                frame_start_next = 1'b1;
+        case (state_reg)
+            STATE_IDLE: begin
+                // idle state - wait for data
+                frame_error_next = 1'b0;
+                frame_min_count_next = MIN_LEN_W'(MIN_FRAME_LEN-4-KEEP_W);
+                hdr_ptr_next = 0;
+                frame_len_next = 0;
+                frame_len_lim_next = cfg_tx_max_pkt_len;
+                reset_crc = 1'b1;
                 s_axis_tx_tready_next = 1'b1;
-                state_next = STATE_PAYLOAD;
-            end else begin
-                swap_lanes_next = 1'b0;
-                ifg_count_next = 8'd0;
-                deficit_idle_count_next = 2'd0;
-                state_next = STATE_IDLE;
+
+                output_data_next = s_tdata_reg;
+                output_type_next = OUTPUT_TYPE_IDLE;
+
+                s_tdata_next = s_axis_tx_tdata_masked;
+                s_empty_next = keep2empty(s_axis_tx.tkeep);
+
+                if (s_axis_tx.tvalid && cfg_tx_enable) begin
+                    // Preamble and SFD
+                    output_data_next = {ETH_SFD, {7{ETH_PRE}}};
+                    output_type_next = OUTPUT_TYPE_START_0;
+                    frame_start_next = 1'b1;
+                    s_axis_tx_tready_next = 1'b1;
+                    state_next = STATE_PAYLOAD;
+                end else begin
+                    swap_lanes_next = 1'b0;
+                    ifg_count_next = 8'd0;
+                    deficit_idle_count_next = 2'd0;
+                    state_next = STATE_IDLE;
+                end
             end
-        end
-        STATE_PAYLOAD: begin
-            // transfer payload
-            update_crc = 1'b1;
-            s_axis_tx_tready_next = 1'b1;
+            STATE_PAYLOAD: begin
+                // transfer payload
+                update_crc = 1'b1;
+                s_axis_tx_tready_next = 1'b1;
 
-            output_data_next = s_tdata_reg;
-            output_type_next = OUTPUT_TYPE_DATA;
+                output_data_next = s_tdata_reg;
+                output_type_next = OUTPUT_TYPE_DATA;
 
-            s_tdata_next = s_axis_tx_tdata_masked;
-            s_empty_next = keep2empty(s_axis_tx.tkeep);
+                s_tdata_next = s_axis_tx_tdata_masked;
+                s_empty_next = keep2empty(s_axis_tx.tkeep);
 
-            stat_tx_byte_next = 4'(KEEP_W);
+                stat_tx_byte_next = 4'(KEEP_W);
 
-            if (s_axis_tx.tvalid && s_axis_tx.tlast) begin
-                frame_oversize_next = frame_len_lim_reg < 16'(8+8+4-keep2empty(s_axis_tx.tkeep));
-            end else begin
-                frame_oversize_next = frame_len_lim_reg < 8+8;
-            end
+                if (s_axis_tx.tvalid && s_axis_tx.tlast) begin
+                    frame_oversize_next = frame_len_lim_reg < 16'(8+8+4-keep2empty(s_axis_tx.tkeep));
+                end else begin
+                    frame_oversize_next = frame_len_lim_reg < 8+8;
+                end
 
-            if (!s_axis_tx.tvalid || s_axis_tx.tlast || frame_oversize_next) begin
-                s_axis_tx_tready_next = frame_next; // drop frame
-                frame_error_next = !s_axis_tx.tvalid || s_axis_tx.tuser[0] || frame_oversize_next;
-                stat_tx_err_user_next = s_axis_tx.tuser[0];
-                stat_tx_err_underflow_next = !s_axis_tx.tvalid;
+                if (!s_axis_tx.tvalid || s_axis_tx.tlast || frame_oversize_next) begin
+                    s_axis_tx_tready_next = frame_next; // drop frame
+                    frame_error_next = !s_axis_tx.tvalid || s_axis_tx.tuser[0] || frame_oversize_next;
+                    stat_tx_err_user_next = s_axis_tx.tuser[0];
+                    stat_tx_err_underflow_next = !s_axis_tx.tvalid;
 
-                if (PADDING_EN && frame_min_count_reg != 0) begin
-                    if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
-                        s_empty_next = 0;
-                        state_next = STATE_PAD;
-                    end else begin
-                        if (keep2empty(s_axis_tx.tkeep) > 3'(KEEP_W-frame_min_count_reg)) begin
-                            s_empty_next = 3'(KEEP_W-frame_min_count_reg);
+                    if (PADDING_EN && frame_min_count_reg != 0) begin
+                        if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
+                            s_empty_next = 0;
+                            state_next = STATE_PAD;
+                        end else begin
+                            if (keep2empty(s_axis_tx.tkeep) > 3'(KEEP_W-frame_min_count_reg)) begin
+                                s_empty_next = 3'(KEEP_W-frame_min_count_reg);
+                            end
+                            if (frame_error_next) begin
+                                state_next = STATE_ERR;
+                            end else begin
+                                state_next = STATE_FCS_1;
+                            end
                         end
+                    end else begin
                         if (frame_error_next) begin
                             state_next = STATE_ERR;
                         end else begin
@@ -527,58 +553,118 @@ always_comb begin
                         end
                     end
                 end else begin
-                    if (frame_error_next) begin
+                    state_next = STATE_PAYLOAD;
+                end
+            end
+            STATE_PAD: begin
+                // pad frame to MIN_FRAME_LEN
+                s_axis_tx_tready_next = frame_next; // drop frame
+
+                output_data_next = s_tdata_reg;
+                output_type_next = OUTPUT_TYPE_DATA;
+
+                s_tdata_next = 64'd0;
+                s_empty_next = 0;
+
+                stat_tx_byte_next = 4'(KEEP_W);
+
+                update_crc = 1'b1;
+
+                if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
+                    state_next = STATE_PAD;
+                end else begin
+                    s_empty_next = 3'(KEEP_W-frame_min_count_reg);
+                    if (frame_error_reg) begin
                         state_next = STATE_ERR;
                     end else begin
                         state_next = STATE_FCS_1;
                     end
                 end
-            end else begin
-                state_next = STATE_PAYLOAD;
             end
-        end
-        STATE_PAD: begin
-            // pad frame to MIN_FRAME_LEN
-            s_axis_tx_tready_next = frame_next; // drop frame
+            STATE_FCS_1: begin
+                // last cycle
+                s_axis_tx_tready_next = frame_next; // drop frame
 
-            output_data_next = s_tdata_reg;
-            output_type_next = OUTPUT_TYPE_DATA;
+                output_data_next = fcs_output_data_0;
+                output_type_next = fcs_output_type_0;
 
-            s_tdata_next = 64'd0;
-            s_empty_next = 0;
+                update_crc = 1'b1;
 
-            stat_tx_byte_next = 4'(KEEP_W);
-
-            update_crc = 1'b1;
-
-            if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
-                state_next = STATE_PAD;
-            end else begin
-                s_empty_next = 3'(KEEP_W-frame_min_count_reg);
-                if (frame_error_reg) begin
-                    state_next = STATE_ERR;
+                ifg_count_next = (cfg_tx_ifg > 8'd12 ? cfg_tx_ifg : 8'd12) - ifg_offset + (swap_lanes_reg ? 8'd4 : 8'd0) + 8'(deficit_idle_count_reg);
+                if (s_empty_reg <= 4) begin
+                    stat_tx_byte_next = 4'(KEEP_W);
+                    state_next = STATE_FCS_2;
                 end else begin
-                    state_next = STATE_FCS_1;
+                    stat_tx_byte_next = 12-s_empty_reg;
+                    frame_len_next = frame_len_reg + 16'(12-s_empty_reg);
+                    stat_tx_pkt_len_next = frame_len_next;
+                    stat_tx_pkt_good_next = !frame_error_reg;
+                    stat_tx_pkt_bad_next = frame_error_reg;
+                    stat_tx_pkt_ucast_next = !is_mcast_reg;
+                    stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                    stat_tx_pkt_bcast_next = is_bcast_reg;
+                    stat_tx_pkt_vlan_next = is_8021q_reg;
+                    stat_tx_err_oversize_next = frame_oversize_reg;
+
+                    state_next = STATE_IFG;
                 end
             end
-        end
-        STATE_FCS_1: begin
-            // last cycle
-            s_axis_tx_tready_next = frame_next; // drop frame
+            STATE_FCS_2: begin
+                // last cycle
+                s_axis_tx_tready_next = frame_next; // drop frame
 
-            output_data_next = fcs_output_data_0;
-            output_type_next = fcs_output_type_0;
+                output_data_next = fcs_output_data_1;
+                output_type_next = fcs_output_type_1;
 
-            update_crc = 1'b1;
+                stat_tx_byte_next = 4-s_empty_reg;
+                frame_len_next = frame_len_reg + 16'(4-s_empty_reg);
 
-            ifg_count_next = (cfg_tx_ifg > 8'd12 ? cfg_tx_ifg : 8'd12) - ifg_offset + (swap_lanes_reg ? 8'd4 : 8'd0) + 8'(deficit_idle_count_reg);
-            if (s_empty_reg <= 4) begin
-                stat_tx_byte_next = 4'(KEEP_W);
-                state_next = STATE_FCS_2;
-            end else begin
-                stat_tx_byte_next = 12-s_empty_reg;
-                frame_len_next = frame_len_reg + 16'(12-s_empty_reg);
+                reset_crc = 1'b1;
+
                 stat_tx_pkt_len_next = frame_len_next;
+                stat_tx_pkt_good_next = !frame_error_reg;
+                stat_tx_pkt_bad_next = frame_error_reg;
+                stat_tx_pkt_ucast_next = !is_mcast_reg;
+                stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                stat_tx_pkt_bcast_next = is_bcast_reg;
+                stat_tx_pkt_vlan_next = is_8021q_reg;
+                stat_tx_err_oversize_next = frame_oversize_reg;
+
+                if (DIC_EN) begin
+                    if (ifg_count_next > 8'd7) begin
+                        state_next = STATE_IFG;
+                    end else begin
+                        if (ifg_count_next >= 8'd4) begin
+                            deficit_idle_count_next = 2'(ifg_count_next - 8'd4);
+                            swap_lanes_next = 1'b1;
+                        end else begin
+                            deficit_idle_count_next = 2'(ifg_count_next);
+                            ifg_count_next = 8'd0;
+                            swap_lanes_next = 1'b0;
+                        end
+                        s_axis_tx_tready_next = 1'b1;
+                        state_next = STATE_IDLE;
+                    end
+                end else begin
+                    if (ifg_count_next > 8'd4) begin
+                        state_next = STATE_IFG;
+                    end else begin
+                        s_axis_tx_tready_next = 1'b1;
+                        swap_lanes_next = ifg_count_next != 0;
+                        state_next = STATE_IDLE;
+                    end
+                end
+            end
+            STATE_ERR: begin
+                // terminate packet with error
+                s_axis_tx_tready_next = frame_next; // drop frame
+
+                output_data_next = s_tdata_reg;
+                output_type_next = OUTPUT_TYPE_ERROR;
+
+                ifg_count_next = cfg_tx_ifg > 8'd12 ? cfg_tx_ifg : 8'd12;
+
+                stat_tx_pkt_len_next = frame_len_reg;
                 stat_tx_pkt_good_next = !frame_error_reg;
                 stat_tx_pkt_bad_next = frame_error_reg;
                 stat_tx_pkt_ucast_next = !is_mcast_reg;
@@ -589,118 +675,52 @@ always_comb begin
 
                 state_next = STATE_IFG;
             end
-        end
-        STATE_FCS_2: begin
-            // last cycle
-            s_axis_tx_tready_next = frame_next; // drop frame
+            STATE_IFG: begin
+                // send IFG
+                s_axis_tx_tready_next = frame_next; // drop frame
 
-            output_data_next = fcs_output_data_1;
-            output_type_next = fcs_output_type_1;
+                output_data_next = s_tdata_reg;
+                output_type_next = OUTPUT_TYPE_IDLE;
 
-            stat_tx_byte_next = 4-s_empty_reg;
-            frame_len_next = frame_len_reg + 16'(4-s_empty_reg);
-
-            reset_crc = 1'b1;
-
-            stat_tx_pkt_len_next = frame_len_next;
-            stat_tx_pkt_good_next = !frame_error_reg;
-            stat_tx_pkt_bad_next = frame_error_reg;
-            stat_tx_pkt_ucast_next = !is_mcast_reg;
-            stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
-            stat_tx_pkt_bcast_next = is_bcast_reg;
-            stat_tx_pkt_vlan_next = is_8021q_reg;
-            stat_tx_err_oversize_next = frame_oversize_reg;
-
-            if (DIC_EN) begin
-                if (ifg_count_next > 8'd7) begin
-                    state_next = STATE_IFG;
+                if (ifg_count_reg > 8'd8) begin
+                    ifg_count_next = ifg_count_reg - 8'd8;
                 end else begin
-                    if (ifg_count_next >= 8'd4) begin
-                        deficit_idle_count_next = 2'(ifg_count_next - 8'd4);
-                        swap_lanes_next = 1'b1;
+                    ifg_count_next = 8'd0;
+                end
+
+                reset_crc = 1'b1;
+
+                if (DIC_EN) begin
+                    if (ifg_count_next > 8'd7 || frame_reg) begin
+                        state_next = STATE_IFG;
                     end else begin
-                        deficit_idle_count_next = 2'(ifg_count_next);
-                        ifg_count_next = 8'd0;
-                        swap_lanes_next = 1'b0;
+                        if (ifg_count_next >= 8'd4) begin
+                            deficit_idle_count_next = 2'(ifg_count_next - 8'd4);
+                            swap_lanes_next = 1'b1;
+                        end else begin
+                            deficit_idle_count_next = 2'(ifg_count_next);
+                            ifg_count_next = 8'd0;
+                            swap_lanes_next = 1'b0;
+                        end
+                        s_axis_tx_tready_next = 1'b1;
+                        state_next = STATE_IDLE;
                     end
-                    s_axis_tx_tready_next = 1'b1;
-                    state_next = STATE_IDLE;
-                end
-            end else begin
-                if (ifg_count_next > 8'd4) begin
-                    state_next = STATE_IFG;
                 end else begin
-                    s_axis_tx_tready_next = 1'b1;
-                    swap_lanes_next = ifg_count_next != 0;
-                    state_next = STATE_IDLE;
-                end
-            end
-        end
-        STATE_ERR: begin
-            // terminate packet with error
-            s_axis_tx_tready_next = frame_next; // drop frame
-
-            output_data_next = s_tdata_reg;
-            output_type_next = OUTPUT_TYPE_ERROR;
-
-            ifg_count_next = cfg_tx_ifg > 8'd12 ? cfg_tx_ifg : 8'd12;
-
-            stat_tx_pkt_len_next = frame_len_reg;
-            stat_tx_pkt_good_next = !frame_error_reg;
-            stat_tx_pkt_bad_next = frame_error_reg;
-            stat_tx_pkt_ucast_next = !is_mcast_reg;
-            stat_tx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
-            stat_tx_pkt_bcast_next = is_bcast_reg;
-            stat_tx_pkt_vlan_next = is_8021q_reg;
-            stat_tx_err_oversize_next = frame_oversize_reg;
-
-            state_next = STATE_IFG;
-        end
-        STATE_IFG: begin
-            // send IFG
-            s_axis_tx_tready_next = frame_next; // drop frame
-
-            output_data_next = s_tdata_reg;
-            output_type_next = OUTPUT_TYPE_IDLE;
-
-            if (ifg_count_reg > 8'd8) begin
-                ifg_count_next = ifg_count_reg - 8'd8;
-            end else begin
-                ifg_count_next = 8'd0;
-            end
-
-            reset_crc = 1'b1;
-
-            if (DIC_EN) begin
-                if (ifg_count_next > 8'd7 || frame_reg) begin
-                    state_next = STATE_IFG;
-                end else begin
-                    if (ifg_count_next >= 8'd4) begin
-                        deficit_idle_count_next = 2'(ifg_count_next - 8'd4);
-                        swap_lanes_next = 1'b1;
+                    if (ifg_count_next > 8'd4 || frame_reg) begin
+                        state_next = STATE_IFG;
                     end else begin
-                        deficit_idle_count_next = 2'(ifg_count_next);
-                        ifg_count_next = 8'd0;
-                        swap_lanes_next = 1'b0;
+                        s_axis_tx_tready_next = 1'b1;
+                        swap_lanes_next = ifg_count_next != 0;
+                        state_next = STATE_IDLE;
                     end
-                    s_axis_tx_tready_next = 1'b1;
-                    state_next = STATE_IDLE;
-                end
-            end else begin
-                if (ifg_count_next > 8'd4 || frame_reg) begin
-                    state_next = STATE_IFG;
-                end else begin
-                    s_axis_tx_tready_next = 1'b1;
-                    swap_lanes_next = ifg_count_next != 0;
-                    state_next = STATE_IDLE;
                 end
             end
-        end
-        default: begin
-            // invalid state, return to idle
-            state_next = STATE_IDLE;
-        end
-    endcase
+            default: begin
+                // invalid state, return to idle
+                state_next = STATE_IDLE;
+            end
+        endcase
+    end
 end
 
 always_ff @(posedge clk) begin
@@ -746,33 +766,6 @@ always_ff @(posedge clk) begin
     stat_tx_err_user_reg <= stat_tx_err_user_next;
     stat_tx_err_underflow_reg <= stat_tx_err_underflow_next;
 
-    delay_type_valid <= 1'b0;
-    delay_type <= output_type_next ^ 4'd4;
-
-    swap_data <= output_data_next[63:32];
-
-    if (swap_lanes_reg) begin
-        output_data_reg <= {output_data_next[31:0], swap_data};
-        if (delay_type_valid) begin
-            output_type_reg <= delay_type;
-        end else if (output_type_next == OUTPUT_TYPE_START_0) begin
-            output_type_reg <= OUTPUT_TYPE_START_4;
-        end else if (output_type_next[3]) begin
-            // OUTPUT_TYPE_TERM_*
-            if (output_type_next[2]) begin
-                delay_type_valid <= 1'b1;
-                output_type_reg <= OUTPUT_TYPE_DATA;
-            end else begin
-                output_type_reg <= output_type_next ^ 4'd4;
-            end
-        end else begin
-            output_type_reg <= output_type_next;
-        end
-    end else begin
-        output_data_reg <= output_data_next;
-        output_type_reg <= output_type_next;
-    end
-
     if (PTP_TS_EN && PTP_TS_FMT_TOD) begin
         m_axis_tx_cpl_valid_reg <= m_axis_tx_cpl_valid_int_reg;
         m_axis_tx_cpl_ts_adj_reg[15:0] <= m_axis_tx_cpl_ts_reg[15:0];
@@ -781,113 +774,151 @@ always_ff @(posedge clk) begin
         m_axis_tx_cpl_ts_adj_reg[95:48] <= m_axis_tx_cpl_ts_reg[95:48] + 1;
     end
 
-    if (frame_start_reg) begin
+    if (GBX_IF_EN && tx_gbx_req_stall) begin
+        // gearbox stall
+        encoded_tx_data_valid_reg <= 1'b0;
+        encoded_tx_hdr_valid_reg <= 1'b0;
+    end else begin
+        delay_type_valid <= 1'b0;
+        delay_type <= output_type_next ^ 4'd4;
+
+        swap_data <= output_data_next[63:32];
+
         if (swap_lanes_reg) begin
-            if (PTP_TS_EN) begin
-                if (PTP_TS_FMT_TOD) begin
-                    m_axis_tx_cpl_ts_reg[45:0] <= ptp_ts[45:0] + 46'(ts_inc_reg >> 1);
-                    m_axis_tx_cpl_ts_reg[95:48] <= ptp_ts[95:48];
+            output_data_reg <= {output_data_next[31:0], swap_data};
+            if (delay_type_valid) begin
+                output_type_reg <= delay_type;
+            end else if (output_type_next == OUTPUT_TYPE_START_0) begin
+                output_type_reg <= OUTPUT_TYPE_START_4;
+            end else if (output_type_next[3]) begin
+                // OUTPUT_TYPE_TERM_*
+                if (output_type_next[2]) begin
+                    delay_type_valid <= 1'b1;
+                    output_type_reg <= OUTPUT_TYPE_DATA;
                 end else begin
-                    m_axis_tx_cpl_ts_reg <= ptp_ts + PTP_TS_W'(ts_inc_reg >> 1);
+                    output_type_reg <= output_type_next ^ 4'd4;
+                end
+            end else begin
+                output_type_reg <= output_type_next;
+            end
+        end else begin
+            output_data_reg <= output_data_next;
+            output_type_reg <= output_type_next;
+        end
+
+        if (frame_start_reg) begin
+            if (swap_lanes_reg) begin
+                if (PTP_TS_EN) begin
+                    if (PTP_TS_FMT_TOD) begin
+                        m_axis_tx_cpl_ts_reg[45:0] <= ptp_ts[45:0] + 46'(ts_inc_reg >> 1);
+                        m_axis_tx_cpl_ts_reg[95:48] <= ptp_ts[95:48];
+                    end else begin
+                        m_axis_tx_cpl_ts_reg <= ptp_ts + PTP_TS_W'(ts_inc_reg >> 1);
+                    end
+                end
+                start_packet_reg <= 2'b10;
+            end else begin
+                if (PTP_TS_EN) begin
+                    m_axis_tx_cpl_ts_reg <= ptp_ts;
+                end
+                start_packet_reg <= 2'b01;
+            end
+            m_axis_tx_cpl_tag_reg <= s_axis_tx.tid;
+            if (TX_CPL_CTRL_IN_TUSER) begin
+                if (PTP_TS_FMT_TOD) begin
+                    m_axis_tx_cpl_valid_int_reg <= (s_axis_tx.tuser >> 1) == 0;
+                end else begin
+                    m_axis_tx_cpl_valid_reg <= (s_axis_tx.tuser >> 1) == 0;
+                end
+            end else begin
+                if (PTP_TS_FMT_TOD) begin
+                    m_axis_tx_cpl_valid_int_reg <= 1'b1;
+                end else begin
+                    m_axis_tx_cpl_valid_reg <= 1'b1;
                 end
             end
-            start_packet_reg <= 2'b10;
-        end else begin
-            if (PTP_TS_EN) begin
-                m_axis_tx_cpl_ts_reg <= ptp_ts;
-            end
-            start_packet_reg <= 2'b01;
         end
-        m_axis_tx_cpl_tag_reg <= s_axis_tx.tid;
-        if (TX_CPL_CTRL_IN_TUSER) begin
-            if (PTP_TS_FMT_TOD) begin
-                m_axis_tx_cpl_valid_int_reg <= (s_axis_tx.tuser >> 1) == 0;
-            end else begin
-                m_axis_tx_cpl_valid_reg <= (s_axis_tx.tuser >> 1) == 0;
+
+        case (output_type_reg)
+            OUTPUT_TYPE_IDLE: begin
+                encoded_tx_data_reg <= {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
             end
-        end else begin
-            if (PTP_TS_FMT_TOD) begin
-                m_axis_tx_cpl_valid_int_reg <= 1'b1;
-            end else begin
-                m_axis_tx_cpl_valid_reg <= 1'b1;
+            OUTPUT_TYPE_ERROR: begin
+                encoded_tx_data_reg <= {{8{CTRL_ERROR}}, BLOCK_TYPE_CTRL};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
             end
+            OUTPUT_TYPE_START_0: begin
+                encoded_tx_data_reg <= {output_data_reg[63:8], BLOCK_TYPE_START_0};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_START_4: begin
+                encoded_tx_data_reg <= {output_data_reg[63:40], 4'd0, {4{CTRL_IDLE}}, BLOCK_TYPE_START_4};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_DATA: begin
+                encoded_tx_data_reg <= output_data_reg;
+                encoded_tx_hdr_reg <= SYNC_DATA;
+            end
+            OUTPUT_TYPE_TERM_0: begin
+                encoded_tx_data_reg <= {{7{CTRL_IDLE}}, 7'd0, BLOCK_TYPE_TERM_0};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_1: begin
+                encoded_tx_data_reg <= {{6{CTRL_IDLE}}, 6'd0, output_data_reg[7:0], BLOCK_TYPE_TERM_1};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_2: begin
+                encoded_tx_data_reg <= {{5{CTRL_IDLE}}, 5'd0, output_data_reg[15:0], BLOCK_TYPE_TERM_2};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_3: begin
+                encoded_tx_data_reg <= {{4{CTRL_IDLE}}, 4'd0, output_data_reg[23:0], BLOCK_TYPE_TERM_3};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_4: begin
+                encoded_tx_data_reg <= {{3{CTRL_IDLE}}, 3'd0, output_data_reg[31:0], BLOCK_TYPE_TERM_4};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_5: begin
+                encoded_tx_data_reg <= {{2{CTRL_IDLE}}, 2'd0, output_data_reg[39:0], BLOCK_TYPE_TERM_5};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_6: begin
+                encoded_tx_data_reg <= {{1{CTRL_IDLE}}, 1'd0, output_data_reg[47:0], BLOCK_TYPE_TERM_6};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            OUTPUT_TYPE_TERM_7: begin
+                encoded_tx_data_reg <= {output_data_reg[55:0], BLOCK_TYPE_TERM_7};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+            default: begin
+                encoded_tx_data_reg <= {{8{CTRL_ERROR}}, BLOCK_TYPE_CTRL};
+                encoded_tx_hdr_reg <= SYNC_CTRL;
+            end
+        endcase
+
+        encoded_tx_data_valid_reg <= 1'b1;
+        encoded_tx_hdr_valid_reg <= 1'b1;
+
+        crc_state_reg[0] <= crc_state_next[0];
+        crc_state_reg[1] <= crc_state_next[1];
+        crc_state_reg[2] <= crc_state_next[2];
+        crc_state_reg[3] <= crc_state_next[3];
+        crc_state_reg[4] <= crc_state_next[4];
+        crc_state_reg[5] <= crc_state_next[5];
+        crc_state_reg[6] <= crc_state_next[6];
+
+        if (update_crc) begin
+            crc_state_reg[7] <= crc_state_next[7];
+        end
+
+        if (reset_crc) begin
+            crc_state_reg[7] <= '1;
         end
     end
 
-    case (output_type_reg)
-        OUTPUT_TYPE_IDLE: begin
-            encoded_tx_data_reg <= {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_ERROR: begin
-            encoded_tx_data_reg <= {{8{CTRL_ERROR}}, BLOCK_TYPE_CTRL};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_START_0: begin
-            encoded_tx_data_reg <= {output_data_reg[63:8], BLOCK_TYPE_START_0};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_START_4: begin
-            encoded_tx_data_reg <= {output_data_reg[63:40], 4'd0, {4{CTRL_IDLE}}, BLOCK_TYPE_START_4};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_DATA: begin
-            encoded_tx_data_reg <= output_data_reg;
-            encoded_tx_hdr_reg <= SYNC_DATA;
-        end
-        OUTPUT_TYPE_TERM_0: begin
-            encoded_tx_data_reg <= {{7{CTRL_IDLE}}, 7'd0, BLOCK_TYPE_TERM_0};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_1: begin
-            encoded_tx_data_reg <= {{6{CTRL_IDLE}}, 6'd0, output_data_reg[7:0], BLOCK_TYPE_TERM_1};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_2: begin
-            encoded_tx_data_reg <= {{5{CTRL_IDLE}}, 5'd0, output_data_reg[15:0], BLOCK_TYPE_TERM_2};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_3: begin
-            encoded_tx_data_reg <= {{4{CTRL_IDLE}}, 4'd0, output_data_reg[23:0], BLOCK_TYPE_TERM_3};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_4: begin
-            encoded_tx_data_reg <= {{3{CTRL_IDLE}}, 3'd0, output_data_reg[31:0], BLOCK_TYPE_TERM_4};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_5: begin
-            encoded_tx_data_reg <= {{2{CTRL_IDLE}}, 2'd0, output_data_reg[39:0], BLOCK_TYPE_TERM_5};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_6: begin
-            encoded_tx_data_reg <= {{1{CTRL_IDLE}}, 1'd0, output_data_reg[47:0], BLOCK_TYPE_TERM_6};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        OUTPUT_TYPE_TERM_7: begin
-            encoded_tx_data_reg <= {output_data_reg[55:0], BLOCK_TYPE_TERM_7};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-        default: begin
-            encoded_tx_data_reg <= {{8{CTRL_ERROR}}, BLOCK_TYPE_CTRL};
-            encoded_tx_hdr_reg <= SYNC_CTRL;
-        end
-    endcase
-
-    crc_state_reg[0] <= crc_state_next[0];
-    crc_state_reg[1] <= crc_state_next[1];
-    crc_state_reg[2] <= crc_state_next[2];
-    crc_state_reg[3] <= crc_state_next[3];
-    crc_state_reg[4] <= crc_state_next[4];
-    crc_state_reg[5] <= crc_state_next[5];
-    crc_state_reg[6] <= crc_state_next[6];
-
-    if (update_crc) begin
-        crc_state_reg[7] <= crc_state_next[7];
-    end
-
-    if (reset_crc) begin
-        crc_state_reg[7] <= '1;
-    end
+    tx_gbx_start_reg <= tx_gbx_req_start;
 
     last_ts_reg <= (4+16)'(ptp_ts);
     ts_inc_reg <= (4+16)'(ptp_ts) - last_ts_reg;
@@ -909,7 +940,10 @@ always_ff @(posedge clk) begin
         m_axis_tx_cpl_valid_int_reg <= 1'b0;
 
         encoded_tx_data_reg <= {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
+        encoded_tx_data_valid_reg <= 1'b0;
         encoded_tx_hdr_reg <= SYNC_CTRL;
+        encoded_tx_hdr_valid_reg <= 1'b0;
+        tx_gbx_start_reg <= '0;
 
         output_data_reg <= '0;
         output_type_reg <= OUTPUT_TYPE_IDLE;

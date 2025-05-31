@@ -23,6 +23,9 @@ module taxi_eth_mac_25g_us_ch #
 
     parameter logic HAS_COMMON = 1'b1,
 
+    // GT config
+    parameter logic CFG_LOW_LATENCY = 0,
+
     // GT type
     parameter string GT_TYPE = "GTY",
 
@@ -278,130 +281,244 @@ localparam HDR_W = 2;
 
 wire rx_reset_req;
 
-wire [5:0] gt_txheader;
-wire [63:0] gt_txdata;
-wire gt_rxgearboxslip;
-wire [5:0] gt_rxheader;
-wire [1:0] gt_rxheadervalid;
-wire [63:0] gt_rxdata;
-wire [1:0] gt_rxdatavalid;
+wire [DATA_W-1:0]  serdes_tx_data;
+wire               serdes_tx_data_valid;
+wire [HDR_W-1:0]   serdes_tx_hdr;
+wire               serdes_tx_hdr_valid;
+wire               serdes_tx_gbx_req_start;
+wire               serdes_tx_gbx_req_stall;
+wire               serdes_tx_gbx_start;
+wire [DATA_W-1:0]  serdes_rx_data;
+wire               serdes_rx_data_valid;
+wire [HDR_W-1:0]   serdes_rx_hdr;
+wire               serdes_rx_hdr_valid;
+wire               serdes_rx_bitslip;
 
-taxi_eth_phy_25g_us_gt #(
-    .SIM(SIM),
-    .VENDOR(VENDOR),
-    .FAMILY(FAMILY),
+if (CFG_LOW_LATENCY) begin : gt
 
-    .HAS_COMMON(HAS_COMMON),
+    taxi_eth_phy_25g_us_gt_ll #(
+        .SIM(SIM),
+        .VENDOR(VENDOR),
+        .FAMILY(FAMILY),
 
-    // GT type
-    .GT_TYPE(GT_TYPE),
+        .HAS_COMMON(HAS_COMMON),
 
-    // PLL parameters
-    .QPLL0_PD(QPLL0_PD),
-    .QPLL1_PD(QPLL1_PD),
-    .QPLL0_EXT_CTRL(QPLL0_EXT_CTRL),
-    .QPLL1_EXT_CTRL(QPLL1_EXT_CTRL),
+        // GT type
+        .GT_TYPE(GT_TYPE),
 
-    // GT parameters
-    .GT_TX_PD(GT_TX_PD),
-    .GT_TX_QPLL_SEL(GT_TX_QPLL_SEL),
-    .GT_TX_POLARITY(GT_TX_POLARITY),
-    .GT_TX_ELECIDLE(GT_TX_ELECIDLE),
-    .GT_TX_INHIBIT(GT_TX_INHIBIT),
-    .GT_TX_DIFFCTRL(GT_TX_DIFFCTRL),
-    .GT_TX_MAINCURSOR(GT_TX_MAINCURSOR),
-    .GT_TX_POSTCURSOR(GT_TX_POSTCURSOR),
-    .GT_TX_PRECURSOR(GT_TX_PRECURSOR),
-    .GT_RX_PD(GT_RX_PD),
-    .GT_RX_QPLL_SEL(GT_RX_QPLL_SEL),
-    .GT_RX_LPM_EN(GT_RX_LPM_EN),
-    .GT_RX_POLARITY(GT_RX_POLARITY)
-)
-gt_inst (
-    .xcvr_ctrl_clk(xcvr_ctrl_clk),
-    .xcvr_ctrl_rst(xcvr_ctrl_rst),
+        // PLL parameters
+        .QPLL0_PD(QPLL0_PD),
+        .QPLL1_PD(QPLL1_PD),
+        .QPLL0_EXT_CTRL(QPLL0_EXT_CTRL),
+        .QPLL1_EXT_CTRL(QPLL1_EXT_CTRL),
 
-    /*
-     * Common
-     */
-    .xcvr_gtpowergood_out(xcvr_gtpowergood_out),
+        // GT parameters
+        .GT_TX_PD(GT_TX_PD),
+        .GT_TX_QPLL_SEL(GT_TX_QPLL_SEL),
+        .GT_TX_POLARITY(GT_TX_POLARITY),
+        .GT_TX_ELECIDLE(GT_TX_ELECIDLE),
+        .GT_TX_INHIBIT(GT_TX_INHIBIT),
+        .GT_TX_DIFFCTRL(GT_TX_DIFFCTRL),
+        .GT_TX_MAINCURSOR(GT_TX_MAINCURSOR),
+        .GT_TX_POSTCURSOR(GT_TX_POSTCURSOR),
+        .GT_TX_PRECURSOR(GT_TX_PRECURSOR),
+        .GT_RX_PD(GT_RX_PD),
+        .GT_RX_QPLL_SEL(GT_RX_QPLL_SEL),
+        .GT_RX_LPM_EN(GT_RX_LPM_EN),
+        .GT_RX_POLARITY(GT_RX_POLARITY),
 
-    /*
-     * PLL out
-     */
-    .xcvr_gtrefclk00_in(xcvr_gtrefclk00_in),
-    .xcvr_qpll0pd_in(xcvr_qpll0pd_in),
-    .xcvr_qpll0reset_in(xcvr_qpll0reset_in),
-    .xcvr_qpll0pcierate_in(xcvr_qpll0pcierate_in),
-    .xcvr_qpll0lock_out(xcvr_qpll0lock_out),
-    .xcvr_qpll0clk_out(xcvr_qpll0clk_out),
-    .xcvr_qpll0refclk_out(xcvr_qpll0refclk_out),
-    .xcvr_gtrefclk01_in(xcvr_gtrefclk01_in),
-    .xcvr_qpll1pd_in(xcvr_qpll1pd_in),
-    .xcvr_qpll1reset_in(xcvr_qpll1reset_in),
-    .xcvr_qpll1pcierate_in(xcvr_qpll1pcierate_in),
-    .xcvr_qpll1lock_out(xcvr_qpll1lock_out),
-    .xcvr_qpll1clk_out(xcvr_qpll1clk_out),
-    .xcvr_qpll1refclk_out(xcvr_qpll1refclk_out),
+        // MAC/PHY parameters
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W)
+    )
+    gt_inst (
+        .xcvr_ctrl_clk(xcvr_ctrl_clk),
+        .xcvr_ctrl_rst(xcvr_ctrl_rst),
 
-    /*
-     * PLL in
-     */
-    .xcvr_qpll0lock_in(xcvr_qpll0lock_in),
-    .xcvr_qpll0clk_in(xcvr_qpll0clk_in),
-    .xcvr_qpll0refclk_in(xcvr_qpll0refclk_in),
-    .xcvr_qpll1lock_in(xcvr_qpll1lock_in),
-    .xcvr_qpll1clk_in(xcvr_qpll1clk_in),
-    .xcvr_qpll1refclk_in(xcvr_qpll1refclk_in),
+        /*
+         * Common
+         */
+        .xcvr_gtpowergood_out(xcvr_gtpowergood_out),
 
-    /*
-     * Serial data
-     */
-    .xcvr_txp(xcvr_txp),
-    .xcvr_txn(xcvr_txn),
-    .xcvr_rxp(xcvr_rxp),
-    .xcvr_rxn(xcvr_rxn),
+        /*
+         * PLL out
+         */
+        .xcvr_gtrefclk00_in(xcvr_gtrefclk00_in),
+        .xcvr_qpll0pd_in(xcvr_qpll0pd_in),
+        .xcvr_qpll0reset_in(xcvr_qpll0reset_in),
+        .xcvr_qpll0pcierate_in(xcvr_qpll0pcierate_in),
+        .xcvr_qpll0lock_out(xcvr_qpll0lock_out),
+        .xcvr_qpll0clk_out(xcvr_qpll0clk_out),
+        .xcvr_qpll0refclk_out(xcvr_qpll0refclk_out),
+        .xcvr_gtrefclk01_in(xcvr_gtrefclk01_in),
+        .xcvr_qpll1pd_in(xcvr_qpll1pd_in),
+        .xcvr_qpll1reset_in(xcvr_qpll1reset_in),
+        .xcvr_qpll1pcierate_in(xcvr_qpll1pcierate_in),
+        .xcvr_qpll1lock_out(xcvr_qpll1lock_out),
+        .xcvr_qpll1clk_out(xcvr_qpll1clk_out),
+        .xcvr_qpll1refclk_out(xcvr_qpll1refclk_out),
 
-    /*
-     * GT user clocks
-     */
-    .rx_clk(rx_clk),
-    .rx_rst_in(rx_rst_in || rx_reset_req),
-    .rx_rst_out(rx_rst_out),
-    .tx_clk(tx_clk),
-    .tx_rst_in(tx_rst_in),
-    .tx_rst_out(tx_rst_out),
+        /*
+         * PLL in
+         */
+        .xcvr_qpll0lock_in(xcvr_qpll0lock_in),
+        .xcvr_qpll0clk_in(xcvr_qpll0clk_in),
+        .xcvr_qpll0refclk_in(xcvr_qpll0refclk_in),
+        .xcvr_qpll1lock_in(xcvr_qpll1lock_in),
+        .xcvr_qpll1clk_in(xcvr_qpll1clk_in),
+        .xcvr_qpll1refclk_in(xcvr_qpll1refclk_in),
 
-    /*
-     * Serdes interface
-     */
-    .gt_txheader(gt_txheader),
-    .gt_txdata(gt_txdata),
-    .gt_rxgearboxslip(gt_rxgearboxslip),
-    .gt_rxheader(gt_rxheader),
-    .gt_rxheadervalid(gt_rxheadervalid),
-    .gt_rxdata(gt_rxdata),
-    .gt_rxdatavalid(gt_rxdatavalid)
-);
+        /*
+         * Serial data
+         */
+        .xcvr_txp(xcvr_txp),
+        .xcvr_txn(xcvr_txn),
+        .xcvr_rxp(xcvr_rxp),
+        .xcvr_rxn(xcvr_rxn),
 
-wire [DATA_W-1:0] serdes_tx_data;
-wire [HDR_W-1:0]  serdes_tx_hdr;
-wire [DATA_W-1:0] serdes_rx_data;
-wire [HDR_W-1:0]  serdes_rx_hdr;
-wire serdes_rx_bitslip;
+        /*
+         * GT user clocks
+         */
+        .rx_clk(rx_clk),
+        .rx_rst_in(rx_rst_in || rx_reset_req),
+        .rx_rst_out(rx_rst_out),
+        .tx_clk(tx_clk),
+        .tx_rst_in(tx_rst_in),
+        .tx_rst_out(tx_rst_out),
 
-assign gt_txdata = serdes_tx_data;
-assign gt_txheader = {4'd0, serdes_tx_hdr};
-assign gt_rxgearboxslip = serdes_rx_bitslip;
+        /*
+         * Serdes interface
+         */
+        .serdes_tx_data(serdes_tx_data),
+        .serdes_tx_data_valid(serdes_tx_data_valid),
+        .serdes_tx_hdr(serdes_tx_hdr),
+        .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+        .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+        .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+        .serdes_tx_gbx_start(serdes_tx_gbx_start),
+        .serdes_rx_data(serdes_rx_data),
+        .serdes_rx_data_valid(serdes_rx_data_valid),
+        .serdes_rx_hdr(serdes_rx_hdr),
+        .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
+        .serdes_rx_bitslip(serdes_rx_bitslip)
+    );
 
-if (!SIM) begin
-    assign serdes_rx_data = gt_rxdata;
-    assign serdes_rx_hdr = gt_rxheader[1:0];
+end else begin : gt
+
+    taxi_eth_phy_25g_us_gt #(
+        .SIM(SIM),
+        .VENDOR(VENDOR),
+        .FAMILY(FAMILY),
+
+        .HAS_COMMON(HAS_COMMON),
+
+        // GT type
+        .GT_TYPE(GT_TYPE),
+
+        // PLL parameters
+        .QPLL0_PD(QPLL0_PD),
+        .QPLL1_PD(QPLL1_PD),
+        .QPLL0_EXT_CTRL(QPLL0_EXT_CTRL),
+        .QPLL1_EXT_CTRL(QPLL1_EXT_CTRL),
+
+        // GT parameters
+        .GT_TX_PD(GT_TX_PD),
+        .GT_TX_QPLL_SEL(GT_TX_QPLL_SEL),
+        .GT_TX_POLARITY(GT_TX_POLARITY),
+        .GT_TX_ELECIDLE(GT_TX_ELECIDLE),
+        .GT_TX_INHIBIT(GT_TX_INHIBIT),
+        .GT_TX_DIFFCTRL(GT_TX_DIFFCTRL),
+        .GT_TX_MAINCURSOR(GT_TX_MAINCURSOR),
+        .GT_TX_POSTCURSOR(GT_TX_POSTCURSOR),
+        .GT_TX_PRECURSOR(GT_TX_PRECURSOR),
+        .GT_RX_PD(GT_RX_PD),
+        .GT_RX_QPLL_SEL(GT_RX_QPLL_SEL),
+        .GT_RX_LPM_EN(GT_RX_LPM_EN),
+        .GT_RX_POLARITY(GT_RX_POLARITY),
+
+        // MAC/PHY parameters
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W)
+    )
+    gt_inst (
+        .xcvr_ctrl_clk(xcvr_ctrl_clk),
+        .xcvr_ctrl_rst(xcvr_ctrl_rst),
+
+        /*
+         * Common
+         */
+        .xcvr_gtpowergood_out(xcvr_gtpowergood_out),
+
+        /*
+         * PLL out
+         */
+        .xcvr_gtrefclk00_in(xcvr_gtrefclk00_in),
+        .xcvr_qpll0pd_in(xcvr_qpll0pd_in),
+        .xcvr_qpll0reset_in(xcvr_qpll0reset_in),
+        .xcvr_qpll0pcierate_in(xcvr_qpll0pcierate_in),
+        .xcvr_qpll0lock_out(xcvr_qpll0lock_out),
+        .xcvr_qpll0clk_out(xcvr_qpll0clk_out),
+        .xcvr_qpll0refclk_out(xcvr_qpll0refclk_out),
+        .xcvr_gtrefclk01_in(xcvr_gtrefclk01_in),
+        .xcvr_qpll1pd_in(xcvr_qpll1pd_in),
+        .xcvr_qpll1reset_in(xcvr_qpll1reset_in),
+        .xcvr_qpll1pcierate_in(xcvr_qpll1pcierate_in),
+        .xcvr_qpll1lock_out(xcvr_qpll1lock_out),
+        .xcvr_qpll1clk_out(xcvr_qpll1clk_out),
+        .xcvr_qpll1refclk_out(xcvr_qpll1refclk_out),
+
+        /*
+         * PLL in
+         */
+        .xcvr_qpll0lock_in(xcvr_qpll0lock_in),
+        .xcvr_qpll0clk_in(xcvr_qpll0clk_in),
+        .xcvr_qpll0refclk_in(xcvr_qpll0refclk_in),
+        .xcvr_qpll1lock_in(xcvr_qpll1lock_in),
+        .xcvr_qpll1clk_in(xcvr_qpll1clk_in),
+        .xcvr_qpll1refclk_in(xcvr_qpll1refclk_in),
+
+        /*
+         * Serial data
+         */
+        .xcvr_txp(xcvr_txp),
+        .xcvr_txn(xcvr_txn),
+        .xcvr_rxp(xcvr_rxp),
+        .xcvr_rxn(xcvr_rxn),
+
+        /*
+         * GT user clocks
+         */
+        .rx_clk(rx_clk),
+        .rx_rst_in(rx_rst_in || rx_reset_req),
+        .rx_rst_out(rx_rst_out),
+        .tx_clk(tx_clk),
+        .tx_rst_in(tx_rst_in),
+        .tx_rst_out(tx_rst_out),
+
+        /*
+         * Serdes interface
+         */
+        .serdes_tx_data(serdes_tx_data),
+        .serdes_tx_data_valid(serdes_tx_data_valid),
+        .serdes_tx_hdr(serdes_tx_hdr),
+        .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+        .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+        .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+        .serdes_tx_gbx_start(serdes_tx_gbx_start),
+        .serdes_rx_data(serdes_rx_data),
+        .serdes_rx_data_valid(serdes_rx_data_valid),
+        .serdes_rx_hdr(serdes_rx_hdr),
+        .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
+        .serdes_rx_bitslip(serdes_rx_bitslip)
+    );
+
 end
 
 taxi_eth_mac_phy_10g #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .TX_GBX_IF_EN(CFG_LOW_LATENCY),
+    .RX_GBX_IF_EN(CFG_LOW_LATENCY),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -445,9 +562,16 @@ eth_mac_phy_10g_inst (
      * Serdes interface
      */
     .serdes_tx_data(serdes_tx_data),
+    .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
+    .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+    .serdes_tx_gbx_start(serdes_tx_gbx_start),
     .serdes_rx_data(serdes_rx_data),
+    .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
     .serdes_rx_bitslip(serdes_rx_bitslip),
     .serdes_rx_reset_req(rx_reset_req),
 

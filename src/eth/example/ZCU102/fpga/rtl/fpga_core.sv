@@ -622,6 +622,9 @@ end else begin : sfp_mac
 
         .CNT(4),
 
+        // GT config
+        .CFG_LOW_LATENCY(1),
+
         // GT type
         .GT_TYPE("GTH"),
 

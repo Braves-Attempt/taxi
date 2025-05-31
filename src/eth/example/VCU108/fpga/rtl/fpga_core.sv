@@ -348,6 +348,9 @@ taxi_eth_mac_25g_us #(
 
     .CNT(4),
 
+    // GT config
+    .CFG_LOW_LATENCY(1),
+
     // GT type
     .GT_TYPE("GTY"),
 

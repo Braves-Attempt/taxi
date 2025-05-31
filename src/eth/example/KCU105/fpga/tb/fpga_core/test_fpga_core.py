@@ -71,11 +71,38 @@ class TB:
             cocotb.start_soon(Clock(dut.sfp_mgt_refclk_0_p, 6.4, units="ns").start())
 
             for ch in dut.sfp_mac.sfp_mac_inst.ch:
-                cocotb.start_soon(Clock(ch.ch_inst.gt_inst.tx_clk, 6.4, units="ns").start())
-                cocotb.start_soon(Clock(ch.ch_inst.gt_inst.rx_clk, 6.4, units="ns").start())
+                gt_inst = ch.ch_inst.gt.gt_inst
 
-                self.sfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.gt_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
-                self.sfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.gt_inst.tx_clk, reverse=True))
+                if ch.ch_inst.CFG_LOW_LATENCY.value:
+                    clk = 6.206
+                    gbx_cfg = (33, [32])
+                else:
+                    clk = 6.4
+                    gbx_cfg = None
+
+                cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
+                cocotb.start_soon(Clock(gt_inst.rx_clk, clk, units="ns").start())
+
+                self.sfp_sources.append(BaseRSerdesSource(
+                    data=gt_inst.serdes_rx_data,
+                    data_valid=gt_inst.serdes_rx_data_valid,
+                    hdr=gt_inst.serdes_rx_hdr,
+                    hdr_valid=gt_inst.serdes_rx_hdr_valid,
+                    clock=gt_inst.rx_clk,
+                    slip=gt_inst.serdes_rx_bitslip,
+                    reverse=True,
+                    gbx_cfg=gbx_cfg
+                ))
+                self.sfp_sinks.append(BaseRSerdesSink(
+                    data=gt_inst.serdes_tx_data,
+                    data_valid=gt_inst.serdes_tx_data_valid,
+                    hdr=gt_inst.serdes_tx_hdr,
+                    hdr_valid=gt_inst.serdes_tx_hdr_valid,
+                    gbx_start=gt_inst.serdes_tx_gbx_start,
+                    clock=gt_inst.tx_clk,
+                    reverse=True,
+                    gbx_cfg=gbx_cfg
+                ))
 
         self.uart_source = UartSource(dut.uart_rxd, baud=921600, bits=8, stop_bits=1)
         self.uart_sink = UartSink(dut.uart_txd, baud=921600, bits=8, stop_bits=1)

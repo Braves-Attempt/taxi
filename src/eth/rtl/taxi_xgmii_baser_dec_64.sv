@@ -19,7 +19,8 @@ module taxi_xgmii_baser_dec_64 #
 (
     parameter DATA_W = 64,
     parameter CTRL_W = (DATA_W/8),
-    parameter HDR_W = 2
+    parameter HDR_W = 2,
+    parameter logic GBX_IF_EN = 1'b0
 )
 (
     input  wire logic              clk,
@@ -29,13 +30,16 @@ module taxi_xgmii_baser_dec_64 #
      * 10GBASE-R encoded input
      */
     input  wire logic [DATA_W-1:0] encoded_rx_data,
+    input  wire logic              encoded_rx_data_valid = 1'b1,
     input  wire logic [HDR_W-1:0]  encoded_rx_hdr,
+    input  wire logic              encoded_rx_hdr_valid = 1'b1,
 
     /*
      * XGMII interface
      */
     output wire logic [DATA_W-1:0] xgmii_rxd,
     output wire logic [CTRL_W-1:0] xgmii_rxc,
+    output wire logic              xgmii_rx_valid,
 
     /*
      * Status
@@ -110,6 +114,7 @@ logic [CTRL_W-1:0] decode_err;
 
 logic [DATA_W-1:0] xgmii_rxd_reg = '0, xgmii_rxd_next;
 logic [CTRL_W-1:0] xgmii_rxc_reg = '0, xgmii_rxc_next;
+logic xgmii_rx_valid_reg = 1'b0, xgmii_rx_valid_next;
 
 logic rx_bad_block_reg = 1'b0, rx_bad_block_next;
 logic rx_sequence_error_reg = 1'b0, rx_sequence_error_next;
@@ -117,6 +122,7 @@ logic frame_reg = 1'b0, frame_next;
 
 assign xgmii_rxd = xgmii_rxd_reg;
 assign xgmii_rxc = xgmii_rxc_reg;
+assign xgmii_rx_valid = xgmii_rx_valid_reg;
 
 assign rx_bad_block = rx_bad_block_reg;
 assign rx_sequence_error = rx_sequence_error_reg;
@@ -124,6 +130,7 @@ assign rx_sequence_error = rx_sequence_error_reg;
 always_comb begin
     xgmii_rxd_next = {8{XGMII_ERROR}};
     xgmii_rxc_next = 8'hff;
+    xgmii_rx_valid_next = 1'b0;
     rx_bad_block_next = 1'b0;
     rx_sequence_error_next = 1'b0;
     frame_next = frame_reg;
@@ -173,12 +180,16 @@ always_comb begin
         endcase
     end
 
-    // use only four bits of block type for reduced fanin
-    if (encoded_rx_hdr[0] == 0) begin
+    if (GBX_IF_EN && !encoded_rx_data_valid) begin
+        // wait for data
+    end else if (encoded_rx_hdr[0] == 0) begin
+        // data block
         xgmii_rxd_next = encoded_rx_data;
         xgmii_rxc_next = 8'h00;
         rx_bad_block_next = 1'b0;
     end else begin
+        // control block
+        // use only four bits of block type for reduced fanin
         case (encoded_rx_data[7:4])
             BLOCK_TYPE_CTRL[7:4]: begin
                 // C7 C6 C5 C4 C3 C2 C1 C0 BT
@@ -340,7 +351,9 @@ always_comb begin
     end
 
     // check all block type bits to detect bad encodings
-    if (encoded_rx_hdr == SYNC_DATA) begin
+    if (GBX_IF_EN && !encoded_rx_hdr_valid) begin
+        // wait for header
+    end else if (encoded_rx_hdr == SYNC_DATA) begin
         // data - nothing encoded
     end else if (encoded_rx_hdr == SYNC_CTRL) begin
         // control - check for bad block types
@@ -378,12 +391,14 @@ end
 always_ff @(posedge clk) begin
     xgmii_rxd_reg <= xgmii_rxd_next;
     xgmii_rxc_reg <= xgmii_rxc_next;
+    xgmii_rx_valid_reg <= xgmii_rx_valid_next;
 
     rx_bad_block_reg <= rx_bad_block_next;
     rx_sequence_error_reg <= rx_sequence_error_next;
     frame_reg <= frame_next;
 
     if (rst) begin
+        xgmii_rx_valid_reg <= 1'b0;
         frame_reg <= 1'b0;
     end
 end

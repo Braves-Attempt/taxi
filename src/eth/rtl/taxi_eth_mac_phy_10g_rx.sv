@@ -19,6 +19,7 @@ module taxi_eth_mac_phy_10g_rx #
 (
     parameter DATA_W = 64,
     parameter HDR_W = (DATA_W/32),
+    parameter logic GBX_IF_EN = 1'b0,
     parameter logic PTP_TS_EN = 1'b0,
     parameter logic PTP_TS_FMT_TOD = 1'b1,
     parameter PTP_TS_W = PTP_TS_FMT_TOD ? 96 : 64,
@@ -43,7 +44,9 @@ module taxi_eth_mac_phy_10g_rx #
      * SERDES interface
      */
     input  wire logic [DATA_W-1:0]    serdes_rx_data,
+    input  wire logic                 serdes_rx_data_valid = 1'b1,
     input  wire logic [HDR_W-1:0]     serdes_rx_hdr,
+    input  wire logic                 serdes_rx_hdr_valid = 1'b1,
     output wire logic                 serdes_rx_bitslip,
     output wire logic                 serdes_rx_reset_req,
 
@@ -85,11 +88,14 @@ module taxi_eth_mac_phy_10g_rx #
 );
 
 wire [DATA_W-1:0] encoded_rx_data;
+wire encoded_rx_data_valid;
 wire [HDR_W-1:0]  encoded_rx_hdr;
+wire encoded_rx_hdr_valid;
 
 taxi_eth_phy_10g_rx_if #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .BIT_REVERSE(BIT_REVERSE),
     .SCRAMBLER_DISABLE(SCRAMBLER_DISABLE),
     .PRBS31_EN(PRBS31_EN),
@@ -106,13 +112,17 @@ eth_phy_10g_rx_if_inst (
      * 10GBASE-R encoded interface
      */
     .encoded_rx_data(encoded_rx_data),
+    .encoded_rx_data_valid(encoded_rx_data_valid),
     .encoded_rx_hdr(encoded_rx_hdr),
+    .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
 
     /*
      * SERDES interface
      */
     .serdes_rx_data(serdes_rx_data),
+    .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
     .serdes_rx_bitslip(serdes_rx_bitslip),
     .serdes_rx_reset_req(serdes_rx_reset_req),
 
@@ -135,6 +145,7 @@ eth_phy_10g_rx_if_inst (
 taxi_axis_baser_rx_64 #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .PTP_TS_EN(PTP_TS_EN),
     .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
     .PTP_TS_W(PTP_TS_W)
@@ -147,7 +158,9 @@ axis_baser_rx_inst (
      * 10GBASE-R encoded input
      */
     .encoded_rx_data(encoded_rx_data),
+    .encoded_rx_data_valid(encoded_rx_data_valid),
     .encoded_rx_hdr(encoded_rx_hdr),
+    .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
 
     /*
      * Receive interface (AXI stream)

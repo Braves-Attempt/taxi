@@ -141,6 +141,9 @@ taxi_eth_mac_25g_us #(
 
     .CNT(2),
 
+    // GT config
+    .CFG_LOW_LATENCY(1),
+
     // GT type
     .GT_TYPE(FAMILY == "kintexu" ? "GTH" : "GTY"),
 

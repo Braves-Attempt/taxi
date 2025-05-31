@@ -48,11 +48,38 @@ class TB:
 
         for inst in dut.gty_quad:
             for ch in inst.mac_inst.ch:
-                cocotb.start_soon(Clock(ch.ch_inst.gt_inst.tx_clk, 2.56, units="ns").start())
-                cocotb.start_soon(Clock(ch.ch_inst.gt_inst.rx_clk, 2.56, units="ns").start())
+                gt_inst = ch.ch_inst.gt.gt_inst
 
-                self.qsfp_sources.append(BaseRSerdesSource(ch.ch_inst.serdes_rx_data, ch.ch_inst.serdes_rx_hdr, ch.ch_inst.gt_inst.rx_clk, slip=ch.ch_inst.serdes_rx_bitslip, reverse=True))
-                self.qsfp_sinks.append(BaseRSerdesSink(ch.ch_inst.serdes_tx_data, ch.ch_inst.serdes_tx_hdr, ch.ch_inst.gt_inst.tx_clk, reverse=True))
+                if ch.ch_inst.CFG_LOW_LATENCY.value:
+                    clk = 2.482
+                    gbx_cfg = (66, [64, 65])
+                else:
+                    clk = 2.56
+                    gbx_cfg = None
+
+                cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
+                cocotb.start_soon(Clock(gt_inst.rx_clk, clk, units="ns").start())
+
+                self.qsfp_sources.append(BaseRSerdesSource(
+                    data=gt_inst.serdes_rx_data,
+                    data_valid=gt_inst.serdes_rx_data_valid,
+                    hdr=gt_inst.serdes_rx_hdr,
+                    hdr_valid=gt_inst.serdes_rx_hdr_valid,
+                    clock=gt_inst.rx_clk,
+                    slip=gt_inst.serdes_rx_bitslip,
+                    reverse=True,
+                    gbx_cfg=gbx_cfg
+                ))
+                self.qsfp_sinks.append(BaseRSerdesSink(
+                    data=gt_inst.serdes_tx_data,
+                    data_valid=gt_inst.serdes_tx_data_valid,
+                    hdr=gt_inst.serdes_tx_hdr,
+                    hdr_valid=gt_inst.serdes_tx_hdr_valid,
+                    gbx_start=gt_inst.serdes_tx_gbx_start,
+                    clock=gt_inst.tx_clk,
+                    reverse=True,
+                    gbx_cfg=gbx_cfg
+                ))
 
         dut.qsfp_0_modprsl.setimmediatevalue(0)
         dut.qsfp_0_intl.setimmediatevalue(0)

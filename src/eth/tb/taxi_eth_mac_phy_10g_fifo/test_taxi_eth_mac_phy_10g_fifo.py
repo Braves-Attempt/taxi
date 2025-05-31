@@ -38,16 +38,22 @@ except ImportError:
 
 
 class TB:
-    def __init__(self, dut):
+    def __init__(self, dut, gbx_cfg=None):
         self.dut = dut
 
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
         if len(dut.serdes_tx_data) == 64:
-            self.clk_period = 6.4
+            if gbx_cfg:
+                self.clk_period = 6.206
+            else:
+                self.clk_period = 6.4
         else:
-            self.clk_period = 3.2
+            if gbx_cfg:
+                self.clk_period = 3.102
+            else:
+                self.clk_period = 3.2
 
         cocotb.start_soon(Clock(dut.logic_clk, self.clk_period, units="ns").start())
         cocotb.start_soon(Clock(dut.rx_clk, self.clk_period, units="ns").start())
@@ -55,8 +61,26 @@ class TB:
         cocotb.start_soon(Clock(dut.stat_clk, self.clk_period, units="ns").start())
         cocotb.start_soon(Clock(dut.ptp_sample_clk, 9.9, units="ns").start())
 
-        self.serdes_source = BaseRSerdesSource(dut.serdes_rx_data, dut.serdes_rx_hdr, dut.rx_clk, slip=dut.serdes_rx_bitslip)
-        self.serdes_sink = BaseRSerdesSink(dut.serdes_tx_data, dut.serdes_tx_hdr, dut.tx_clk)
+        self.serdes_source = BaseRSerdesSource(
+            data=dut.serdes_rx_data,
+            data_valid=dut.serdes_rx_data_valid,
+            hdr=dut.serdes_rx_hdr,
+            hdr_valid=dut.serdes_rx_hdr_valid,
+            clock=dut.rx_clk,
+            slip=dut.serdes_rx_bitslip,
+            gbx_cfg=gbx_cfg
+        )
+        self.serdes_sink = BaseRSerdesSink(
+            data=dut.serdes_tx_data,
+            data_valid=dut.serdes_tx_data_valid,
+            hdr=dut.serdes_tx_hdr,
+            hdr_valid=dut.serdes_tx_hdr_valid,
+            gbx_req_start=dut.serdes_tx_gbx_req_start,
+            gbx_req_stall=dut.serdes_tx_gbx_req_stall,
+            gbx_start=dut.serdes_tx_gbx_start,
+            clock=dut.tx_clk,
+            gbx_cfg=gbx_cfg
+        )
 
         self.axis_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.logic_clk, dut.logic_rst)
         self.tx_cpl_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_tx_cpl), dut.logic_clk, dut.logic_rst)
@@ -97,9 +121,9 @@ class TB:
         await RisingEdge(self.dut.logic_clk)
 
 
-async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12):
+async def run_test_rx(dut, gbx_cfg=None, payload_lengths=None, payload_data=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.serdes_source.ifg = ifg
     tb.dut.cfg_tx_ifg.value = ifg
@@ -148,17 +172,18 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12):
 
         assert rx_frame.tdata == test_data
         assert frame_error == 0
-        assert abs(ptp_ts_ns - tx_frame_sfd_ns - tb.clk_period*4) < tb.clk_period*2
+        if gbx_cfg is None:
+            assert abs(ptp_ts_ns - tx_frame_sfd_ns - tb.clk_period*4) < tb.clk_period*2
 
     assert tb.axis_sink.empty()
 
-    await RisingEdge(dut.logic_clk)
-    await RisingEdge(dut.logic_clk)
+    for k in range(10):
+        await RisingEdge(dut.logic_clk)
 
 
-async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12):
+async def run_test_tx(dut, gbx_cfg=None, payload_lengths=None, payload_data=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.serdes_source.ifg = ifg
     tb.dut.cfg_tx_max_pkt_len.value = 9218
@@ -197,19 +222,20 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12):
         assert rx_frame.get_payload() == test_data
         assert rx_frame.check_fcs()
         assert rx_frame.ctrl is None
-        assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period*5) < tb.clk_period*2
+        if gbx_cfg is None:
+            assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period*5) < tb.clk_period*2
 
     assert tb.serdes_sink.empty()
 
-    await RisingEdge(dut.logic_clk)
-    await RisingEdge(dut.logic_clk)
+    for k in range(10):
+        await RisingEdge(dut.logic_clk)
 
 
-async def run_test_tx_alignment(dut, payload_data=None, ifg=12):
+async def run_test_tx_alignment(dut, gbx_cfg=None, payload_data=None, ifg=12):
 
     dic_en = int(cocotb.top.DIC_EN.value)
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     byte_width = tb.axis_source.width // 8
 
@@ -256,7 +282,8 @@ async def run_test_tx_alignment(dut, payload_data=None, ifg=12):
             assert rx_frame.get_payload() == test_data
             assert rx_frame.check_fcs()
             assert rx_frame.ctrl is None
-            assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period*5) < tb.clk_period*2
+            if gbx_cfg is None:
+                assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period*5) < tb.clk_period*2
 
             start_lane.append(rx_frame.start_lane)
 
@@ -296,13 +323,13 @@ async def run_test_tx_alignment(dut, payload_data=None, ifg=12):
 
     assert tb.serdes_sink.empty()
 
-    await RisingEdge(dut.logic_clk)
-    await RisingEdge(dut.logic_clk)
+    for k in range(10):
+        await RisingEdge(dut.logic_clk)
 
 
-async def run_test_rx_frame_sync(dut):
+async def run_test_rx_frame_sync(dut, gbx_cfg=None):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     await tb.reset()
 
@@ -352,20 +379,29 @@ def cycle_en():
 
 if cocotb.SIM_NAME:
 
+    gbx_cfgs = [None]
+
+    if cocotb.top.RX_GBX_IF_EN.value:
+        gbx_cfgs.append((33, [32]))
+        gbx_cfgs.append((66, [64, 65]))
+
     for test in [run_test_rx, run_test_tx]:
 
         factory = TestFactory(test)
         factory.add_option("payload_lengths", [size_list])
         factory.add_option("payload_data", [incrementing_payload])
         factory.add_option("ifg", [12, 0])
+        factory.add_option("gbx_cfg", gbx_cfgs)
         factory.generate_tests()
 
     factory = TestFactory(run_test_tx_alignment)
     factory.add_option("payload_data", [incrementing_payload])
     factory.add_option("ifg", [12])
+    factory.add_option("gbx_cfg", gbx_cfgs)
     factory.generate_tests()
 
     factory = TestFactory(run_test_rx_frame_sync)
+    factory.add_option("gbx_cfg", gbx_cfgs)
     factory.generate_tests()
 
 
@@ -391,8 +427,9 @@ def process_f_files(files):
 
 
 @pytest.mark.parametrize("dic_en", [1, 0])
+@pytest.mark.parametrize("gbx_en", [1, 0])
 @pytest.mark.parametrize("data_w", [64])
-def test_taxi_eth_mac_phy_10g_fifo(request, data_w, dic_en):
+def test_taxi_eth_mac_phy_10g_fifo(request, data_w, gbx_en, dic_en):
     dut = "taxi_eth_mac_phy_10g_fifo"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = module
@@ -408,6 +445,8 @@ def test_taxi_eth_mac_phy_10g_fifo(request, data_w, dic_en):
 
     parameters['DATA_W'] = data_w
     parameters['HDR_W'] = 2
+    parameters['TX_GBX_IF_EN'] = gbx_en
+    parameters['RX_GBX_IF_EN'] = parameters['TX_GBX_IF_EN']
     parameters['AXIS_DATA_W'] = parameters['DATA_W']
     parameters['PADDING_EN'] = 1
     parameters['DIC_EN'] = dic_en

@@ -24,19 +24,24 @@ from cocotbext.eth import XgmiiFrame
 
 class BaseRSerdesSource():
 
-    def __init__(self, data, hdr, clock, enable=None, slip=None, scramble=True, reverse=False, *args, **kwargs):
+    def __init__(self, data, hdr, clock, enable=None, slip=None, data_valid=None, hdr_valid=None,
+            gbx_start=None, scramble=True, reverse=False, gbx_cfg=None, *args, **kwargs):
+
         self.log = logging.getLogger(f"cocotb.{data._path}")
         self.data = data
         self.hdr = hdr
         self.clock = clock
         self.enable = enable
         self.slip = slip
+        self.data_valid = data_valid
+        self.hdr_valid = hdr_valid
+        self.gbx_start = gbx_start
         self.scramble = scramble
         self.reverse = reverse
 
         self.log.info("BASE-R serdes source")
-        self.log.info("Copyright (c) 2021 Alex Forencich")
-        self.log.info("https://github.com/alexforencich/verilog-ethernet")
+        self.log.info("Copyright (c) 2021-2025 FPGA Ninja, LLC")
+        self.log.info("https://github.com/fpganinja/taxi")
 
         super().__init__(*args, **kwargs)
 
@@ -52,6 +57,13 @@ class BaseRSerdesSource():
         self.force_offset_start = False
 
         self.bit_offset = 0
+
+        self.gbx_seq = 0
+        self.gbx_seq_len = None
+        self.gbx_seq_stall = None
+        self.gbx_in_bits = 66
+        self.gbx_out_bits = 66
+        self.gbx_bit_cnt = 0
 
         self.queue_occupancy_bytes = 0
         self.queue_occupancy_frames = 0
@@ -71,10 +83,63 @@ class BaseRSerdesSource():
         self.log.info("  Enable scrambler: %s", self.scramble)
         self.log.info("  Bit reverse: %s", self.reverse)
 
+        if gbx_cfg:
+            self.set_gbx_cfg(*gbx_cfg)
+
         self.data.setimmediatevalue(0)
+        if self.data_valid is not None:
+            self.data_valid.setimmediatevalue(0)
         self.hdr.setimmediatevalue(0)
+        if self.hdr_valid is not None:
+            self.hdr_valid.setimmediatevalue(0)
+        if self.gbx_start is not None:
+            self.gbx_start.setimmediatevalue(0)
 
         self._run_cr = cocotb.start_soon(self._run())
+
+    def set_gbx_cfg(self, seq_len=None, seq_stall=None):
+        self.log.info("Set gearbox configuration")
+
+        if seq_len is None:
+            self.log.info("Gearbox disabled")
+            self.gbx_bit_cnt = 0
+            self.gbx_seq_len = None
+            self.gbx_seq_stall = None
+            self.gbx_in_bits = 66
+            self.gbx_out_bits = 66
+            self.gbx_seq = 0
+
+        seq_stall = sorted(list(set(seq_stall)))
+
+        for x in seq_stall:
+            assert 0 <= x < seq_len
+
+        self.log.info("  Sequence length: %d cycles", seq_len)
+        self.log.info("  Stall cycles: %s", seq_stall)
+
+        out_bits = 66
+        in_cycles = seq_len
+        out_cycles = in_cycles - len(seq_stall)
+        in_bits = (out_bits * out_cycles) // in_cycles
+
+        self.log.info("  Input: %d bits (%d cycles)", in_bits, in_cycles)
+        self.log.info("  Output: %d bits (%d cycles)", out_bits, out_cycles)
+        self.log.info("  Gearbox ratio: %d:%d", in_bits, out_bits)
+
+        assert in_cycles*in_bits == out_cycles*out_bits
+
+        self.gbx_seq = 0
+        self.gbx_seq_len = seq_len
+        self.gbx_seq_stall = set(seq_stall)
+        self.gbx_in_bits = in_bits
+        self.gbx_out_bits = out_bits
+        self.gbx_bit_cnt = 0
+
+        for k in range(self.gbx_seq_len):
+            self.gbx_bit_cnt += in_bits
+            if k in self.gbx_seq_stall:
+                continue
+            self.gbx_bit_cnt = max(self.gbx_bit_cnt - out_bits, 0)
 
     async def send(self, frame):
         while self.full():
@@ -134,12 +199,51 @@ class BaseRSerdesSource():
         last_d = 0
         self.active = False
 
+        clk_period = 0
+        last_clk = 0
+        gbx_delay = 0
+
         while True:
             await RisingEdge(self.clock)
+
+            if not clk_period:
+                if last_clk:
+                    clk_period = get_sim_time() - last_clk
+                else:
+                    last_clk = get_sim_time()
 
             # clock enable
             if self.enable is not None and not self.enable.value:
                 continue
+
+            # gearbox sequence
+            if self.gbx_seq_len:
+                self.gbx_seq = (self.gbx_seq + 1) % self.gbx_seq_len
+
+                if self.gbx_start is not None:
+                    self.gbx_start.value = (self.gbx_seq == 0)
+
+                self.gbx_bit_cnt += self.gbx_in_bits
+
+                # stall cycle
+                if self.gbx_seq in self.gbx_seq_stall:
+                    self.data.value = 0
+                    if self.data_valid is not None:
+                        self.data_valid.value = 0
+                    self.hdr.value = 0
+                    if self.hdr_valid is not None:
+                        self.hdr_valid.value = 0
+                    continue
+
+                self.gbx_bit_cnt = max(self.gbx_bit_cnt - self.gbx_out_bits, 0)
+                gbx_delay = (self.gbx_bit_cnt * clk_period) // self.gbx_in_bits
+            else:
+                self.gbx_seq = 0
+                self.gbx_bit_cnt = 0
+                gbx_delay = 0
+
+                if self.gbx_start is not None:
+                    self.gbx_start.value = 0
 
             if ifg_cnt + deficit_idle_cnt > self.byte_lanes-1 or (not self.enable_dic and ifg_cnt > 4):
                 # in IFG
@@ -158,7 +262,7 @@ class BaseRSerdesSource():
                     self.queue_occupancy_bytes -= len(frame)
                     self.queue_occupancy_frames -= 1
                     self.current_frame = frame
-                    frame.sim_time_start = get_sim_time()
+                    frame.sim_time_start = get_sim_time() - gbx_delay
                     frame.sim_time_sfd = None
                     frame.sim_time_end = None
                     self.log.info("TX frame: %s", frame)
@@ -201,14 +305,14 @@ class BaseRSerdesSource():
                     if frame is not None:
                         d = frame.data[frame_offset]
                         if frame.sim_time_sfd is None and d == EthPre.SFD:
-                            frame.sim_time_sfd = get_sim_time()
+                            frame.sim_time_sfd = get_sim_time() - gbx_delay
                         dl.append(d)
                         cl.append(frame.ctrl[frame_offset])
                         frame_offset += 1
 
                         if frame_offset >= len(frame.data):
                             ifg_cnt = max(self.ifg - (self.byte_lanes-k), 0)
-                            frame.sim_time_end = get_sim_time()
+                            frame.sim_time_end = get_sim_time() - gbx_delay
                             frame.handle_tx_complete()
                             frame = None
                             self.current_frame = None
@@ -349,29 +453,49 @@ class BaseRSerdesSource():
                 hdr = sum(1 << (1-i) for i in range(2) if (hdr >> i) & 1)
 
             self.data.value = data
+            if self.data_valid is not None:
+                self.data_valid.value = 1
             self.hdr.value = hdr
+            if self.hdr_valid is not None:
+                self.hdr_valid.value = 1
 
 
 class BaseRSerdesSink:
 
-    def __init__(self, data, hdr, clock, enable=None, scramble=True, reverse=False, *args, **kwargs):
+    def __init__(self, data, hdr, clock, enable=None, data_valid=None, hdr_valid=None,
+            gbx_req_start=None, gbx_req_stall=None, gbx_start=None,
+            scramble=True, reverse=False, gbx_cfg=None, *args, **kwargs):
+
         self.log = logging.getLogger(f"cocotb.{data._path}")
         self.data = data
         self.hdr = hdr
         self.clock = clock
         self.enable = enable
+        self.data_valid = data_valid
+        self.hdr_valid = hdr_valid
+        self.gbx_req_start = gbx_req_start
+        self.gbx_req_stall = gbx_req_stall
+        self.gbx_start = gbx_start
         self.scramble = scramble
         self.reverse = reverse
 
         self.log.info("BASE-R serdes sink")
-        self.log.info("Copyright (c) 2021 Alex Forencich")
-        self.log.info("https://github.com/alexforencich/verilog-ethernet")
+        self.log.info("Copyright (c) 2021-2025 FPGA Ninja, LLC")
+        self.log.info("https://github.com/fpganinja/taxi")
 
         super().__init__(*args, **kwargs)
 
         self.active = False
         self.queue = Queue()
         self.active_event = Event()
+
+        self.gbx_seq = 0
+        self.gbx_seq_gen = 0
+        self.gbx_seq_len = None
+        self.gbx_seq_stall = None
+        self.gbx_in_bits = 66
+        self.gbx_out_bits = 66
+        self.gbx_bit_cnt = 0
 
         self.queue_occupancy_bytes = 0
         self.queue_occupancy_frames = 0
@@ -388,7 +512,56 @@ class BaseRSerdesSink:
         self.log.info("  Enable scrambler: %s", self.scramble)
         self.log.info("  Bit reverse: %s", self.reverse)
 
+        if gbx_cfg:
+            self.set_gbx_cfg(*gbx_cfg)
+
+        if self.gbx_req_start is not None:
+            self.gbx_req_start.setimmediatevalue(0)
+        if self.gbx_req_stall is not None:
+            self.gbx_req_stall.setimmediatevalue(0)
+
         self._run_cr = cocotb.start_soon(self._run())
+
+    def set_gbx_cfg(self, seq_len=None, seq_stall=None):
+        self.log.info("Set gearbox configuration")
+
+        if seq_len is None:
+            self.log.info("Gearbox disabled")
+            self.gbx_seq_len = None
+            self.gbx_seq_stall = None
+
+        seq_stall = sorted(list(set(seq_stall)))
+
+        for x in seq_stall:
+            assert 0 <= x < seq_len
+
+        self.log.info("  Sequence length: %d cycles", seq_len)
+        self.log.info("  Stall cycles: %s", seq_stall)
+
+        in_bits = 66
+        out_cycles = seq_len
+        in_cycles = out_cycles - len(seq_stall)
+        out_bits = (in_bits * in_cycles) // out_cycles
+
+        self.log.info("  Input: %d bits (%d cycles)", in_bits, in_cycles)
+        self.log.info("  Output: %d bits (%d cycles)", out_bits, out_cycles)
+        self.log.info("  Gearbox ratio: %d:%d", in_bits, out_bits)
+
+        assert in_cycles*in_bits == out_cycles*out_bits
+
+        self.gbx_seq = 0
+        self.gbx_seq_gen = 0
+        self.gbx_seq_len = seq_len
+        self.gbx_seq_stall = set(seq_stall)
+        self.gbx_in_bits = in_bits
+        self.gbx_out_bits = out_bits
+        self.gbx_bit_cnt = 0
+
+        for k in range(self.gbx_seq_len):
+            self.gbx_bit_cnt = max(self.gbx_bit_cnt - out_bits, 0)
+            if k in self.gbx_seq_stall:
+                continue
+            self.gbx_bit_cnt += in_bits
 
     def _recv(self, frame, compact=True):
         if self.queue.empty():
@@ -436,12 +609,68 @@ class BaseRSerdesSink:
         scrambler_state = 0
         self.active = False
 
+        clk_period = 0
+        last_clk = 0
+        gbx_delay = 0
+        sync_bad = True
+
         while True:
             await RisingEdge(self.clock)
+
+            if not clk_period:
+                if last_clk:
+                    clk_period = get_sim_time() - last_clk
+                else:
+                    last_clk = get_sim_time()
 
             # clock enable
             if self.enable is not None and not self.enable.value:
                 continue
+
+            # gearbox sequence
+            if self.gbx_seq_len:
+                # generation
+                self.gbx_seq_gen = (self.gbx_seq_gen + 1) % self.gbx_seq_len
+
+                if self.gbx_req_start is not None:
+                    self.gbx_req_start.value = (self.gbx_seq_gen == 0)
+
+                # stall cycle
+                if self.gbx_req_stall is not None:
+                    self.gbx_req_stall.value = (self.gbx_seq_gen in self.gbx_seq_stall)
+
+                # sync
+                self.gbx_seq = (self.gbx_seq + 1) % self.gbx_seq_len
+
+                if self.gbx_start is not None:
+                    if self.gbx_start.value.integer:
+                        self.gbx_seq = 0
+
+                self.gbx_bit_cnt = max(self.gbx_bit_cnt - self.gbx_out_bits, 0)
+
+                if self.gbx_seq in self.gbx_seq_stall:
+                    continue
+
+                self.gbx_bit_cnt += self.gbx_in_bits
+                gbx_delay = (self.gbx_bit_cnt * clk_period) // self.gbx_out_bits
+            else:
+                self.gbx_seq = 0
+                self.gbx_seq_gen = 0
+                self.gbx_bit_cnt = 0
+                gbx_delay = 0
+
+                if self.gbx_start is not None:
+                    self.gbx_start.value = 1
+
+            if self.data_valid is not None:
+                if not self.data_valid.value.integer:
+                    # stall
+                    if self.gbx_seq_len and not sync_bad:
+                        sync_bad = True
+                        self.log.warning("Data not valid outside of gearbox stall cycle")
+                    continue
+
+            sync_bad = False
 
             data = self.data.value.integer
             hdr = self.hdr.value.integer
@@ -590,7 +819,7 @@ class BaseRSerdesSink:
                     if c_val and d_val == XgmiiCtrl.START:
                         # start
                         frame = XgmiiFrame(bytearray([EthPre.PRE]), [0])
-                        frame.sim_time_start = get_sim_time()
+                        frame.sim_time_start = get_sim_time() + gbx_delay
                         frame.start_lane = offset
                 else:
                     if c_val:
@@ -601,7 +830,7 @@ class BaseRSerdesSink:
                             frame.ctrl.append(c_val)
 
                         frame.compact()
-                        frame.sim_time_end = get_sim_time()
+                        frame.sim_time_end = get_sim_time() + gbx_delay
                         self.log.info("RX frame: %s", frame)
 
                         self.queue_occupancy_bytes += len(frame)
@@ -613,7 +842,7 @@ class BaseRSerdesSink:
                         frame = None
                     else:
                         if frame.sim_time_sfd is None and d_val == EthPre.SFD:
-                            frame.sim_time_sfd = get_sim_time()
+                            frame.sim_time_sfd = get_sim_time() + gbx_delay
 
                         frame.data.append(d_val)
                         frame.ctrl.append(c_val)

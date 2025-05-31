@@ -20,6 +20,8 @@ module test_taxi_eth_mac_phy_10g #
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 64,
     parameter HDR_W = 2,
+    parameter logic TX_GBX_IF_EN = 1'b0,
+    parameter logic RX_GBX_IF_EN = TX_GBX_IF_EN,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -61,9 +63,16 @@ taxi_axis_if #(.DATA_W(PTP_TS_W), .KEEP_W(1), .ID_EN(1), .ID_W(TX_TAG_W)) m_axis
 taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(RX_USER_W)) m_axis_rx();
 
 logic [DATA_W-1:0] serdes_tx_data;
+logic serdes_tx_data_valid;
 logic [HDR_W-1:0] serdes_tx_hdr;
+logic serdes_tx_hdr_valid;
+logic serdes_tx_gbx_req_start;
+logic serdes_tx_gbx_req_stall;
+logic serdes_tx_gbx_start;
 logic [DATA_W-1:0] serdes_rx_data;
+logic serdes_rx_data_valid;
 logic [HDR_W-1:0] serdes_rx_hdr;
+logic serdes_rx_hdr_valid;
 logic serdes_rx_bitslip;
 logic serdes_rx_reset_req;
 
@@ -184,6 +193,8 @@ logic cfg_rx_pfc_en;
 taxi_eth_mac_phy_10g #(
     .DATA_W(DATA_W),
     .HDR_W(HDR_W),
+    .TX_GBX_IF_EN(TX_GBX_IF_EN),
+    .RX_GBX_IF_EN(RX_GBX_IF_EN),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -229,9 +240,16 @@ uut (
      * SERDES interface
      */
     .serdes_tx_data(serdes_tx_data),
+    .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
+    .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+    .serdes_tx_gbx_start(serdes_tx_gbx_start),
     .serdes_rx_data(serdes_rx_data),
+    .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),
+    .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
     .serdes_rx_bitslip(serdes_rx_bitslip),
     .serdes_rx_reset_req(serdes_rx_reset_req),
 

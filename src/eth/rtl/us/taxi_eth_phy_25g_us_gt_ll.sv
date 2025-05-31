@@ -13,9 +13,9 @@ Authors:
 `default_nettype none
 
 /*
- * Transceiver wrapper for UltraScale/UltraScale+
+ * Transceiver wrapper for UltraScale/UltraScale+ (low latency)
  */
-module taxi_eth_phy_25g_us_gt #
+module taxi_eth_phy_25g_us_gt_ll #
 (
     parameter logic SIM = 1'b0,
     parameter string VENDOR = "XILINX",
@@ -370,8 +370,89 @@ if (!SIM) begin
     assign serdes_rx_hdr_valid = gt_rxheadervalid[0];
 end
 
-assign serdes_tx_gbx_req_start = 1'b0;
-assign serdes_tx_gbx_req_stall = 1'b0;
+if (GT_TYPE == "GTY") begin : tx_seq
+    // 66 clock cycle sequence for GTY, with two stalls on cycles 64 and 65
+    // 64-bit internal, 64-bit external datapath width (required for operation at 25G)
+
+    // Generate gearbox request signals
+    logic [6:0] tx_seq_gen_reg = '0;
+    logic tx_req_start_reg = 1'b0;
+    logic tx_req_stall_reg = 1'b0;
+
+    assign serdes_tx_gbx_req_start = tx_req_start_reg;
+    assign serdes_tx_gbx_req_stall = tx_req_stall_reg;
+
+    always @(posedge tx_clk) begin
+        tx_req_start_reg <= 1'b0;
+        tx_req_stall_reg <= 1'b0;
+
+        tx_seq_gen_reg <= tx_seq_gen_reg - 1;
+        if (tx_seq_gen_reg == 0) begin
+            tx_seq_gen_reg <= 65;
+            tx_req_start_reg <= 1'b1;
+        end
+        if (tx_seq_gen_reg == 2 || tx_seq_gen_reg == 1) begin
+            tx_req_stall_reg <= 1'b1;
+        end
+    end
+
+    // Generate TX sequence
+    logic [6:0] tx_seq_reg = '0;
+
+    assign gt_txsequence = {1'b0, tx_seq_reg[6:1]};
+
+    always @(posedge tx_clk) begin
+        tx_seq_reg <= tx_seq_reg + 1;
+        if (tx_seq_reg == 65) begin
+            tx_seq_reg <= '0;
+        end
+        if (serdes_tx_gbx_start) begin
+            tx_seq_reg <= 1;
+        end
+    end
+
+end else begin : tx_seq
+    // 33 clock cycle sequence for GTH, with one stall on cycle 32
+    // 32-bit internal, 64-bit external datapath width
+
+    // Generate gearbox request signals
+    logic [5:0] tx_seq_gen_reg = '0;
+    logic tx_req_start_reg = 1'b0;
+    logic tx_req_stall_reg = 1'b0;
+
+    assign serdes_tx_gbx_req_start = tx_req_start_reg;
+    assign serdes_tx_gbx_req_stall = tx_req_stall_reg;
+
+    always @(posedge tx_clk) begin
+        tx_req_start_reg <= 1'b0;
+        tx_req_stall_reg <= 1'b0;
+
+        tx_seq_gen_reg <= tx_seq_gen_reg - 1;
+        if (tx_seq_gen_reg == 0) begin
+            tx_seq_gen_reg <= 32;
+            tx_req_start_reg <= 1'b1;
+        end
+        if (tx_seq_gen_reg == 1) begin
+            tx_req_stall_reg <= 1'b1;
+        end
+    end
+
+    // Generate TX sequence
+    logic [5:0] tx_seq_reg = '0;
+
+    assign gt_txsequence = {1'b0, tx_seq_reg};
+
+    always @(posedge tx_clk) begin
+        tx_seq_reg <= tx_seq_reg + 1;
+        if (tx_seq_reg == 32) begin
+            tx_seq_reg <= '0;
+        end
+        if (serdes_tx_gbx_start) begin
+            tx_seq_reg <= 1;
+        end
+    end
+
+end
 
 if (SIM) begin : xcvr
     // simulation (no GT core)
@@ -400,8 +481,8 @@ if (SIM) begin : xcvr
 end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
     // UltraScale+ GTY (with common)
 
-    taxi_eth_phy_25g_us_gty_full
-    taxi_eth_phy_25g_us_gty_full_inst (
+    taxi_eth_phy_25g_us_gty_ll_full
+    taxi_eth_phy_25g_us_gty_ll_full_inst (
         // Common
         .gtpowergood_out(xcvr_gtpowergood_out),
 
@@ -436,6 +517,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
         .gtwiz_userclk_tx_usrclk2_out(tx_clk),
         .gtwiz_userclk_tx_active_out(gt_userclk_tx_active),
         .gtwiz_reset_tx_done_in(tx_reset_done),
+        .gtwiz_buffbypass_tx_reset_in(1'b0),
+        .gtwiz_buffbypass_tx_start_user_in(1'b0),
+        .gtwiz_buffbypass_tx_done_out(),
+        .gtwiz_buffbypass_tx_error_out(),
         .txpdelecidlemode_in(1'b1),
         .txpd_in(gt_tx_pd ? 2'b11 : 2'b00),
         .gttxreset_in(gt_tx_reset),
@@ -459,7 +544,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -468,6 +553,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
         .gtwiz_userclk_rx_usrclk2_out(rx_clk),
         .gtwiz_userclk_rx_active_out(gt_userclk_rx_active),
         .gtwiz_reset_rx_done_in(rx_reset_done),
+        .gtwiz_buffbypass_rx_reset_in(1'b0),
+        .gtwiz_buffbypass_rx_start_user_in(1'b0),
+        .gtwiz_buffbypass_rx_done_out(),
+        .gtwiz_buffbypass_rx_error_out(),
         .rxpd_in(gt_rx_pd ? 2'b11 : 2'b00),
         .gtrxreset_in(gt_rx_reset),
         .rxpmareset_in(gt_rx_pma_reset),
@@ -495,14 +584,14 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
         .rxdatavalid_out(gt_rxdatavalid),
         .rxheader_out(gt_rxheader),
         .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
+        .rxstartofseq_out(gt_rxstartofseq)
     );
 
 end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
     // UltraScale+ GTH (with common)
 
-    taxi_eth_phy_25g_us_gth_full
-    taxi_eth_phy_25g_us_gth_full_inst (
+    taxi_eth_phy_25g_us_gth_ll_full
+    taxi_eth_phy_25g_us_gth_ll_full_inst (
         // Common
         .gtpowergood_out(xcvr_gtpowergood_out),
 
@@ -537,6 +626,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
         .gtwiz_userclk_tx_usrclk2_out(tx_clk),
         .gtwiz_userclk_tx_active_out(gt_userclk_tx_active),
         .gtwiz_reset_tx_done_in(tx_reset_done),
+        .gtwiz_buffbypass_tx_reset_in(1'b0),
+        .gtwiz_buffbypass_tx_start_user_in(1'b0),
+        .gtwiz_buffbypass_tx_done_out(),
+        .gtwiz_buffbypass_tx_error_out(),
         .txpdelecidlemode_in(1'b1),
         .txpd_in(gt_tx_pd ? 2'b11 : 2'b00),
         .gttxreset_in(gt_tx_reset),
@@ -560,7 +653,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -569,6 +662,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
         .gtwiz_userclk_rx_usrclk2_out(rx_clk),
         .gtwiz_userclk_rx_active_out(gt_userclk_rx_active),
         .gtwiz_reset_rx_done_in(rx_reset_done),
+        .gtwiz_buffbypass_rx_reset_in(1'b0),
+        .gtwiz_buffbypass_rx_start_user_in(1'b0),
+        .gtwiz_buffbypass_rx_done_out(),
+        .gtwiz_buffbypass_rx_error_out(),
         .rxpd_in(gt_rx_pd ? 2'b11 : 2'b00),
         .gtrxreset_in(gt_rx_reset),
         .rxpmareset_in(gt_rx_pma_reset),
@@ -596,14 +693,14 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
         .rxdatavalid_out(gt_rxdatavalid),
         .rxheader_out(gt_rxheader),
         .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
+        .rxstartofseq_out(gt_rxstartofseq)
     );
 
 end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
     // UltraScale GTY (with common)
 
-    taxi_eth_phy_25g_us_gty_full
-    taxi_eth_phy_25g_us_gty_full_inst (
+    taxi_eth_phy_25g_us_gty_ll_full
+    taxi_eth_phy_25g_us_gty_ll_full_inst (
         // Common
         .gtpowergood_out(xcvr_gtpowergood_out),
 
@@ -638,6 +735,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
         .gtwiz_userclk_tx_usrclk2_out(tx_clk),
         .gtwiz_userclk_tx_active_out(gt_userclk_tx_active),
         .gtwiz_reset_tx_done_in(tx_reset_done),
+        .gtwiz_buffbypass_tx_reset_in(1'b0),
+        .gtwiz_buffbypass_tx_start_user_in(1'b0),
+        .gtwiz_buffbypass_tx_done_out(),
+        .gtwiz_buffbypass_tx_error_out(),
         .txpdelecidlemode_in(1'b1),
         .txpd_in(gt_tx_pd ? 2'b11 : 2'b00),
         .gttxreset_in(gt_tx_reset),
@@ -661,7 +762,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -670,6 +771,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
         .gtwiz_userclk_rx_usrclk2_out(rx_clk),
         .gtwiz_userclk_rx_active_out(gt_userclk_rx_active),
         .gtwiz_reset_rx_done_in(rx_reset_done),
+        .gtwiz_buffbypass_rx_reset_in(1'b0),
+        .gtwiz_buffbypass_rx_start_user_in(1'b0),
+        .gtwiz_buffbypass_rx_done_out(),
+        .gtwiz_buffbypass_rx_error_out(),
         .rxpd_in(gt_rx_pd ? 2'b11 : 2'b00),
         .gtrxreset_in(gt_rx_reset),
         .rxpmareset_in(gt_rx_pma_reset),
@@ -697,14 +802,14 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
         .rxdatavalid_out(gt_rxdatavalid),
         .rxheader_out(gt_rxheader),
         .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
+        .rxstartofseq_out(gt_rxstartofseq)
     );
 
 end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
     // UltraScale GTH (with common)
 
-    taxi_eth_phy_25g_us_gth_full
-    taxi_eth_phy_25g_us_gth_full_inst (
+    taxi_eth_phy_25g_us_gth_ll_full
+    taxi_eth_phy_25g_us_gth_ll_full_inst (
         // Common
         .gtpowergood_out(xcvr_gtpowergood_out),
 
@@ -739,6 +844,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
         .gtwiz_userclk_tx_usrclk2_out(tx_clk),
         .gtwiz_userclk_tx_active_out(gt_userclk_tx_active),
         .gtwiz_reset_tx_done_in(tx_reset_done),
+        .gtwiz_buffbypass_tx_reset_in(1'b0),
+        .gtwiz_buffbypass_tx_start_user_in(1'b0),
+        .gtwiz_buffbypass_tx_done_out(),
+        .gtwiz_buffbypass_tx_error_out(),
         .txpdelecidlemode_in(1'b1),
         .txpd_in(gt_tx_pd ? 2'b11 : 2'b00),
         .gttxreset_in(gt_tx_reset),
@@ -762,7 +871,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -771,6 +880,10 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
         .gtwiz_userclk_rx_usrclk2_out(rx_clk),
         .gtwiz_userclk_rx_active_out(gt_userclk_rx_active),
         .gtwiz_reset_rx_done_in(rx_reset_done),
+        .gtwiz_buffbypass_rx_reset_in(1'b0),
+        .gtwiz_buffbypass_rx_start_user_in(1'b0),
+        .gtwiz_buffbypass_rx_done_out(),
+        .gtwiz_buffbypass_rx_error_out(),
         .rxpd_in(gt_rx_pd ? 2'b11 : 2'b00),
         .gtrxreset_in(gt_rx_reset),
         .rxpmareset_in(gt_rx_pma_reset),
@@ -798,14 +911,14 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
         .rxdatavalid_out(gt_rxdatavalid),
         .rxheader_out(gt_rxheader),
         .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
+        .rxstartofseq_out(gt_rxstartofseq)
     );
 
 end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
     // UltraScale/UltraScale+ GTY (channel only)
 
-    taxi_eth_phy_25g_us_gty_ch
-    taxi_eth_phy_25g_us_gty_ch_inst (
+    taxi_eth_phy_25g_us_gty_ll_ch
+    taxi_eth_phy_25g_us_gty_ll_ch_inst (
         // Common
         .gtpowergood_out(xcvr_gtpowergood_out),
 
@@ -828,6 +941,10 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
         .gtwiz_userclk_tx_usrclk2_out(tx_clk),
         .gtwiz_userclk_tx_active_out(gt_userclk_tx_active),
         .gtwiz_reset_tx_done_in(tx_reset_done),
+        .gtwiz_buffbypass_tx_reset_in(1'b0),
+        .gtwiz_buffbypass_tx_start_user_in(1'b0),
+        .gtwiz_buffbypass_tx_done_out(),
+        .gtwiz_buffbypass_tx_error_out(),
         .txpdelecidlemode_in(1'b1),
         .txpd_in(gt_tx_pd ? 2'b11 : 2'b00),
         .gttxreset_in(gt_tx_reset),
@@ -851,7 +968,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -860,6 +977,10 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
         .gtwiz_userclk_rx_usrclk2_out(rx_clk),
         .gtwiz_userclk_rx_active_out(gt_userclk_rx_active),
         .gtwiz_reset_rx_done_in(rx_reset_done),
+        .gtwiz_buffbypass_rx_reset_in(1'b0),
+        .gtwiz_buffbypass_rx_start_user_in(1'b0),
+        .gtwiz_buffbypass_rx_done_out(),
+        .gtwiz_buffbypass_rx_error_out(),
         .rxpd_in(gt_rx_pd ? 2'b11 : 2'b00),
         .gtrxreset_in(gt_rx_reset),
         .rxpmareset_in(gt_rx_pma_reset),
@@ -887,7 +1008,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
         .rxdatavalid_out(gt_rxdatavalid),
         .rxheader_out(gt_rxheader),
         .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
+        .rxstartofseq_out(gt_rxstartofseq)
     );
 
     assign xcvr_qpll0lock_out = 1'b0;
@@ -897,8 +1018,8 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
 end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
     // UltraScale/UltraScale+ GTY (channel only)
 
-    taxi_eth_phy_25g_us_gth_ch
-    taxi_eth_phy_25g_us_gth_ch_inst (
+    taxi_eth_phy_25g_us_gth_ll_ch
+    taxi_eth_phy_25g_us_gth_ll_ch_inst (
         // Common
         .gtpowergood_out(xcvr_gtpowergood_out),
 
@@ -921,6 +1042,10 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
         .gtwiz_userclk_tx_usrclk2_out(tx_clk),
         .gtwiz_userclk_tx_active_out(gt_userclk_tx_active),
         .gtwiz_reset_tx_done_in(tx_reset_done),
+        .gtwiz_buffbypass_tx_reset_in(1'b0),
+        .gtwiz_buffbypass_tx_start_user_in(1'b0),
+        .gtwiz_buffbypass_tx_done_out(),
+        .gtwiz_buffbypass_tx_error_out(),
         .txpdelecidlemode_in(1'b1),
         .txpd_in(gt_tx_pd ? 2'b11 : 2'b00),
         .gttxreset_in(gt_tx_reset),
@@ -944,7 +1069,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -953,6 +1078,10 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
         .gtwiz_userclk_rx_usrclk2_out(rx_clk),
         .gtwiz_userclk_rx_active_out(gt_userclk_rx_active),
         .gtwiz_reset_rx_done_in(rx_reset_done),
+        .gtwiz_buffbypass_rx_reset_in(1'b0),
+        .gtwiz_buffbypass_rx_start_user_in(1'b0),
+        .gtwiz_buffbypass_rx_done_out(),
+        .gtwiz_buffbypass_rx_error_out(),
         .rxpd_in(gt_rx_pd ? 2'b11 : 2'b00),
         .gtrxreset_in(gt_rx_reset),
         .rxpmareset_in(gt_rx_pma_reset),
@@ -980,7 +1109,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
         .rxdatavalid_out(gt_rxdatavalid),
         .rxheader_out(gt_rxheader),
         .rxheadervalid_out(gt_rxheadervalid),
-        .rxstartofseq_out()
+        .rxstartofseq_out(gt_rxstartofseq)
     );
 
     assign xcvr_qpll0lock_out = 1'b0;

@@ -15,6 +15,7 @@ import os
 import sys
 
 import cocotb_test.simulator
+import pytest
 
 import cocotb
 from cocotb.clock import Clock
@@ -37,15 +38,28 @@ except ImportError:
 
 
 class TB:
-    def __init__(self, dut):
+    def __init__(self, dut, gbx_cfg=None):
         self.dut = dut
 
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.start_soon(Clock(dut.clk, 6.4, units="ns").start())
+        if gbx_cfg:
+            self.clk_period = 6.206
+        else:
+            self.clk_period = 6.4
 
-        self.source = BaseRSerdesSource(dut.encoded_rx_data, dut.encoded_rx_hdr, dut.clk, scramble=False)
+        cocotb.start_soon(Clock(dut.clk, self.clk_period, units="ns").start())
+
+        self.source = BaseRSerdesSource(
+            data=dut.encoded_rx_data,
+            data_valid=dut.encoded_rx_data_valid,
+            hdr=dut.encoded_rx_hdr,
+            hdr_valid=dut.encoded_rx_hdr_valid,
+            clock=dut.clk,
+            scramble=False,
+            gbx_cfg=gbx_cfg
+        )
         self.sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.clk, dut.rst)
 
         self.ptp_clock = PtpClockSimTime(ts_tod=dut.ptp_ts, clock=dut.clk)
@@ -96,9 +110,9 @@ class TB:
                 self.stats[stat] += int(getattr(self.dut, stat).value)
 
 
-async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
+async def run_test(dut, gbx_cfg=None, payload_lengths=None, payload_data=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.source.ifg = ifg
     tb.dut.cfg_rx_max_pkt_len.value = 9218
@@ -138,7 +152,8 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
 
         assert rx_frame.tdata == test_data
         assert frame_error == 0
-        assert abs(ptp_ts_ns - tx_frame_sfd_ns - 6.4) < 0.01
+        if gbx_cfg is None:
+            assert abs(ptp_ts_ns - tx_frame_sfd_ns - 6.4) < 0.01
 
     assert tb.sink.empty()
 
@@ -161,13 +176,13 @@ async def run_test(dut, payload_lengths=None, payload_data=None, ifg=12):
     assert tb.stats["stat_rx_err_framing"] == 0
     assert tb.stats["stat_rx_err_preamble"] == 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
-async def run_test_oversize(dut, ifg=12):
+async def run_test_oversize(dut, gbx_cfg=None, ifg=12):
 
-    tb = TB(dut)
+    tb = TB(dut, gbx_cfg)
 
     tb.source.ifg = ifg
     tb.dut.cfg_rx_max_pkt_len.value = 1518
@@ -250,8 +265,8 @@ async def run_test_oversize(dut, ifg=12):
         assert tb.stats["stat_rx_err_framing"] == 0
         assert tb.stats["stat_rx_err_preamble"] == 0
 
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    for k in range(10):
+        await RisingEdge(dut.clk)
 
 
 def size_list():
@@ -268,14 +283,22 @@ def cycle_en():
 
 if cocotb.SIM_NAME:
 
+    gbx_cfgs = [None]
+
+    if cocotb.top.GBX_IF_EN.value:
+        gbx_cfgs.append((33, [32]))
+        gbx_cfgs.append((66, [64, 65]))
+
     factory = TestFactory(run_test)
     factory.add_option("payload_lengths", [size_list])
     factory.add_option("payload_data", [incrementing_payload])
     factory.add_option("ifg", list(range(0, 13)))
+    factory.add_option("gbx_cfg", gbx_cfgs)
     factory.generate_tests()
 
     factory = TestFactory(run_test_oversize)
     factory.add_option("ifg", list(range(0, 13)))
+    factory.add_option("gbx_cfg", gbx_cfgs)
     factory.generate_tests()
 
 
@@ -300,7 +323,8 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_taxi_axis_baser_rx_64(request):
+@pytest.mark.parametrize("gbx_en", [1, 0])
+def test_taxi_axis_baser_rx_64(request, gbx_en):
     dut = "taxi_axis_baser_rx_64"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = module
@@ -318,6 +342,7 @@ def test_taxi_axis_baser_rx_64(request):
 
     parameters['DATA_W'] = 64
     parameters['HDR_W'] = 2
+    parameters['GBX_IF_EN'] = gbx_en
     parameters['PTP_TS_EN'] = 1
     parameters['PTP_TS_FMT_TOD'] = 1
     parameters['PTP_TS_W'] = 96 if parameters['PTP_TS_FMT_TOD'] else 64

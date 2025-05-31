@@ -23,6 +23,9 @@ module taxi_eth_mac_25g_us #
 
     parameter CNT = 4,
 
+    // GT config
+    parameter logic CFG_LOW_LATENCY = 0,
+
     // GT type
     parameter string GT_TYPE = "GTY",
 
@@ -332,6 +335,9 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
         .FAMILY(FAMILY),
 
         .HAS_COMMON(HAS_COMMON),
+
+        // GT config
+        .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
 
         // GT type
         .GT_TYPE(GT_TYPE),

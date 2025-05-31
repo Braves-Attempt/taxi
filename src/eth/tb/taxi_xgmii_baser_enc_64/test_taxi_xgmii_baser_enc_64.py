@@ -46,6 +46,9 @@ class TB:
         self.source = XgmiiSource(dut.xgmii_txd, dut.xgmii_txc, dut.clk, dut.rst)
         self.sink = BaseRSerdesSink(dut.encoded_tx_data, dut.encoded_tx_hdr, dut.clk, scramble=False)
 
+        dut.xgmii_tx_valid.setimmediatevalue(1)
+        dut.tx_gbx_start_in.setimmediatevalue(0)
+
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)
         await RisingEdge(self.dut.clk)
@@ -227,6 +230,7 @@ def test_taxi_xgmii_baser_enc_64(request):
     parameters['DATA_W'] = 64
     parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['HDR_W'] = 2
+    parameters['GBX_IF_EN'] = 0
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
