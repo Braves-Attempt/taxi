@@ -177,8 +177,8 @@ set_property -dict {LOC D28  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {
 create_clock -period 6.400 -name sfp_mgt_refclk_0 [get_ports sfp_mgt_refclk_0_p]
 #create_clock -period 6.400 -name sfp_mgt_refclk_1 [get_ports sfp_mgt_refclk_1_p]
 
-set_false_path -to [get_ports {sfp0_tx_disable_b sfp1_tx_disable_b}]
-set_output_delay 0 [get_ports {sfp0_tx_disable_b sfp1_tx_disable_b}]
+set_false_path -to [get_ports {sfp_tx_disable_b[*]}]
+set_output_delay 0 [get_ports {sfp_tx_disable_b[*]}]
 
 # PCIe Interface
 #set_property -dict {LOC AB2 } [get_ports {pcie_rx_p[0]}] ;# MGTHRXP3_225 GTHE3_CHANNEL_X0Y7 / GTHE3_COMMON_X0Y1
