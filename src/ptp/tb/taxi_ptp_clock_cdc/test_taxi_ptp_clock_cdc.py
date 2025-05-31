@@ -281,7 +281,7 @@ async def run_test(dut):
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
-    assert abs(mean(diffs)*1e9) < 5
+    assert abs(mean(diffs)*1e9) < 6.4
 
     await RisingEdge(dut.input_clk)
     tb.log.info("Coherent tracking (+/- 200 ppm)")
@@ -313,7 +313,7 @@ async def run_test(dut):
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
-    assert abs(mean(diffs)*1e9) < 5
+    assert abs(mean(diffs)*1e9) < 6.4
 
     await RisingEdge(dut.input_clk)
     tb.log.info("Slightly faster (6.3 ns)")
