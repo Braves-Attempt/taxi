@@ -327,21 +327,23 @@ endfunction
 
 wire [OUT_W-1:0][IN_W-1:0] mask = lfsr_mask();
 
-for (genvar n = 0; n < LFSR_W; n = n + 1) begin : lfsr_state
-    if (DATA_IN_EN) begin
-        assign state_out[n] = ^({data_in, state_in} & mask[n]);
-    end else begin
-        assign state_out[n] = ^(state_in & mask[n]);
-    end
+wire [IN_W-1:0] lfsr_in;
+wire [OUT_W-1:0] lfsr_out;
+
+if (DATA_IN_EN) begin
+    assign lfsr_in = {data_in, state_in};
+end else begin
+    assign lfsr_in = state_in;
 end
+
+for (genvar n = 0; n < OUT_W; n = n + 1) begin
+    assign lfsr_out[n] = ^(lfsr_in & mask[n]);
+end
+
+assign state_out = lfsr_out[0 +: LFSR_W];
+
 if (DATA_OUT_EN) begin
-    for (genvar n = 0; n < DATA_W; n = n + 1) begin : lfsr_data
-        if (DATA_IN_EN) begin
-            assign data_out[n] = ^({data_in, state_in} & mask[n+LFSR_W]);
-        end else begin
-            assign data_out[n] = ^(state_in & mask[n+LFSR_W]);
-        end
-    end
+    assign data_out = lfsr_out[LFSR_W +: DATA_W];
 end else begin
     assign data_out = '0;
 end
