@@ -88,7 +88,6 @@ def scramble_pcie_gen3(data, state=0x1efedc, poly=0x524042):
                 b = b | (1 << i)
             else:
                 state = state >> 1
-        print(hex(state), hex(b))
         data_out.append(b ^ d)
     return data_out
 
