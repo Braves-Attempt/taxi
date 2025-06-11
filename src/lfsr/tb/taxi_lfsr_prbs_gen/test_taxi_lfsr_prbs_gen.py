@@ -94,6 +94,62 @@ async def run_test_prbs(dut, ref_prbs):
         await RisingEdge(dut.clk)
 
 
+def scramble_pcie(data, state=0xffff, poly=0x9c00):
+    data_out = bytearray()
+    for d in data:
+        b = 0
+        for i in range(8):
+            if state & 1:
+                state = (state >> 1) ^ poly
+                b = b | (1 << i)
+            else:
+                state = state >> 1
+        data_out.append(b ^ d)
+    return data_out
+
+
+def scramble_pcie_gen3(data, state=0x1efedc, poly=0x524042):
+    data_out = bytearray()
+    for d in data:
+        b = 0
+        for i in range(8):
+            if state & 1:
+                state = (state >> 1) ^ poly
+                b = b | (1 << i)
+            else:
+                state = state >> 1
+        data_out.append(b ^ d)
+    return data_out
+
+
+async def run_test_scramble(dut, ref_scramble):
+
+    data_width = len(dut.data_out)
+    byte_lanes = data_width // 8
+
+    tb = TB(dut)
+
+    await tb.reset()
+
+    block = bytearray(512*byte_lanes)
+
+    scr = ref_scramble(block)
+    scr_iter = iter(chunks(scr, byte_lanes))
+
+    dut.enable.value = 1
+    await RisingEdge(dut.clk)
+
+    for i in range(512):
+        ref = int.from_bytes(bytes(next(scr_iter)), 'little')
+        val = dut.data_out.value.integer
+
+        tb.log.info("PRBS: 0x%x (ref: 0x%x)", val, ref)
+
+        assert ref == val
+
+        await RisingEdge(dut.clk)
+
+
 if cocotb.SIM_NAME:
 
     if int(cocotb.top.LFSR_POLY.value) == 0x021:
@@ -104,6 +160,16 @@ if cocotb.SIM_NAME:
     if int(cocotb.top.LFSR_POLY.value) == 0x10000001:
         factory = TestFactory(run_test_prbs)
         factory.add_option("ref_prbs", [prbs31])
+        factory.generate_tests()
+
+    if cocotb.top.LFSR_POLY.value == 0x0039:
+        factory = TestFactory(run_test_scramble)
+        factory.add_option("ref_scramble", [scramble_pcie])
+        factory.generate_tests()
+
+    if cocotb.top.LFSR_POLY.value == 0x210125:
+        factory = TestFactory(run_test_scramble)
+        factory.add_option("ref_scramble", [scramble_pcie_gen3])
         factory.generate_tests()
 
 
@@ -131,6 +197,10 @@ def process_f_files(files):
             (9,  "9'h021", "'1", 0, 0, 1, 64),
             (31, "31'h10000001", "'1", 0, 0, 1, 8),
             (31, "31'h10000001", "'1", 0, 0, 1, 64),
+            (16,  "16'h0039", "'1", 1, 1, 0, 8),
+            (16,  "16'h0039", "'1", 1, 1, 0, 64),
+            (23,  "23'h210125", "23'h1efedc", 1, 1, 0, 8),
+            (23,  "23'h210125", "23'h1efedc", 1, 1, 0, 64),
         ])
 def test_taxi_lfsr_prbs_gen(request, lfsr_w, lfsr_poly, lfsr_init, lfsr_galois, reverse, invert, data_w):
     dut = "taxi_lfsr_prbs_gen"
