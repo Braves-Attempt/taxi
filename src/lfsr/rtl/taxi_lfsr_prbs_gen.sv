@@ -33,10 +33,10 @@ module taxi_lfsr_prbs_gen #
     parameter DATA_W = 8
 )
 (
-    input  wire logic                   clk,
-    input  wire logic                   rst,
+    input  wire logic               clk,
+    input  wire logic               rst,
 
-    input  wire logic                   enable,
+    input  wire logic               enable,
     output wire logic [DATA_W-1:0]  data_out
 );
 

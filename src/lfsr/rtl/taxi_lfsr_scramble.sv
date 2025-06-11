@@ -31,11 +31,11 @@ module taxi_lfsr_scramble #
     parameter DATA_W = 64
 )
 (
-    input  wire logic                   clk,
-    input  wire logic                   rst,
+    input  wire logic               clk,
+    input  wire logic               rst,
 
     input  wire logic [DATA_W-1:0]  data_in,
-    input  wire logic                   data_in_valid,
+    input  wire logic               data_in_valid,
     output wire logic [DATA_W-1:0]  data_out
 );
 
