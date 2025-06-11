@@ -78,6 +78,21 @@ def scramble_pcie(data, state=0xffff, poly=0x9c00):
     return data_out
 
 
+def scramble_pcie_gen3(data, state=0x1efedc, poly=0x524042):
+    data_out = bytearray()
+    for d in data:
+        b = 0
+        for i in range(8):
+            if state & 1:
+                state = (state >> 1) ^ poly
+                b = b | (1 << i)
+            else:
+                state = state >> 1
+        print(hex(state), hex(b))
+        data_out.append(b ^ d)
+    return data_out
+
+
 async def run_test_scramble(dut, ref_scramble):
 
     data_width = len(dut.data_in)
@@ -127,6 +142,11 @@ if cocotb.SIM_NAME:
         factory.add_option("ref_scramble", [scramble_pcie])
         factory.generate_tests()
 
+    if cocotb.top.LFSR_POLY.value == 0x210125:
+        factory = TestFactory(run_test_scramble)
+        factory.add_option("ref_scramble", [scramble_pcie_gen3])
+        factory.generate_tests()
+
 
 # cocotb-test
 
@@ -152,6 +172,8 @@ def process_f_files(files):
             (58,  "58'h8000000001", "'1", 0, 1, 64, 1),
             (16,  "16'h0039", "'1", 1, 1, 8, 0),
             (16,  "16'h0039", "'1", 1, 1, 64, 0),
+            (23,  "23'h210125", "23'h1efedc", 1, 1, 8, 0),
+            (23,  "23'h210125", "23'h1efedc", 1, 1, 64, 0),
         ])
 def test_taxi_lfsr_scramble(request, lfsr_w, lfsr_poly, lfsr_init, lfsr_galois, reverse, data_w, self_sync):
     dut = "taxi_lfsr_scramble"
