@@ -190,7 +190,9 @@ taxi_lfsr #(
     .LFSR_GALOIS(1),
     .LFSR_FEED_FORWARD(0),
     .REVERSE(1),
-    .DATA_W(8)
+    .DATA_W(DATA_W),
+    .DATA_IN_EN(1'b1),
+    .DATA_OUT_EN(1'b0)
 )
 eth_crc_8 (
     .data_in(s_tdata_reg),

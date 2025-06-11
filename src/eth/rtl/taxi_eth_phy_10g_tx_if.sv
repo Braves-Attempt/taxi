@@ -145,7 +145,9 @@ taxi_lfsr #(
     .LFSR_GALOIS(0),
     .LFSR_FEED_FORWARD(0),
     .REVERSE(1),
-    .DATA_W(DATA_W)
+    .DATA_W(DATA_W),
+    .DATA_IN_EN(1'b1),
+    .DATA_OUT_EN(1'b1)
 )
 scrambler_inst (
     .data_in(encoded_tx_data),
@@ -166,7 +168,9 @@ taxi_lfsr #(
     .LFSR_GALOIS(0),
     .LFSR_FEED_FORWARD(0),
     .REVERSE(1),
-    .DATA_W(DATA_W+HDR_W)
+    .DATA_W(DATA_W+HDR_W),
+    .DATA_IN_EN(1'b0),
+    .DATA_OUT_EN(1'b1)
 )
 prbs31_gen_inst (
     .data_in('0),

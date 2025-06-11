@@ -35,6 +35,8 @@ export PARAM_LFSR_GALOIS ?= "1'b1"
 export PARAM_LFSR_FEED_FORWARD ?= "1'b0"
 export PARAM_REVERSE ?= "1'b1"
 export PARAM_DATA_W ?= 8
+export PARAM_DATA_IN_EN ?= "1'b1"
+export PARAM_DATA_OUT_EN ?= "1'b1"
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

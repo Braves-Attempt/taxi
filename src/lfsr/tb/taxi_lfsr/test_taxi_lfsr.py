@@ -220,6 +220,8 @@ def test_taxi_lfsr(request, lfsr_w, lfsr_poly, lfsr_galois, reverse, data_w):
     parameters['LFSR_FEED_FORWARD'] = "1'b0"
     parameters['REVERSE'] = f"1'b{reverse}"
     parameters['DATA_W'] = data_w
+    parameters['DATA_IN_EN'] = "1'b1"
+    parameters['DATA_OUT_EN'] = "1'b1"
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

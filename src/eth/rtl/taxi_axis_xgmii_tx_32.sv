@@ -208,7 +208,9 @@ for (genvar n = 0; n < 4; n = n + 1) begin : crc
         .LFSR_GALOIS(1),
         .LFSR_FEED_FORWARD(0),
         .REVERSE(1),
-        .DATA_W(8*(n+1))
+        .DATA_W(8*(n+1)),
+        .DATA_IN_EN(1'b1),
+        .DATA_OUT_EN(1'b0)
     )
     eth_crc (
         .data_in(s_tdata_reg[0 +: 8*(n+1)]),

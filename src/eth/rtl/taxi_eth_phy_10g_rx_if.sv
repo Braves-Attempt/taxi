@@ -155,7 +155,9 @@ taxi_lfsr #(
     .LFSR_GALOIS(0),
     .LFSR_FEED_FORWARD(1),
     .REVERSE(1),
-    .DATA_W(DATA_W)
+    .DATA_W(DATA_W),
+    .DATA_IN_EN(1'b1),
+    .DATA_OUT_EN(1'b1)
 )
 descrambler_inst (
     .data_in(serdes_rx_data_int),
@@ -176,7 +178,9 @@ taxi_lfsr #(
     .LFSR_GALOIS(0),
     .LFSR_FEED_FORWARD(1),
     .REVERSE(1),
-    .DATA_W(DATA_W+HDR_W)
+    .DATA_W(DATA_W+HDR_W),
+    .DATA_IN_EN(1'b1),
+    .DATA_OUT_EN(1'b1)
 )
 prbs31_check_inst (
     .data_in(~{serdes_rx_data_int, serdes_rx_hdr_int}),

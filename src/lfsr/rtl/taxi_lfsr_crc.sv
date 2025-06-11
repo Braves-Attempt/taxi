@@ -155,7 +155,9 @@ taxi_lfsr #(
     .LFSR_GALOIS(LFSR_GALOIS),
     .LFSR_FEED_FORWARD('0),
     .REVERSE(REVERSE),
-    .DATA_W(DATA_W)
+    .DATA_W(DATA_W),
+    .DATA_IN_EN(1'b1),
+    .DATA_OUT_EN(1'b0)
 )
 lfsr_inst (
     .data_in(data_in),

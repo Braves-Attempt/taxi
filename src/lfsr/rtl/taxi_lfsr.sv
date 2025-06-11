@@ -27,8 +27,11 @@ module taxi_lfsr #
     parameter logic LFSR_FEED_FORWARD = 1'b0,
     // bit-reverse input and output
     parameter logic REVERSE = 1'b0,
-    // width of data input
-    parameter DATA_W = 8
+    // width of data ports
+    parameter DATA_W = 8,
+    // enable data input and output
+    parameter logic DATA_IN_EN = 1'b1,
+    parameter logic DATA_OUT_EN = 1'b1
 )
 (
     input  wire logic [DATA_W-1:0]  data_in,
@@ -170,7 +173,10 @@ PRBS31      Fibonacci, inverted     31      31'h10000001    any
 
 */
 
-function [LFSR_W+DATA_W-1:0][LFSR_W+DATA_W-1:0] lfsr_mask();
+localparam IN_W = LFSR_W+(DATA_IN_EN ? DATA_W : 0);
+localparam OUT_W = LFSR_W+(DATA_OUT_EN ? DATA_W : 0);
+
+function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
     logic [LFSR_W-1:0] lfsr_mask_state[LFSR_W-1:0];
     logic [DATA_W-1:0] lfsr_mask_data[LFSR_W-1:0];
     logic [LFSR_W-1:0] output_mask_state[DATA_W-1:0];
@@ -270,42 +276,73 @@ function [LFSR_W+DATA_W-1:0][LFSR_W+DATA_W-1:0] lfsr_mask();
         end
     end
 
+    // disable broken linter
+    /* verilator lint_off WIDTH */
     if (REVERSE) begin
         // output reversed
         for (integer i = 0; i < LFSR_W; i = i + 1) begin
             for (integer j = 0; j < LFSR_W; j = j + 1) begin
                 lfsr_mask[i][j] = lfsr_mask_state[LFSR_W-i-1][LFSR_W-j-1];
             end
-            for (integer j = 0; j < DATA_W; j = j + 1) begin
-                lfsr_mask[i][j+LFSR_W] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+            if (DATA_IN_EN) begin
+                for (integer j = 0; j < DATA_W; j = j + 1) begin
+                    lfsr_mask[i][j+LFSR_W] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+                end
             end
         end
-        for (integer i = 0; i < DATA_W; i = i + 1) begin
-            for (integer j = 0; j < LFSR_W; j = j + 1) begin
-                lfsr_mask[i+LFSR_W][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
-            end
-            for (integer j = 0; j < DATA_W; j = j + 1) begin
-                lfsr_mask[i+LFSR_W][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+        if (DATA_OUT_EN) begin
+            for (integer i = 0; i < DATA_W; i = i + 1) begin
+                for (integer j = 0; j < LFSR_W; j = j + 1) begin
+                    lfsr_mask[i+LFSR_W][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
+                end
+                if (DATA_IN_EN) begin
+                    for (integer j = 0; j < DATA_W; j = j + 1) begin
+                        lfsr_mask[i+LFSR_W][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                    end
+                end
             end
         end
     end else begin
         // output normal
         for (integer i = 0; i < LFSR_W; i = i + 1) begin
-            lfsr_mask[i] = {lfsr_mask_data[i], lfsr_mask_state[i]};
+            if (DATA_IN_EN) begin
+                lfsr_mask[i] = {lfsr_mask_data[i], lfsr_mask_state[i]};
+            end else begin
+                lfsr_mask[i] = lfsr_mask_state[i];
+            end
         end
-        for (integer i = 0; i < DATA_W; i = i + 1) begin
-            lfsr_mask[i+LFSR_W] = {output_mask_data[i], output_mask_state[i]};
+        if (DATA_OUT_EN) begin
+            for (integer i = 0; i < DATA_W; i = i + 1) begin
+                if (DATA_IN_EN) begin
+                    lfsr_mask[i+LFSR_W] = {output_mask_data[i], output_mask_state[i]};
+                end else begin
+                    lfsr_mask[i+LFSR_W] = output_mask_state[i];
+                end
+            end
         end
     end
+    /* verilator lint_on WIDTH */
 endfunction
 
-wire [LFSR_W+DATA_W-1:0][LFSR_W+DATA_W-1:0] mask = lfsr_mask();
+wire [OUT_W-1:0][IN_W-1:0] mask = lfsr_mask();
 
 for (genvar n = 0; n < LFSR_W; n = n + 1) begin : lfsr_state
-    assign state_out[n] = ^({data_in, state_in} & mask[n]);
+    if (DATA_IN_EN) begin
+        assign state_out[n] = ^({data_in, state_in} & mask[n]);
+    end else begin
+        assign state_out[n] = ^(state_in & mask[n]);
+    end
 end
-for (genvar n = 0; n < DATA_W; n = n + 1) begin : lfsr_data
-    assign data_out[n] = ^({data_in, state_in} & mask[n+LFSR_W]);
+if (DATA_OUT_EN) begin
+    for (genvar n = 0; n < DATA_W; n = n + 1) begin : lfsr_data
+        if (DATA_IN_EN) begin
+            assign data_out[n] = ^({data_in, state_in} & mask[n+LFSR_W]);
+        end else begin
+            assign data_out[n] = ^(state_in & mask[n+LFSR_W]);
+        end
+    end
+end else begin
+    assign data_out = '0;
 end
 
 endmodule
