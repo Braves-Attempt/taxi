@@ -169,6 +169,7 @@ PRBS23      Fibonacci, inverted     23      23'h040001      any             ITU 
 PRBS29      Fibonacci, inverted     29      29'h08000001    any
 PRBS31      Fibonacci, inverted     31      31'h10000001    any
 64b66b      Fibonacci, bit-reverse  58      58'h8000000001  any             10G Ethernet
+pcie        Galois, bit-reverse     16      16'h0039        16'hffff        PCIe gen 1/2
 128b130b    Galois, bit-reverse     23      23'h210125      any             PCIe gen 3
 
 */

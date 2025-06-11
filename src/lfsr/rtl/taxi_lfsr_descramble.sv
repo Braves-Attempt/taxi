@@ -28,7 +28,9 @@ module taxi_lfsr_descramble #
     // bit-reverse input and output
     parameter logic REVERSE = 1'b1,
     // width of data bus
-    parameter DATA_W = 64
+    parameter DATA_W = 64,
+    // self-synchronizing
+    parameter logic SELF_SYNC = 1'b1
 )
 (
     input  wire logic               clk,
@@ -141,6 +143,7 @@ PRBS23      Fibonacci, inverted     23      23'h040001      any             ITU 
 PRBS29      Fibonacci, inverted     29      29'h08000001    any
 PRBS31      Fibonacci, inverted     31      31'h10000001    any
 64b66b      Fibonacci, bit-reverse  58      58'h8000000001  any             10G Ethernet
+pcie        Galois, bit-reverse     16      16'h0039        16'hffff        PCIe gen 1/2
 128b130b    Galois, bit-reverse     23      23'h210125      any             PCIe gen 3
 
 */
@@ -157,14 +160,14 @@ taxi_lfsr #(
     .LFSR_W(LFSR_W),
     .LFSR_POLY(LFSR_POLY),
     .LFSR_GALOIS(LFSR_GALOIS),
-    .LFSR_FEED_FORWARD('1),
+    .LFSR_FEED_FORWARD(SELF_SYNC),
     .REVERSE(REVERSE),
     .DATA_W(DATA_W),
-    .DATA_IN_EN(1'b1),
+    .DATA_IN_EN(SELF_SYNC),
     .DATA_OUT_EN(1'b1)
 )
 lfsr_inst (
-    .data_in(data_in),
+    .data_in(SELF_SYNC ? data_in : '0),
     .state_in(state_reg),
     .data_out(lfsr_data),
     .state_out(lfsr_state)
@@ -173,7 +176,7 @@ lfsr_inst (
 always_ff @(posedge clk) begin
     if (data_in_valid) begin
         state_reg <= lfsr_state;
-        output_reg <= lfsr_data;
+        output_reg <= SELF_SYNC ? lfsr_data : (lfsr_data ^ data_in);
     end
 
     if (rst) begin

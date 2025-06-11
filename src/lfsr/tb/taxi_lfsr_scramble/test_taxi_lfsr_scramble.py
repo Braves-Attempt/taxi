@@ -64,6 +64,20 @@ def scramble_64b66b(data, state=0x3ffffffffffffff):
     return data_out
 
 
+def scramble_pcie(data, state=0xffff, poly=0x9c00):
+    data_out = bytearray()
+    for d in data:
+        b = 0
+        for i in range(8):
+            if state & 1:
+                state = (state >> 1) ^ poly
+                b = b | (1 << i)
+            else:
+                state = state >> 1
+        data_out.append(b ^ d)
+    return data_out
+
+
 async def run_test_scramble(dut, ref_scramble):
 
     data_width = len(dut.data_in)
@@ -75,7 +89,7 @@ async def run_test_scramble(dut, ref_scramble):
 
     block = bytearray(itertools.islice(itertools.cycle(range(256)), 1024))
 
-    scr = scramble_64b66b(block)
+    scr = ref_scramble(block)
     scr_iter = iter(chunks(scr, byte_lanes))
 
     first = True
@@ -108,6 +122,11 @@ if cocotb.SIM_NAME:
         factory.add_option("ref_scramble", [scramble_64b66b])
         factory.generate_tests()
 
+    if cocotb.top.LFSR_POLY.value == 0x0039:
+        factory = TestFactory(run_test_scramble)
+        factory.add_option("ref_scramble", [scramble_pcie])
+        factory.generate_tests()
+
 
 # cocotb-test
 
@@ -128,11 +147,13 @@ def process_f_files(files):
     return list(lst.values())
 
 
-@pytest.mark.parametrize(("lfsr_w", "lfsr_poly", "lfsr_init", "lfsr_galois", "reverse", "data_w"), [
-            (58,  "58'h8000000001", "'1", 0, 1, 8),
-            (58,  "58'h8000000001", "'1", 0, 1, 64),
+@pytest.mark.parametrize(("lfsr_w", "lfsr_poly", "lfsr_init", "lfsr_galois", "reverse", "data_w", "self_sync"), [
+            (58,  "58'h8000000001", "'1", 0, 1, 8, 1),
+            (58,  "58'h8000000001", "'1", 0, 1, 64, 1),
+            (16,  "16'h0039", "'1", 1, 1, 8, 0),
+            (16,  "16'h0039", "'1", 1, 1, 64, 0),
         ])
-def test_taxi_lfsr_scramble(request, lfsr_w, lfsr_poly, lfsr_init, lfsr_galois, reverse, data_w):
+def test_taxi_lfsr_scramble(request, lfsr_w, lfsr_poly, lfsr_init, lfsr_galois, reverse, data_w, self_sync):
     dut = "taxi_lfsr_scramble"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
@@ -152,6 +173,7 @@ def test_taxi_lfsr_scramble(request, lfsr_w, lfsr_poly, lfsr_init, lfsr_galois, 
     parameters['LFSR_GALOIS'] = f"1'b{lfsr_galois}"
     parameters['REVERSE'] = f"1'b{reverse}"
     parameters['DATA_W'] = data_w
+    parameters['SELF_SYNC'] = f"1'b{self_sync}"
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

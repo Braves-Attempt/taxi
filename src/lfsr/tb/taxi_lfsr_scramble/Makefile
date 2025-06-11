@@ -36,6 +36,7 @@ export PARAM_LFSR_INIT ?= "'1"
 export PARAM_LFSR_GALOIS ?= "1'b0"
 export PARAM_REVERSE ?= "1'b1"
 export PARAM_DATA_W ?= 8
+export PARAM_SELF_SYNC ?= "1'b1"
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
