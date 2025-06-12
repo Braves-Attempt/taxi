@@ -174,7 +174,12 @@ pcie        Galois, bit-reverse     16      16'h0039        16'hffff        PCIe
 
 */
 
-localparam IN_W = LFSR_W+(DATA_IN_EN ? DATA_W : 0);
+localparam INPUT_DATA_IN_STATE = DATA_IN_EN && LFSR_GALOIS && !LFSR_FEED_FORWARD && DATA_W <= LFSR_W;
+localparam INPUT_STATE_IN_DATA = DATA_IN_EN && LFSR_GALOIS && !LFSR_FEED_FORWARD && DATA_W > LFSR_W;
+
+localparam DATA_IN_INT = DATA_IN_EN && !INPUT_DATA_IN_STATE;
+
+localparam IN_W = INPUT_STATE_IN_DATA ? DATA_W : (LFSR_W+(DATA_IN_INT ? DATA_W : 0));
 localparam OUT_W = LFSR_W+(DATA_OUT_EN ? DATA_W : 0);
 
 function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
@@ -282,23 +287,35 @@ function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
     if (REVERSE) begin
         // output reversed
         for (integer i = 0; i < LFSR_W; i = i + 1) begin
-            for (integer j = 0; j < LFSR_W; j = j + 1) begin
-                lfsr_mask[i][j] = lfsr_mask_state[LFSR_W-i-1][LFSR_W-j-1];
-            end
-            if (DATA_IN_EN) begin
+            if (INPUT_STATE_IN_DATA) begin
                 for (integer j = 0; j < DATA_W; j = j + 1) begin
-                    lfsr_mask[i][j+LFSR_W] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+                    lfsr_mask[i][j] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+                end
+            end else begin
+                for (integer j = 0; j < LFSR_W; j = j + 1) begin
+                    lfsr_mask[i][j] = lfsr_mask_state[LFSR_W-i-1][LFSR_W-j-1];
+                end
+                if (DATA_IN_INT) begin
+                    for (integer j = 0; j < DATA_W; j = j + 1) begin
+                        lfsr_mask[i][j+LFSR_W] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+                    end
                 end
             end
         end
         if (DATA_OUT_EN) begin
             for (integer i = 0; i < DATA_W; i = i + 1) begin
-                for (integer j = 0; j < LFSR_W; j = j + 1) begin
-                    lfsr_mask[i+LFSR_W][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
-                end
-                if (DATA_IN_EN) begin
+                if (INPUT_STATE_IN_DATA) begin
                     for (integer j = 0; j < DATA_W; j = j + 1) begin
-                        lfsr_mask[i+LFSR_W][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                        lfsr_mask[i+LFSR_W][j] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                    end
+                end else begin
+                    for (integer j = 0; j < LFSR_W; j = j + 1) begin
+                        lfsr_mask[i+LFSR_W][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
+                    end
+                    if (DATA_IN_INT) begin
+                        for (integer j = 0; j < DATA_W; j = j + 1) begin
+                            lfsr_mask[i+LFSR_W][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                        end
                     end
                 end
             end
@@ -306,7 +323,9 @@ function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
     end else begin
         // output normal
         for (integer i = 0; i < LFSR_W; i = i + 1) begin
-            if (DATA_IN_EN) begin
+            if (INPUT_STATE_IN_DATA) begin
+                lfsr_mask[i] = lfsr_mask_data[i];
+            end else if (DATA_IN_INT) begin
                 lfsr_mask[i] = {lfsr_mask_data[i], lfsr_mask_state[i]};
             end else begin
                 lfsr_mask[i] = lfsr_mask_state[i];
@@ -314,7 +333,9 @@ function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
         end
         if (DATA_OUT_EN) begin
             for (integer i = 0; i < DATA_W; i = i + 1) begin
-                if (DATA_IN_EN) begin
+                if (INPUT_STATE_IN_DATA) begin
+                    lfsr_mask[i+LFSR_W] = output_mask_data[i];
+                end else if (DATA_IN_INT) begin
                     lfsr_mask[i+LFSR_W] = {output_mask_data[i], output_mask_state[i]};
                 end else begin
                     lfsr_mask[i+LFSR_W] = output_mask_state[i];
@@ -331,7 +352,25 @@ wire [IN_W-1:0] lfsr_in;
 wire [OUT_W-1:0] lfsr_out;
 
 if (DATA_IN_EN) begin
-    assign lfsr_in = {data_in, state_in};
+    if (INPUT_STATE_IN_DATA) begin
+        if (DATA_W == LFSR_W) begin
+            assign lfsr_in = data_in ^ state_in;
+        end else begin
+            if (REVERSE) begin
+                assign lfsr_in = data_in ^ {{DATA_W - LFSR_W{1'b0}}, state_in};
+            end else begin
+                assign lfsr_in = data_in ^ {state_in, {DATA_W - LFSR_W{1'b0}}};
+            end
+        end
+    end else if (INPUT_DATA_IN_STATE) begin
+        if (REVERSE) begin
+            assign lfsr_in = {{LFSR_W - DATA_W{1'b0}}, data_in} ^ state_in;
+        end else begin
+            assign lfsr_in = {data_in, {LFSR_W - DATA_W{1'b0}}} ^ state_in;
+        end
+    end else begin
+        assign lfsr_in = {data_in, state_in};
+    end
 end else begin
     assign lfsr_in = state_in;
 end
