@@ -176,11 +176,14 @@ pcie        Galois, bit-reverse     16      16'h0039        16'hffff        PCIe
 
 localparam INPUT_DATA_IN_STATE = DATA_IN_EN && LFSR_GALOIS && !LFSR_FEED_FORWARD && DATA_W <= LFSR_W;
 localparam INPUT_STATE_IN_DATA = DATA_IN_EN && LFSR_GALOIS && !LFSR_FEED_FORWARD && DATA_W > LFSR_W;
+localparam OUTPUT_DATA_IN_STATE = DATA_OUT_EN && !LFSR_GALOIS && !LFSR_FEED_FORWARD && DATA_W <= LFSR_W;
+localparam OUTPUT_STATE_IN_DATA = DATA_OUT_EN && !LFSR_GALOIS && !LFSR_FEED_FORWARD && DATA_W > LFSR_W;
 
 localparam DATA_IN_INT = DATA_IN_EN && !INPUT_DATA_IN_STATE;
+localparam DATA_OUT_INT = DATA_OUT_EN && !OUTPUT_DATA_IN_STATE;
 
 localparam IN_W = INPUT_STATE_IN_DATA ? DATA_W : (LFSR_W+(DATA_IN_INT ? DATA_W : 0));
-localparam OUT_W = LFSR_W+(DATA_OUT_EN ? DATA_W : 0);
+localparam OUT_W = OUTPUT_STATE_IN_DATA ? DATA_W : (LFSR_W+(DATA_OUT_INT ? DATA_W : 0));
 
 function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
     logic [LFSR_W-1:0] lfsr_mask_state[LFSR_W-1:0];
@@ -286,35 +289,54 @@ function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
     /* verilator lint_off WIDTH */
     if (REVERSE) begin
         // output reversed
-        for (integer i = 0; i < LFSR_W; i = i + 1) begin
-            if (INPUT_STATE_IN_DATA) begin
-                for (integer j = 0; j < DATA_W; j = j + 1) begin
-                    lfsr_mask[i][j] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
-                end
-            end else begin
-                for (integer j = 0; j < LFSR_W; j = j + 1) begin
-                    lfsr_mask[i][j] = lfsr_mask_state[LFSR_W-i-1][LFSR_W-j-1];
-                end
-                if (DATA_IN_INT) begin
-                    for (integer j = 0; j < DATA_W; j = j + 1) begin
-                        lfsr_mask[i][j+LFSR_W] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
-                    end
-                end
-            end
-        end
-        if (DATA_OUT_EN) begin
+        if (OUTPUT_STATE_IN_DATA) begin
             for (integer i = 0; i < DATA_W; i = i + 1) begin
                 if (INPUT_STATE_IN_DATA) begin
                     for (integer j = 0; j < DATA_W; j = j + 1) begin
-                        lfsr_mask[i+LFSR_W][j] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                        lfsr_mask[i][j] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
                     end
                 end else begin
                     for (integer j = 0; j < LFSR_W; j = j + 1) begin
-                        lfsr_mask[i+LFSR_W][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
+                        lfsr_mask[i][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
                     end
                     if (DATA_IN_INT) begin
                         for (integer j = 0; j < DATA_W; j = j + 1) begin
-                            lfsr_mask[i+LFSR_W][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                            lfsr_mask[i][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                        end
+                    end
+                end
+            end
+        end else begin
+            for (integer i = 0; i < LFSR_W; i = i + 1) begin
+                if (INPUT_STATE_IN_DATA) begin
+                    for (integer j = 0; j < DATA_W; j = j + 1) begin
+                        lfsr_mask[i][j] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+                    end
+                end else begin
+                    for (integer j = 0; j < LFSR_W; j = j + 1) begin
+                        lfsr_mask[i][j] = lfsr_mask_state[LFSR_W-i-1][LFSR_W-j-1];
+                    end
+                    if (DATA_IN_INT) begin
+                        for (integer j = 0; j < DATA_W; j = j + 1) begin
+                            lfsr_mask[i][j+LFSR_W] = lfsr_mask_data[LFSR_W-i-1][DATA_W-j-1];
+                        end
+                    end
+                end
+            end
+            if (DATA_OUT_INT) begin
+                for (integer i = 0; i < DATA_W; i = i + 1) begin
+                    if (INPUT_STATE_IN_DATA) begin
+                        for (integer j = 0; j < DATA_W; j = j + 1) begin
+                            lfsr_mask[i+LFSR_W][j] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                        end
+                    end else begin
+                        for (integer j = 0; j < LFSR_W; j = j + 1) begin
+                            lfsr_mask[i+LFSR_W][j] = output_mask_state[DATA_W-i-1][LFSR_W-j-1];
+                        end
+                        if (DATA_IN_INT) begin
+                            for (integer j = 0; j < DATA_W; j = j + 1) begin
+                                lfsr_mask[i+LFSR_W][j+LFSR_W] = output_mask_data[DATA_W-i-1][DATA_W-j-1];
+                            end
                         end
                     end
                 end
@@ -322,23 +344,36 @@ function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
         end
     end else begin
         // output normal
-        for (integer i = 0; i < LFSR_W; i = i + 1) begin
-            if (INPUT_STATE_IN_DATA) begin
-                lfsr_mask[i] = lfsr_mask_data[i];
-            end else if (DATA_IN_INT) begin
-                lfsr_mask[i] = {lfsr_mask_data[i], lfsr_mask_state[i]};
-            end else begin
-                lfsr_mask[i] = lfsr_mask_state[i];
-            end
-        end
-        if (DATA_OUT_EN) begin
+        if (OUTPUT_STATE_IN_DATA) begin
             for (integer i = 0; i < DATA_W; i = i + 1) begin
                 if (INPUT_STATE_IN_DATA) begin
-                    lfsr_mask[i+LFSR_W] = output_mask_data[i];
+                    lfsr_mask[i] = output_mask_data[i];
                 end else if (DATA_IN_INT) begin
-                    lfsr_mask[i+LFSR_W] = {output_mask_data[i], output_mask_state[i]};
+                    lfsr_mask[i] = {output_mask_data[i], output_mask_state[i]};
                 end else begin
-                    lfsr_mask[i+LFSR_W] = output_mask_state[i];
+                    lfsr_mask[i] = output_mask_state[i];
+                end
+            end
+
+        end else begin
+            for (integer i = 0; i < LFSR_W; i = i + 1) begin
+                if (INPUT_STATE_IN_DATA) begin
+                    lfsr_mask[i] = lfsr_mask_data[i];
+                end else if (DATA_IN_INT) begin
+                    lfsr_mask[i] = {lfsr_mask_data[i], lfsr_mask_state[i]};
+                end else begin
+                    lfsr_mask[i] = lfsr_mask_state[i];
+                end
+            end
+            if (DATA_OUT_INT) begin
+                for (integer i = 0; i < DATA_W; i = i + 1) begin
+                    if (INPUT_STATE_IN_DATA) begin
+                        lfsr_mask[i+LFSR_W] = output_mask_data[i];
+                    end else if (DATA_IN_INT) begin
+                        lfsr_mask[i+LFSR_W] = {output_mask_data[i], output_mask_state[i]};
+                    end else begin
+                        lfsr_mask[i+LFSR_W] = output_mask_state[i];
+                    end
                 end
             end
         end
@@ -379,12 +414,20 @@ for (genvar n = 0; n < OUT_W; n = n + 1) begin
     assign lfsr_out[n] = ^(lfsr_in & mask[n]);
 end
 
-assign state_out = lfsr_out[0 +: LFSR_W];
-
-if (DATA_OUT_EN) begin
-    assign data_out = lfsr_out[LFSR_W +: DATA_W];
+if (OUTPUT_DATA_IN_STATE) begin
+    assign state_out = lfsr_out;
+    assign data_out = REVERSE ? lfsr_out[OUT_W-1 -: DATA_W] : lfsr_out[0 +: DATA_W];
+end else if (OUTPUT_STATE_IN_DATA) begin
+    assign state_out = REVERSE ? lfsr_out[OUT_W-1 -: LFSR_W] : lfsr_out[0 +: LFSR_W];
+    assign data_out = lfsr_out;
 end else begin
-    assign data_out = '0;
+    assign state_out = lfsr_out[0 +: LFSR_W];
+
+    if (DATA_OUT_EN) begin
+        assign data_out = lfsr_out[LFSR_W +: DATA_W];
+    end else begin
+        assign data_out = '0;
+    end
 end
 
 endmodule
