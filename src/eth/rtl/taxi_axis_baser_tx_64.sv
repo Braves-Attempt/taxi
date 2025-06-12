@@ -46,9 +46,9 @@ module taxi_axis_baser_tx_64 #
     output wire logic                 encoded_tx_data_valid,
     output wire logic [HDR_W-1:0]     encoded_tx_hdr,
     output wire logic                 encoded_tx_hdr_valid,
-    input  wire logic [GBX_CNT-1:0]   tx_gbx_req_start = '0,
+    input  wire logic [GBX_CNT-1:0]   tx_gbx_req_sync = '0,
     input  wire logic                 tx_gbx_req_stall = '0,
-    output wire logic [GBX_CNT-1:0]   tx_gbx_start,
+    output wire logic [GBX_CNT-1:0]   tx_gbx_sync,
 
     /*
      * PTP
@@ -223,7 +223,7 @@ logic [DATA_W-1:0] encoded_tx_data_reg = {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
 logic encoded_tx_data_valid_reg = 1'b0;
 logic [HDR_W-1:0] encoded_tx_hdr_reg = SYNC_CTRL;
 logic encoded_tx_hdr_valid_reg = 1'b0;
-logic [GBX_CNT-1:0] tx_gbx_start_reg = '0;
+logic [GBX_CNT-1:0] tx_gbx_sync_reg = '0;
 
 logic [DATA_W-1:0] output_data_reg = '0, output_data_next;
 logic [3:0] output_type_reg = OUTPUT_TYPE_IDLE, output_type_next;
@@ -251,7 +251,7 @@ assign encoded_tx_data = encoded_tx_data_reg;
 assign encoded_tx_data_valid = GBX_IF_EN ? encoded_tx_data_valid_reg : 1'b1;
 assign encoded_tx_hdr = encoded_tx_hdr_reg;
 assign encoded_tx_hdr_valid = GBX_IF_EN ? encoded_tx_hdr_valid_reg : 1'b1;
-assign tx_gbx_start = GBX_IF_EN ? tx_gbx_start_reg : '0;
+assign tx_gbx_sync = GBX_IF_EN ? tx_gbx_sync_reg : '0;
 
 assign m_axis_tx_cpl.tdata = PTP_TS_EN ? ((!PTP_TS_FMT_TOD || m_axis_tx_cpl_ts_borrow_reg) ? m_axis_tx_cpl_ts_reg : m_axis_tx_cpl_ts_adj_reg) : '0;
 assign m_axis_tx_cpl.tkeep = 1'b1;
@@ -920,7 +920,7 @@ always_ff @(posedge clk) begin
         end
     end
 
-    tx_gbx_start_reg <= tx_gbx_req_start;
+    tx_gbx_sync_reg <= tx_gbx_req_sync;
 
     last_ts_reg <= (4+16)'(ptp_ts);
     ts_inc_reg <= (4+16)'(ptp_ts) - last_ts_reg;
@@ -945,7 +945,7 @@ always_ff @(posedge clk) begin
         encoded_tx_data_valid_reg <= 1'b0;
         encoded_tx_hdr_reg <= SYNC_CTRL;
         encoded_tx_hdr_valid_reg <= 1'b0;
-        tx_gbx_start_reg <= '0;
+        tx_gbx_sync_reg <= '0;
 
         output_data_reg <= '0;
         output_type_reg <= OUTPUT_TYPE_IDLE;

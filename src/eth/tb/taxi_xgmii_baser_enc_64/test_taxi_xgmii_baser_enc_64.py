@@ -47,7 +47,7 @@ class TB:
         self.sink = BaseRSerdesSink(dut.encoded_tx_data, dut.encoded_tx_hdr, dut.clk, scramble=False)
 
         dut.xgmii_tx_valid.setimmediatevalue(1)
-        dut.tx_gbx_start_in.setimmediatevalue(0)
+        dut.tx_gbx_sync_in.setimmediatevalue(0)
 
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)

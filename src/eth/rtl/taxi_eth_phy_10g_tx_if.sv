@@ -36,9 +36,9 @@ module taxi_eth_phy_10g_tx_if #
     input  wire logic               encoded_tx_data_valid = 1'b1,
     input  wire logic [HDR_W-1:0]   encoded_tx_hdr,
     input  wire logic               encoded_tx_hdr_valid = 1'b1,
-    output wire logic               tx_gbx_req_start,
+    output wire logic               tx_gbx_req_sync,
     output wire logic               tx_gbx_req_stall,
-    input  wire logic               tx_gbx_start = 1'b0,
+    input  wire logic               tx_gbx_sync = 1'b0,
     /*
      * SERDES interface
      */
@@ -46,9 +46,9 @@ module taxi_eth_phy_10g_tx_if #
     output wire logic               serdes_tx_data_valid,
     output wire logic [HDR_W-1:0]   serdes_tx_hdr,
     output wire logic               serdes_tx_hdr_valid,
-    input  wire logic               serdes_tx_gbx_req_start = 1'b0,
+    input  wire logic               serdes_tx_gbx_req_sync = 1'b0,
     input  wire logic               serdes_tx_gbx_req_stall = 1'b0,
-    output wire logic               serdes_tx_gbx_start,
+    output wire logic               serdes_tx_gbx_sync,
 
     /*
      * Configuration
@@ -63,7 +63,7 @@ if (DATA_W != 64)
 if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
 
-assign tx_gbx_req_start = GBX_IF_EN ? serdes_tx_gbx_req_start : '0;
+assign tx_gbx_req_sync = GBX_IF_EN ? serdes_tx_gbx_req_sync : '0;
 assign tx_gbx_req_stall = GBX_IF_EN ? serdes_tx_gbx_req_stall : '0;
 
 logic [57:0] scrambler_state_reg = '1;
@@ -78,7 +78,7 @@ logic [DATA_W-1:0] serdes_tx_data_reg = '0;
 logic serdes_tx_data_valid_reg = 1'b0;
 logic [HDR_W-1:0] serdes_tx_hdr_reg = '0;
 logic serdes_tx_hdr_valid_reg = 1'b0;
-logic serdes_tx_gbx_start_reg = 1'b0;
+logic serdes_tx_gbx_sync_reg = 1'b0;
 
 wire [DATA_W-1:0] serdes_tx_data_int;
 wire [HDR_W-1:0] serdes_tx_hdr_int;
@@ -106,7 +106,7 @@ if (SERDES_PIPELINE > 0) begin
     (* srl_style = "register" *)
     reg serdes_tx_hdr_valid_pipe_reg[SERDES_PIPELINE-1:0];
     (* srl_style = "register" *)
-    reg serdes_tx_gbx_start_pipe_reg[SERDES_PIPELINE-1:0];
+    reg serdes_tx_gbx_sync_pipe_reg[SERDES_PIPELINE-1:0];
 
     for (genvar n = 0; n < SERDES_PIPELINE; n = n + 1) begin
         initial begin
@@ -114,7 +114,7 @@ if (SERDES_PIPELINE > 0) begin
             serdes_tx_data_valid_pipe_reg[n] = '0;
             serdes_tx_hdr_pipe_reg[n] = '0;
             serdes_tx_hdr_valid_pipe_reg[n] = '0;
-            serdes_tx_gbx_start_pipe_reg[n] = '0;
+            serdes_tx_gbx_sync_pipe_reg[n] = '0;
         end
 
         always @(posedge clk) begin
@@ -122,7 +122,7 @@ if (SERDES_PIPELINE > 0) begin
             serdes_tx_data_valid_pipe_reg[n] <= n == 0 ? serdes_tx_data_valid_reg : serdes_tx_data_valid_pipe_reg[n-1];
             serdes_tx_hdr_pipe_reg[n] <= n == 0 ? serdes_tx_hdr_int : serdes_tx_hdr_pipe_reg[n-1];
             serdes_tx_hdr_valid_pipe_reg[n] <= n == 0 ? serdes_tx_hdr_valid_reg : serdes_tx_hdr_valid_pipe_reg[n-1];
-            serdes_tx_gbx_start_pipe_reg[n] <= n == 0 ? serdes_tx_gbx_start_reg : serdes_tx_gbx_start_pipe_reg[n-1];
+            serdes_tx_gbx_sync_pipe_reg[n] <= n == 0 ? serdes_tx_gbx_sync_reg : serdes_tx_gbx_sync_pipe_reg[n-1];
         end
     end
 
@@ -130,13 +130,13 @@ if (SERDES_PIPELINE > 0) begin
     assign serdes_tx_data_valid = GBX_IF_EN ? serdes_tx_data_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
     assign serdes_tx_hdr = serdes_tx_hdr_pipe_reg[SERDES_PIPELINE-1];
     assign serdes_tx_hdr_valid = GBX_IF_EN ? serdes_tx_hdr_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
-    assign serdes_tx_gbx_start = GBX_IF_EN ? serdes_tx_gbx_start_pipe_reg[SERDES_PIPELINE-1] : 1'b0;
+    assign serdes_tx_gbx_sync = GBX_IF_EN ? serdes_tx_gbx_sync_pipe_reg[SERDES_PIPELINE-1] : 1'b0;
 end else begin
     assign serdes_tx_data = serdes_tx_data_int;
     assign serdes_tx_data_valid = GBX_IF_EN ? serdes_tx_data_valid_reg : 1'b1;
     assign serdes_tx_hdr = serdes_tx_hdr_int;
     assign serdes_tx_hdr_valid = GBX_IF_EN ? serdes_tx_hdr_valid_reg : 1'b1;
-    assign serdes_tx_gbx_start = GBX_IF_EN ? serdes_tx_gbx_start_reg : 1'b0;
+    assign serdes_tx_gbx_sync = GBX_IF_EN ? serdes_tx_gbx_sync_reg : 1'b0;
 end
 
 taxi_lfsr #(
@@ -194,7 +194,7 @@ always_ff @(posedge clk) begin
 
     serdes_tx_data_valid_reg <= encoded_tx_data_valid;
     serdes_tx_hdr_valid_reg <= encoded_tx_hdr_valid;
-    serdes_tx_gbx_start_reg <= tx_gbx_start;
+    serdes_tx_gbx_sync_reg <= tx_gbx_sync;
 end
 
 endmodule

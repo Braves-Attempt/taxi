@@ -33,7 +33,7 @@ module taxi_xgmii_baser_enc_64 #
     input  wire logic [DATA_W-1:0]   xgmii_txd,
     input  wire logic [CTRL_W-1:0]   xgmii_txc,
     input  wire logic                xgmii_tx_valid = 1'b1,
-    input  wire logic [GBX_CNT-1:0]  tx_gbx_start_in = '0,
+    input  wire logic [GBX_CNT-1:0]  tx_gbx_sync_in = '0,
 
     /*
      * 10GBASE-R encoded interface
@@ -42,7 +42,7 @@ module taxi_xgmii_baser_enc_64 #
     output wire logic                encoded_tx_data_valid,
     output wire logic [HDR_W-1:0]    encoded_tx_hdr,
     output wire logic                encoded_tx_hdr_valid,
-    output wire logic [GBX_CNT-1:0]  tx_gbx_start_out,
+    output wire logic [GBX_CNT-1:0]  tx_gbx_sync_out,
 
     /*
      * Status
@@ -118,7 +118,7 @@ logic [DATA_W-1:0] encoded_tx_data_reg = '0, encoded_tx_data_next;
 logic encoded_tx_data_valid_reg = 1'b0, encoded_tx_data_valid_next;
 logic [HDR_W-1:0] encoded_tx_hdr_reg = '0, encoded_tx_hdr_next;
 logic encoded_tx_hdr_valid_reg = 1'b0, encoded_tx_hdr_valid_next;
-logic [GBX_CNT-1:0] tx_gbx_start_reg = '0, tx_gbx_start_next;
+logic [GBX_CNT-1:0] tx_gbx_sync_reg = '0, tx_gbx_sync_next;
 
 logic tx_bad_block_reg = 1'b0, tx_bad_block_next;
 
@@ -126,7 +126,7 @@ assign encoded_tx_data = encoded_tx_data_reg;
 assign encoded_tx_data_valid = GBX_IF_EN ? encoded_tx_data_valid_reg : 1'b1;
 assign encoded_tx_hdr = encoded_tx_hdr_reg;
 assign encoded_tx_hdr_valid = GBX_IF_EN ? encoded_tx_hdr_valid_reg : 1'b1;
-assign tx_gbx_start_out = GBX_IF_EN ? tx_gbx_start_reg : '0;
+assign tx_gbx_sync_out = GBX_IF_EN ? tx_gbx_sync_reg : '0;
 
 assign tx_bad_block = tx_bad_block_reg;
 
@@ -264,7 +264,7 @@ always_comb begin
 
     encoded_tx_data_valid_next = xgmii_tx_valid;
     encoded_tx_hdr_valid_next = xgmii_tx_valid;
-    tx_gbx_start_next = tx_gbx_start_in;
+    tx_gbx_sync_next = tx_gbx_sync_in;
 end
 
 always_ff @(posedge clk) begin
@@ -272,7 +272,7 @@ always_ff @(posedge clk) begin
     encoded_tx_data_valid_reg <= encoded_tx_data_valid_next;
     encoded_tx_hdr_reg <= encoded_tx_hdr_next;
     encoded_tx_hdr_valid_reg <= encoded_tx_hdr_valid_next;
-    tx_gbx_start_reg <= tx_gbx_start_next;
+    tx_gbx_sync_reg <= tx_gbx_sync_next;
 
     tx_bad_block_reg <= tx_bad_block_next;
 end

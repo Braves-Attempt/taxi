@@ -46,9 +46,9 @@ logic [DATA_W-1:0] encoded_tx_data;
 logic encoded_tx_data_valid;
 logic [HDR_W-1:0] encoded_tx_hdr;
 logic encoded_tx_hdr_valid;
-logic [GBX_CNT-1:0] tx_gbx_req_start;
+logic [GBX_CNT-1:0] tx_gbx_req_sync;
 logic tx_gbx_req_stall;
-logic [GBX_CNT-1:0] tx_gbx_start;
+logic [GBX_CNT-1:0] tx_gbx_sync;
 
 logic [PTP_TS_W-1:0] ptp_ts;
 
@@ -97,9 +97,9 @@ uut (
     .encoded_tx_data_valid(encoded_tx_data_valid),
     .encoded_tx_hdr(encoded_tx_hdr),
     .encoded_tx_hdr_valid(encoded_tx_hdr_valid),
-    .tx_gbx_req_start(tx_gbx_req_start),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
     .tx_gbx_req_stall(tx_gbx_req_stall),
-    .tx_gbx_start(tx_gbx_start),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * PTP

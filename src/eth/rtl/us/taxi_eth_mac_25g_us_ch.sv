@@ -287,9 +287,9 @@ wire [DATA_W-1:0]  serdes_tx_data;
 wire               serdes_tx_data_valid;
 wire [HDR_W-1:0]   serdes_tx_hdr;
 wire               serdes_tx_hdr_valid;
-wire               serdes_tx_gbx_req_start;
+wire               serdes_tx_gbx_req_sync;
 wire               serdes_tx_gbx_req_stall;
-wire               serdes_tx_gbx_start;
+wire               serdes_tx_gbx_sync;
 wire [DATA_W-1:0]  serdes_rx_data;
 wire               serdes_rx_data_valid;
 wire [HDR_W-1:0]   serdes_rx_hdr;
@@ -395,9 +395,9 @@ if (CFG_LOW_LATENCY) begin : gt
         .serdes_tx_data_valid(serdes_tx_data_valid),
         .serdes_tx_hdr(serdes_tx_hdr),
         .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-        .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+        .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
         .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-        .serdes_tx_gbx_start(serdes_tx_gbx_start),
+        .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
         .serdes_rx_data(serdes_rx_data),
         .serdes_rx_data_valid(serdes_rx_data_valid),
         .serdes_rx_hdr(serdes_rx_hdr),
@@ -504,9 +504,9 @@ end else begin : gt
         .serdes_tx_data_valid(serdes_tx_data_valid),
         .serdes_tx_hdr(serdes_tx_hdr),
         .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-        .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+        .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
         .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-        .serdes_tx_gbx_start(serdes_tx_gbx_start),
+        .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
         .serdes_rx_data(serdes_rx_data),
         .serdes_rx_data_valid(serdes_rx_data_valid),
         .serdes_rx_hdr(serdes_rx_hdr),
@@ -569,9 +569,9 @@ eth_mac_phy_10g_inst (
     .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
     .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
     .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-    .serdes_tx_gbx_start(serdes_tx_gbx_start),
+    .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
     .serdes_rx_data(serdes_rx_data),
     .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),

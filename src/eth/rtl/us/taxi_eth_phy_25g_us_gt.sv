@@ -113,9 +113,9 @@ module taxi_eth_phy_25g_us_gt #
     input  wire logic               serdes_tx_data_valid,
     input  wire logic [HDR_W-1:0]   serdes_tx_hdr,
     input  wire logic               serdes_tx_hdr_valid,
-    output wire logic               serdes_tx_gbx_req_start,
+    output wire logic               serdes_tx_gbx_req_sync,
     output wire logic               serdes_tx_gbx_req_stall,
-    input  wire logic               serdes_tx_gbx_start,
+    input  wire logic               serdes_tx_gbx_sync,
     output wire logic [DATA_W-1:0]  serdes_rx_data,
     output wire logic               serdes_rx_data_valid,
     output wire logic [HDR_W-1:0]   serdes_rx_hdr,
@@ -370,7 +370,7 @@ if (!SIM) begin
     assign serdes_rx_hdr_valid = gt_rxheadervalid[0];
 end
 
-assign serdes_tx_gbx_req_start = 1'b0;
+assign serdes_tx_gbx_req_sync = 1'b0;
 assign serdes_tx_gbx_req_stall = 1'b0;
 
 if (SIM) begin : xcvr

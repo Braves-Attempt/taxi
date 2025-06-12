@@ -76,9 +76,9 @@ class TB:
             data_valid=dut.serdes_tx_data_valid,
             hdr=dut.serdes_tx_hdr,
             hdr_valid=dut.serdes_tx_hdr_valid,
-            gbx_req_start=dut.serdes_tx_gbx_req_start,
+            gbx_req_sync=dut.serdes_tx_gbx_req_sync,
             gbx_req_stall=dut.serdes_tx_gbx_req_stall,
-            gbx_start=dut.serdes_tx_gbx_start,
+            gbx_sync=dut.serdes_tx_gbx_sync,
             clock=dut.tx_clk,
             gbx_cfg=gbx_cfg
         )

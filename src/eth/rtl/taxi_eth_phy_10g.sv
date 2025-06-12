@@ -46,9 +46,9 @@ module taxi_eth_phy_10g #
     output wire logic [DATA_W-1:0]  xgmii_rxd,
     output wire logic [CTRL_W-1:0]  xgmii_rxc,
     output wire logic               xgmii_rx_valid = 1'b1,
-    output wire logic               tx_gbx_req_start,
+    output wire logic               tx_gbx_req_sync,
     output wire logic               tx_gbx_req_stall,
-    input  wire logic               tx_gbx_start = 1'b0,
+    input  wire logic               tx_gbx_sync = 1'b0,
 
     /*
      * SERDES interface
@@ -57,9 +57,9 @@ module taxi_eth_phy_10g #
     output wire logic               serdes_tx_data_valid,
     output wire logic [HDR_W-1:0]   serdes_tx_hdr,
     output wire logic               serdes_tx_hdr_valid,
-    input  wire logic               serdes_tx_gbx_req_start = 1'b0,
+    input  wire logic               serdes_tx_gbx_req_sync = 1'b0,
     input  wire logic               serdes_tx_gbx_req_stall = 1'b0,
-    output wire logic               serdes_tx_gbx_start,
+    output wire logic               serdes_tx_gbx_sync,
     input  wire logic [DATA_W-1:0]  serdes_rx_data,
     input  wire logic               serdes_rx_data_valid = 1'b1,
     input  wire logic [HDR_W-1:0]   serdes_rx_hdr,
@@ -155,9 +155,9 @@ eth_phy_10g_tx_inst (
     .xgmii_txd(xgmii_txd),
     .xgmii_txc(xgmii_txc),
     .xgmii_tx_valid(xgmii_tx_valid),
-    .tx_gbx_req_start(tx_gbx_req_start),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
     .tx_gbx_req_stall(tx_gbx_req_stall),
-    .tx_gbx_start(tx_gbx_start),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * SERDES interface
@@ -166,9 +166,9 @@ eth_phy_10g_tx_inst (
     .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
     .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
     .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-    .serdes_tx_gbx_start(serdes_tx_gbx_start),
+    .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
 
     /*
      * Status

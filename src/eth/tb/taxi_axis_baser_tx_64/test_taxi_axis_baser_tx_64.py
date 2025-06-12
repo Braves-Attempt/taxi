@@ -57,9 +57,9 @@ class TB:
             data_valid=dut.encoded_tx_data_valid,
             hdr=dut.encoded_tx_hdr,
             hdr_valid=dut.encoded_tx_hdr_valid,
-            gbx_req_start=dut.tx_gbx_req_start,
+            gbx_req_sync=dut.tx_gbx_req_sync,
             gbx_req_stall=dut.tx_gbx_req_stall,
-            gbx_start=dut.tx_gbx_start,
+            gbx_sync=dut.tx_gbx_sync,
             clock=dut.clk,
             scramble=False,
             gbx_cfg=gbx_cfg

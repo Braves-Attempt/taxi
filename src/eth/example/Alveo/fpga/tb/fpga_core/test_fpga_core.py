@@ -78,7 +78,7 @@ class TB:
                     data_valid=gt_inst.serdes_tx_data_valid,
                     hdr=gt_inst.serdes_tx_hdr,
                     hdr_valid=gt_inst.serdes_tx_hdr_valid,
-                    gbx_start=gt_inst.serdes_tx_gbx_start,
+                    gbx_sync=gt_inst.serdes_tx_gbx_sync,
                     clock=gt_inst.tx_clk,
                     reverse=True,
                     gbx_cfg=gbx_cfg

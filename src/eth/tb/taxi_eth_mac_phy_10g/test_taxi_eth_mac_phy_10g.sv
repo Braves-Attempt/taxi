@@ -66,9 +66,9 @@ logic [DATA_W-1:0] serdes_tx_data;
 logic serdes_tx_data_valid;
 logic [HDR_W-1:0] serdes_tx_hdr;
 logic serdes_tx_hdr_valid;
-logic serdes_tx_gbx_req_start;
+logic serdes_tx_gbx_req_sync;
 logic serdes_tx_gbx_req_stall;
-logic serdes_tx_gbx_start;
+logic serdes_tx_gbx_sync;
 logic [DATA_W-1:0] serdes_rx_data;
 logic serdes_rx_data_valid;
 logic [HDR_W-1:0] serdes_rx_hdr;
@@ -243,9 +243,9 @@ uut (
     .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
     .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
     .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-    .serdes_tx_gbx_start(serdes_tx_gbx_start),
+    .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
     .serdes_rx_data(serdes_rx_data),
     .serdes_rx_data_valid(serdes_rx_data_valid),
     .serdes_rx_hdr(serdes_rx_hdr),

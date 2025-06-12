@@ -25,7 +25,7 @@ from cocotbext.eth import XgmiiFrame
 class BaseRSerdesSource():
 
     def __init__(self, data, hdr, clock, enable=None, slip=None, data_valid=None, hdr_valid=None,
-            gbx_start=None, scramble=True, reverse=False, gbx_cfg=None, *args, **kwargs):
+            gbx_sync=None, scramble=True, reverse=False, gbx_cfg=None, *args, **kwargs):
 
         self.log = logging.getLogger(f"cocotb.{data._path}")
         self.data = data
@@ -35,7 +35,7 @@ class BaseRSerdesSource():
         self.slip = slip
         self.data_valid = data_valid
         self.hdr_valid = hdr_valid
-        self.gbx_start = gbx_start
+        self.gbx_sync = gbx_sync
         self.scramble = scramble
         self.reverse = reverse
 
@@ -92,8 +92,8 @@ class BaseRSerdesSource():
         self.hdr.setimmediatevalue(0)
         if self.hdr_valid is not None:
             self.hdr_valid.setimmediatevalue(0)
-        if self.gbx_start is not None:
-            self.gbx_start.setimmediatevalue(0)
+        if self.gbx_sync is not None:
+            self.gbx_sync.setimmediatevalue(0)
 
         self._run_cr = cocotb.start_soon(self._run())
 
@@ -220,8 +220,8 @@ class BaseRSerdesSource():
             if self.gbx_seq_len:
                 self.gbx_seq = (self.gbx_seq + 1) % self.gbx_seq_len
 
-                if self.gbx_start is not None:
-                    self.gbx_start.value = (self.gbx_seq == 0)
+                if self.gbx_sync is not None:
+                    self.gbx_sync.value = (self.gbx_seq == 0)
 
                 self.gbx_bit_cnt += self.gbx_in_bits
 
@@ -242,8 +242,8 @@ class BaseRSerdesSource():
                 self.gbx_bit_cnt = 0
                 gbx_delay = 0
 
-                if self.gbx_start is not None:
-                    self.gbx_start.value = 0
+                if self.gbx_sync is not None:
+                    self.gbx_sync.value = 0
 
             if ifg_cnt + deficit_idle_cnt > self.byte_lanes-1 or (not self.enable_dic and ifg_cnt > 4):
                 # in IFG
@@ -463,7 +463,7 @@ class BaseRSerdesSource():
 class BaseRSerdesSink:
 
     def __init__(self, data, hdr, clock, enable=None, data_valid=None, hdr_valid=None,
-            gbx_req_start=None, gbx_req_stall=None, gbx_start=None,
+            gbx_req_sync=None, gbx_req_stall=None, gbx_sync=None,
             scramble=True, reverse=False, gbx_cfg=None, *args, **kwargs):
 
         self.log = logging.getLogger(f"cocotb.{data._path}")
@@ -473,9 +473,9 @@ class BaseRSerdesSink:
         self.enable = enable
         self.data_valid = data_valid
         self.hdr_valid = hdr_valid
-        self.gbx_req_start = gbx_req_start
+        self.gbx_req_sync = gbx_req_sync
         self.gbx_req_stall = gbx_req_stall
-        self.gbx_start = gbx_start
+        self.gbx_sync = gbx_sync
         self.scramble = scramble
         self.reverse = reverse
 
@@ -515,8 +515,8 @@ class BaseRSerdesSink:
         if gbx_cfg:
             self.set_gbx_cfg(*gbx_cfg)
 
-        if self.gbx_req_start is not None:
-            self.gbx_req_start.setimmediatevalue(0)
+        if self.gbx_req_sync is not None:
+            self.gbx_req_sync.setimmediatevalue(0)
         if self.gbx_req_stall is not None:
             self.gbx_req_stall.setimmediatevalue(0)
 
@@ -632,8 +632,8 @@ class BaseRSerdesSink:
                 # generation
                 self.gbx_seq_gen = (self.gbx_seq_gen + 1) % self.gbx_seq_len
 
-                if self.gbx_req_start is not None:
-                    self.gbx_req_start.value = (self.gbx_seq_gen == 0)
+                if self.gbx_req_sync is not None:
+                    self.gbx_req_sync.value = (self.gbx_seq_gen == 0)
 
                 # stall cycle
                 if self.gbx_req_stall is not None:
@@ -642,8 +642,8 @@ class BaseRSerdesSink:
                 # sync
                 self.gbx_seq = (self.gbx_seq + 1) % self.gbx_seq_len
 
-                if self.gbx_start is not None:
-                    if self.gbx_start.value.integer:
+                if self.gbx_sync is not None:
+                    if self.gbx_sync.value.integer:
                         self.gbx_seq = 0
 
                 self.gbx_bit_cnt = max(self.gbx_bit_cnt - self.gbx_out_bits, 0)
@@ -659,8 +659,8 @@ class BaseRSerdesSink:
                 self.gbx_bit_cnt = 0
                 gbx_delay = 0
 
-                if self.gbx_start is not None:
-                    self.gbx_start.value = 1
+                if self.gbx_sync is not None:
+                    self.gbx_sync.value = 1
 
             if self.data_valid is not None:
                 if not self.data_valid.value.integer:

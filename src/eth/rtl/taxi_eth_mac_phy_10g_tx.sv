@@ -49,9 +49,9 @@ module taxi_eth_mac_phy_10g_tx #
     output wire logic                 serdes_tx_data_valid,
     output wire logic [HDR_W-1:0]     serdes_tx_hdr,
     output wire logic                 serdes_tx_hdr_valid,
-    input  wire logic                 serdes_tx_gbx_req_start = 1'b0,
+    input  wire logic                 serdes_tx_gbx_req_sync = 1'b0,
     input  wire logic                 serdes_tx_gbx_req_stall = 1'b0,
-    output wire logic                 serdes_tx_gbx_start,
+    output wire logic                 serdes_tx_gbx_sync,
 
     /*
      * PTP
@@ -88,9 +88,9 @@ wire              encoded_tx_data_valid;
 wire [HDR_W-1:0]  encoded_tx_hdr;
 wire              encoded_tx_hdr_valid;
 
-wire tx_gbx_req_start;
+wire tx_gbx_req_sync;
 wire tx_gbx_req_stall;
-wire tx_gbx_start;
+wire tx_gbx_sync;
 
 taxi_axis_baser_tx_64 #(
     .DATA_W(DATA_W),
@@ -122,9 +122,9 @@ axis_baser_tx_inst (
     .encoded_tx_data_valid(encoded_tx_data_valid),
     .encoded_tx_hdr(encoded_tx_hdr),
     .encoded_tx_hdr_valid(encoded_tx_hdr_valid),
-    .tx_gbx_req_start(tx_gbx_req_start),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
     .tx_gbx_req_stall(tx_gbx_req_stall),
-    .tx_gbx_start(tx_gbx_start),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * PTP
@@ -175,9 +175,9 @@ eth_phy_10g_tx_if_inst (
     .encoded_tx_data_valid(encoded_tx_data_valid),
     .encoded_tx_hdr(encoded_tx_hdr),
     .encoded_tx_hdr_valid(encoded_tx_hdr_valid),
-    .tx_gbx_req_start(tx_gbx_req_start),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
     .tx_gbx_req_stall(tx_gbx_req_stall),
-    .tx_gbx_start(tx_gbx_start),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * SERDES interface
@@ -186,9 +186,9 @@ eth_phy_10g_tx_if_inst (
     .serdes_tx_data_valid(serdes_tx_data_valid),
     .serdes_tx_hdr(serdes_tx_hdr),
     .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-    .serdes_tx_gbx_req_start(serdes_tx_gbx_req_start),
+    .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
     .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-    .serdes_tx_gbx_start(serdes_tx_gbx_start),
+    .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
 
     /*
      * Configuration

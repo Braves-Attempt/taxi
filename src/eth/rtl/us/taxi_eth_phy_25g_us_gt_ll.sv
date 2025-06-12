@@ -113,9 +113,9 @@ module taxi_eth_phy_25g_us_gt_ll #
     input  wire logic               serdes_tx_data_valid,
     input  wire logic [HDR_W-1:0]   serdes_tx_hdr,
     input  wire logic               serdes_tx_hdr_valid,
-    output wire logic               serdes_tx_gbx_req_start,
+    output wire logic               serdes_tx_gbx_req_sync,
     output wire logic               serdes_tx_gbx_req_stall,
-    input  wire logic               serdes_tx_gbx_start,
+    input  wire logic               serdes_tx_gbx_sync,
     output wire logic [DATA_W-1:0]  serdes_rx_data,
     output wire logic               serdes_rx_data_valid,
     output wire logic [HDR_W-1:0]   serdes_rx_hdr,
@@ -376,20 +376,20 @@ if (GT_TYPE == "GTY") begin : tx_seq
 
     // Generate gearbox request signals
     logic [6:0] tx_seq_gen_reg = '0;
-    logic tx_req_start_reg = 1'b0;
+    logic tx_req_sync_reg = 1'b0;
     logic tx_req_stall_reg = 1'b0;
 
-    assign serdes_tx_gbx_req_start = tx_req_start_reg;
+    assign serdes_tx_gbx_req_sync = tx_req_sync_reg;
     assign serdes_tx_gbx_req_stall = tx_req_stall_reg;
 
     always @(posedge tx_clk) begin
-        tx_req_start_reg <= 1'b0;
+        tx_req_sync_reg <= 1'b0;
         tx_req_stall_reg <= 1'b0;
 
         tx_seq_gen_reg <= tx_seq_gen_reg - 1;
         if (tx_seq_gen_reg == 0) begin
             tx_seq_gen_reg <= 65;
-            tx_req_start_reg <= 1'b1;
+            tx_req_sync_reg <= 1'b1;
         end
         if (tx_seq_gen_reg == 2 || tx_seq_gen_reg == 1) begin
             tx_req_stall_reg <= 1'b1;
@@ -406,7 +406,7 @@ if (GT_TYPE == "GTY") begin : tx_seq
         if (tx_seq_reg == 65) begin
             tx_seq_reg <= '0;
         end
-        if (serdes_tx_gbx_start) begin
+        if (serdes_tx_gbx_sync) begin
             tx_seq_reg <= 1;
         end
     end
@@ -417,20 +417,20 @@ end else begin : tx_seq
 
     // Generate gearbox request signals
     logic [5:0] tx_seq_gen_reg = '0;
-    logic tx_req_start_reg = 1'b0;
+    logic tx_req_sync_reg = 1'b0;
     logic tx_req_stall_reg = 1'b0;
 
-    assign serdes_tx_gbx_req_start = tx_req_start_reg;
+    assign serdes_tx_gbx_req_sync = tx_req_sync_reg;
     assign serdes_tx_gbx_req_stall = tx_req_stall_reg;
 
     always @(posedge tx_clk) begin
-        tx_req_start_reg <= 1'b0;
+        tx_req_sync_reg <= 1'b0;
         tx_req_stall_reg <= 1'b0;
 
         tx_seq_gen_reg <= tx_seq_gen_reg - 1;
         if (tx_seq_gen_reg == 0) begin
             tx_seq_gen_reg <= 32;
-            tx_req_start_reg <= 1'b1;
+            tx_req_sync_reg <= 1'b1;
         end
         if (tx_seq_gen_reg == 1) begin
             tx_req_stall_reg <= 1'b1;
@@ -447,7 +447,7 @@ end else begin : tx_seq
         if (tx_seq_reg == 32) begin
             tx_seq_reg <= '0;
         end
-        if (serdes_tx_gbx_start) begin
+        if (serdes_tx_gbx_sync) begin
             tx_seq_reg <= 1;
         end
     end
