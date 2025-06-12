@@ -35,15 +35,15 @@ module taxi_eth_mac_phy_10g #
     parameter BITSLIP_HIGH_CYCLES = 0,
     parameter BITSLIP_LOW_CYCLES = 7,
     parameter COUNT_125US = 125000/6.4,
+    parameter logic PFC_EN = 1'b0,
+    parameter logic PAUSE_EN = PFC_EN,
     parameter logic STAT_EN = 1'b0,
     parameter STAT_TX_LEVEL = 1,
     parameter STAT_RX_LEVEL = 1,
     parameter STAT_ID_BASE = 0,
     parameter STAT_UPDATE_PERIOD = 1024,
     parameter logic STAT_STR_EN = 1'b0,
-    parameter logic [8*8-1:0] STAT_PREFIX_STR = "MAC",
-    parameter logic PFC_EN = 1'b0,
-    parameter logic PAUSE_EN = PFC_EN
+    parameter logic [8*8-1:0] STAT_PREFIX_STR = "MAC"
 )
 (
     input  wire logic                 rx_clk,
