@@ -24,7 +24,10 @@ module fpga #
     // device family
     parameter string FAMILY = "zynquplus",
     // SFP rate selection (0 for 1G, 1 for 10G)
-    parameter logic SFP_RATE = 1'b1
+    parameter logic SFP_RATE = 1'b1,
+    // 10G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1
 )
 (
     /*
@@ -425,7 +428,9 @@ fpga_core #(
     .SIM(SIM),
     .VENDOR(VENDOR),
     .FAMILY(FAMILY),
-    .SFP_RATE(SFP_RATE)
+    .SFP_RATE(SFP_RATE),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS)
 )
 core_inst (
     /*

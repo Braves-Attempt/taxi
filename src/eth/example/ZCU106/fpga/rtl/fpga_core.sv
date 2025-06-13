@@ -24,7 +24,10 @@ module fpga_core #
     // device family
     parameter string FAMILY = "zynquplus",
     // SFP rate selection (0 for 1G, 1 for 10G)
-    parameter logic SFP_RATE = 1'b1
+    parameter logic SFP_RATE = 1'b1,
+    // 10G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1
 )
 (
     /*
@@ -433,12 +436,13 @@ end else begin : sfp_mac
         .CNT(2),
 
         // GT config
-        .CFG_LOW_LATENCY(1),
+        .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
 
         // GT type
         .GT_TYPE("GTH"),
 
         // PHY parameters
+        .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
         .PADDING_EN(1'b1),
         .DIC_EN(1'b1),
         .MIN_FRAME_LEN(64),
