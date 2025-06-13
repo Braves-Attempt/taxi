@@ -747,6 +747,9 @@ def test_taxi_eth_mac_10g(request, data_w, dic_en, pfc_en):
     parameters = {}
 
     parameters['DATA_W'] = data_w
+    parameters['TX_GBX_IF_EN'] = 0
+    parameters['RX_GBX_IF_EN'] = parameters['TX_GBX_IF_EN']
+    parameters['GBX_CNT'] = 1
     parameters['PADDING_EN'] = 1
     parameters['DIC_EN'] = dic_en
     parameters['MIN_FRAME_LEN'] = 64

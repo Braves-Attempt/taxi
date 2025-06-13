@@ -911,7 +911,8 @@ def process_f_files(files):
 
 
 @pytest.mark.parametrize(("dic_en", "pfc_en"), [(1, 1), (1, 0), (0, 0)])
-@pytest.mark.parametrize(("low_latency", "combined_mac_pcs"), [(1, 1), (0, 1), (0, 0)])
+@pytest.mark.parametrize("low_latency", [1, 0])
+@pytest.mark.parametrize("combined_mac_pcs", [1, 0])
 def test_taxi_eth_mac_25g_us(request, combined_mac_pcs, low_latency, dic_en, pfc_en):
     dut = "taxi_eth_mac_25g_us"
     module = os.path.splitext(os.path.basename(__file__))[0]

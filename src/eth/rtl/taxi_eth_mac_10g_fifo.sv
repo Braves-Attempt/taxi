@@ -19,6 +19,9 @@ module taxi_eth_mac_10g_fifo #
 (
     parameter DATA_W = 64,
     parameter CTRL_W = (DATA_W/8),
+    parameter logic TX_GBX_IF_EN = 1'b0,
+    parameter logic RX_GBX_IF_EN = TX_GBX_IF_EN,
+    parameter GBX_CNT = 1,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -71,8 +74,13 @@ module taxi_eth_mac_10g_fifo #
      */
     input  wire logic [DATA_W-1:0]    xgmii_rxd,
     input  wire logic [CTRL_W-1:0]    xgmii_rxc,
+    input  wire logic                 xgmii_rx_valid = 1'b1,
     output wire logic [DATA_W-1:0]    xgmii_txd,
     output wire logic [CTRL_W-1:0]    xgmii_txc,
+    output wire logic                 xgmii_tx_valid = 1'b1,
+    input  wire logic [GBX_CNT-1:0]   tx_gbx_req_sync = '0,
+    input  wire logic                 tx_gbx_req_stall = 1'b0,
+    output wire logic [GBX_CNT-1:0]   tx_gbx_sync,
 
     /*
      * PTP clock
@@ -242,6 +250,9 @@ wire stat_rx_fifo_drop;
 taxi_eth_mac_10g #(
     .DATA_W(DATA_W),
     .CTRL_W(CTRL_W),
+    .TX_GBX_IF_EN(TX_GBX_IF_EN),
+    .RX_GBX_IF_EN(RX_GBX_IF_EN),
+    .GBX_CNT(GBX_CNT),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -280,8 +291,13 @@ eth_mac_10g_inst (
      */
     .xgmii_rxd(xgmii_rxd),
     .xgmii_rxc(xgmii_rxc),
+    .xgmii_rx_valid(xgmii_rx_valid),
     .xgmii_txd(xgmii_txd),
     .xgmii_txc(xgmii_txc),
+    .xgmii_tx_valid(xgmii_tx_valid),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
+    .tx_gbx_req_stall(tx_gbx_req_stall),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * PTP

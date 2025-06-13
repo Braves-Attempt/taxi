@@ -720,9 +720,6 @@ if (COMBINED_MAC_PCS) begin : mac
 
 end else begin : mac
 
-    if (CFG_LOW_LATENCY)
-        $fatal(0, "Split MAC/PCS does not currently support low latency mode");
-
     localparam CTRL_W = DATA_W / 8;
 
     wire [DATA_W-1:0]  xgmii_txd;
@@ -807,8 +804,8 @@ end else begin : mac
     taxi_eth_mac_10g #(
         .DATA_W(DATA_W),
         .CTRL_W(CTRL_W),
-        // .TX_GBX_IF_EN(CFG_LOW_LATENCY),
-        // .RX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .TX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .RX_GBX_IF_EN(CFG_LOW_LATENCY),
         .PADDING_EN(PADDING_EN),
         .DIC_EN(DIC_EN),
         .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -847,13 +844,13 @@ end else begin : mac
          */
         .xgmii_txd(xgmii_txd),
         .xgmii_txc(xgmii_txc),
-        // .xgmii_tx_valid(xgmii_tx_valid),
+        .xgmii_tx_valid(xgmii_tx_valid),
         .xgmii_rxd(xgmii_rxd),
         .xgmii_rxc(xgmii_rxc),
-        // .xgmii_rx_valid(xgmii_rx_valid),
-        // .tx_gbx_req_sync(tx_gbx_req_sync),
-        // .tx_gbx_req_stall(tx_gbx_req_stall),
-        // .tx_gbx_sync(tx_gbx_sync),
+        .xgmii_rx_valid(xgmii_rx_valid),
+        .tx_gbx_req_sync(tx_gbx_req_sync),
+        .tx_gbx_req_stall(tx_gbx_req_stall),
+        .tx_gbx_sync(tx_gbx_sync),
 
         /*
          * PTP

@@ -39,6 +39,8 @@ class TB:
 
         self.ptp_clock = PtpClockSimTime(ts_tod=dut.ptp_ts, clock=dut.clk)
 
+        dut.xgmii_rx_valid.setimmediatevalue(1)
+
         dut.cfg_rx_max_pkt_len.setimmediatevalue(0)
         dut.cfg_rx_enable.setimmediatevalue(0)
 
@@ -306,6 +308,7 @@ def test_taxi_axis_xgmii_rx_64(request):
     parameters = {}
 
     parameters['DATA_W'] = 64
+    parameters['GBX_IF_EN'] = 0
     parameters['PTP_TS_EN'] = 1
     parameters['PTP_TS_FMT_TOD'] = 1
     parameters['PTP_TS_W'] = 96 if parameters['PTP_TS_FMT_TOD'] else 64

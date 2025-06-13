@@ -19,6 +19,9 @@ module taxi_eth_mac_10g #
 (
     parameter DATA_W = 64,
     parameter CTRL_W = (DATA_W/8),
+    parameter logic TX_GBX_IF_EN = 1'b0,
+    parameter logic RX_GBX_IF_EN = TX_GBX_IF_EN,
+    parameter GBX_CNT = 1,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -57,8 +60,13 @@ module taxi_eth_mac_10g #
      */
     input  wire logic [DATA_W-1:0]    xgmii_rxd,
     input  wire logic [CTRL_W-1:0]    xgmii_rxc,
+    input  wire logic                 xgmii_rx_valid = 1'b1,
     output wire logic [DATA_W-1:0]    xgmii_txd,
     output wire logic [CTRL_W-1:0]    xgmii_txc,
+    output wire logic                 xgmii_tx_valid = 1'b1,
+    input  wire logic [GBX_CNT-1:0]   tx_gbx_req_sync = '0,
+    input  wire logic                 tx_gbx_req_stall = 1'b0,
+    output wire logic [GBX_CNT-1:0]   tx_gbx_sync,
 
     /*
      * PTP
@@ -213,6 +221,7 @@ if (DATA_W == 64) begin
     taxi_axis_xgmii_rx_64 #(
         .DATA_W(DATA_W),
         .CTRL_W(CTRL_W),
+        .GBX_IF_EN(RX_GBX_IF_EN),
         .PTP_TS_EN(PTP_TS_EN),
         .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
         .PTP_TS_W(PTP_TS_W)
@@ -226,6 +235,7 @@ if (DATA_W == 64) begin
          */
         .xgmii_rxd(xgmii_rxd),
         .xgmii_rxc(xgmii_rxc),
+        .xgmii_rx_valid(xgmii_rx_valid),
 
         /*
          * Receive interface (AXI stream)
@@ -267,6 +277,8 @@ if (DATA_W == 64) begin
     taxi_axis_xgmii_tx_64 #(
         .DATA_W(DATA_W),
         .CTRL_W(CTRL_W),
+        .GBX_IF_EN(TX_GBX_IF_EN),
+        .GBX_CNT(GBX_CNT),
         .PADDING_EN(PADDING_EN),
         .DIC_EN(DIC_EN),
         .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -290,6 +302,10 @@ if (DATA_W == 64) begin
          */
         .xgmii_txd(xgmii_txd),
         .xgmii_txc(xgmii_txc),
+        .xgmii_tx_valid(xgmii_tx_valid),
+        .tx_gbx_req_sync(tx_gbx_req_sync),
+        .tx_gbx_req_stall(tx_gbx_req_stall),
+        .tx_gbx_sync(tx_gbx_sync),
 
         /*
          * PTP
@@ -731,7 +747,7 @@ if (MAC_CTRL_EN) begin : mac_ctrl
         .cfg_tx_pfc_quanta(cfg_tx_pfc_quanta),
         .cfg_tx_pfc_refresh(cfg_tx_pfc_refresh),
         .cfg_quanta_step(10'((DATA_W*256)/512)),
-        .cfg_quanta_clk_en(1'b1),
+        .cfg_quanta_clk_en(!TX_GBX_IF_EN || xgmii_tx_valid),
 
         /*
          * Status
@@ -786,7 +802,7 @@ if (MAC_CTRL_EN) begin : mac_ctrl
         .cfg_rx_pfc_opcode(cfg_rx_pfc_opcode),
         .cfg_rx_pfc_en(cfg_rx_pfc_en),
         .cfg_quanta_step(10'((DATA_W*256)/512)),
-        .cfg_quanta_clk_en(1'b1),
+        .cfg_quanta_clk_en(!RX_GBX_IF_EN || xgmii_rx_valid),
 
         /*
          * Status

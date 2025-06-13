@@ -19,6 +19,7 @@ module test_taxi_axis_xgmii_tx_64 #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 64,
+    parameter logic GBX_IF_EN = 1'b0,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -65,6 +66,7 @@ logic stat_tx_err_underflow;
 taxi_axis_xgmii_tx_64 #(
     .DATA_W(DATA_W),
     .CTRL_W(CTRL_W),
+    .GBX_IF_EN(GBX_IF_EN),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),

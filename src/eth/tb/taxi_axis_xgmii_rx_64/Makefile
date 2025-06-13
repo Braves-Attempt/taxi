@@ -35,6 +35,7 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
 export PARAM_DATA_W := 64
+export PARAM_GBX_IF_EN := 0
 export PARAM_PTP_TS_EN := 1
 export PARAM_PTP_TS_FMT_TOD := 1
 export PARAM_PTP_TS_W := $(if $(filter-out 1,$(PARAM_PTP_TS_FMT_TOD)),64,96)
