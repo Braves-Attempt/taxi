@@ -122,7 +122,7 @@ logic frame_reg = 1'b0, frame_next;
 
 assign xgmii_rxd = xgmii_rxd_reg;
 assign xgmii_rxc = xgmii_rxc_reg;
-assign xgmii_rx_valid = xgmii_rx_valid_reg;
+assign xgmii_rx_valid = GBX_IF_EN ? xgmii_rx_valid_reg : 1'b1;
 
 assign rx_bad_block = rx_bad_block_reg;
 assign rx_sequence_error = rx_sequence_error_reg;
@@ -186,10 +186,12 @@ always_comb begin
         // data block
         xgmii_rxd_next = encoded_rx_data;
         xgmii_rxc_next = 8'h00;
+        xgmii_rx_valid_next = 1'b1;
         rx_bad_block_next = 1'b0;
     end else begin
         // control block
         // use only four bits of block type for reduced fanin
+        xgmii_rx_valid_next = 1'b1;
         case (encoded_rx_data[7:4])
             BLOCK_TYPE_CTRL[7:4]: begin
                 // C7 C6 C5 C4 C3 C2 C1 C0 BT
