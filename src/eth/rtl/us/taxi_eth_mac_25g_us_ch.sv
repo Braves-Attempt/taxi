@@ -724,13 +724,13 @@ end else begin : mac
 
     wire [DATA_W-1:0]  xgmii_txd;
     wire [CTRL_W-1:0]  xgmii_txc;
-    wire               xgmii_tx_valid = 1'b1;
+    wire               xgmii_tx_valid;
     wire [DATA_W-1:0]  xgmii_rxd;
     wire [CTRL_W-1:0]  xgmii_rxc;
-    wire               xgmii_rx_valid = 1'b1;
+    wire               xgmii_rx_valid;
     wire               tx_gbx_req_sync;
     wire               tx_gbx_req_stall;
-    wire               tx_gbx_sync = 1'b0;
+    wire               tx_gbx_sync;
 
     taxi_eth_phy_10g #(
         .DATA_W(DATA_W),
