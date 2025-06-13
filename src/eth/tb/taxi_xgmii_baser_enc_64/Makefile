@@ -35,6 +35,7 @@ export PARAM_DATA_W := 64
 export PARAM_CTRL_W := $(shell expr $(PARAM_DATA_W) / 8 )
 export PARAM_HDR_W := 2
 export PARAM_GBX_IF_EN := 0
+export PARAM_GBX_CNT := 1
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

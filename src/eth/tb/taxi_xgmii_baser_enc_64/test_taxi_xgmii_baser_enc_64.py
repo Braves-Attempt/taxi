@@ -231,6 +231,7 @@ def test_taxi_xgmii_baser_enc_64(request):
     parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['HDR_W'] = 2
     parameters['GBX_IF_EN'] = 0
+    parameters['GBX_CNT'] = 1
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
