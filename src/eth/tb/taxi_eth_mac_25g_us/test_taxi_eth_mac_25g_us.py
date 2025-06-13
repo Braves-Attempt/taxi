@@ -173,6 +173,11 @@ class TB:
 
 async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=12):
 
+    if dut.COMBINED_MAC_PCS.value:
+        pipe_delay = 4
+    else:
+        pipe_delay = 5
+
     tb = TB(dut)
 
     tb.serdes_sources[port].ifg = ifg
@@ -219,12 +224,12 @@ async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
         tb.log.info("RX frame PTP TS: %f ns", ptp_ts_ns)
         tb.log.info("TX frame SFD sim time: %f ns", tx_frame_sfd_ns)
         tb.log.info("Difference: %f ns", abs(ptp_ts_ns - tx_frame_sfd_ns))
-        tb.log.info("Error: %f ns", abs(ptp_ts_ns - tx_frame_sfd_ns - tb.clk_period[port]*4))
+        tb.log.info("Error: %f ns", abs(ptp_ts_ns - tx_frame_sfd_ns - tb.clk_period[port]*pipe_delay))
 
         assert rx_frame.tdata == test_data
         assert frame_error == 0
         if not tb.serdes_sources[port].gbx_seq_len:
-            assert abs(ptp_ts_ns - tx_frame_sfd_ns - tb.clk_period[port]*4) < 0.01
+            assert abs(ptp_ts_ns - tx_frame_sfd_ns - tb.clk_period[port]*pipe_delay) < 0.01
 
     assert tb.axis_sinks[port].empty()
 
@@ -233,6 +238,11 @@ async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
 
 
 async def run_test_tx(dut, port=0, payload_lengths=None, payload_data=None, ifg=12):
+
+    if dut.COMBINED_MAC_PCS.value:
+        pipe_delay = 5
+    else:
+        pipe_delay = 5
 
     tb = TB(dut)
 
@@ -271,13 +281,13 @@ async def run_test_tx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
         tb.log.info("TX frame PTP TS: %f ns", ptp_ts_ns)
         tb.log.info("RX frame SFD sim time: %f ns", rx_frame_sfd_ns)
         tb.log.info("Difference: %f ns", abs(rx_frame_sfd_ns - ptp_ts_ns))
-        tb.log.info("Error: %f ns", abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period[port]*5))
+        tb.log.info("Error: %f ns", abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period[port]*pipe_delay))
 
         assert rx_frame.get_payload() == test_data
         assert rx_frame.check_fcs()
         assert rx_frame.ctrl is None
         if not tb.serdes_sinks[port].gbx_seq_len:
-            assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period[port]*5) < 0.01
+            assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period[port]*pipe_delay) < 0.01
 
     assert tb.serdes_sinks[port].empty()
 
@@ -288,6 +298,11 @@ async def run_test_tx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
 async def run_test_tx_alignment(dut, port=0, payload_data=None, ifg=12):
 
     dic_en = int(cocotb.top.DIC_EN.value)
+
+    if dut.COMBINED_MAC_PCS.value:
+        pipe_delay = 5
+    else:
+        pipe_delay = 5
 
     tb = TB(dut)
 
@@ -339,7 +354,7 @@ async def run_test_tx_alignment(dut, port=0, payload_data=None, ifg=12):
             assert rx_frame.check_fcs()
             assert rx_frame.ctrl is None
             if not tb.serdes_sinks[port].gbx_seq_len:
-                assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period[port]*5) < 0.01
+                assert abs(rx_frame_sfd_ns - ptp_ts_ns - tb.clk_period[port]*pipe_delay) < 0.01
 
             start_lane.append(rx_frame.start_lane)
 
@@ -896,9 +911,8 @@ def process_f_files(files):
 
 
 @pytest.mark.parametrize(("dic_en", "pfc_en"), [(1, 1), (1, 0), (0, 0)])
-@pytest.mark.parametrize("low_latency", [1, 0])
-@pytest.mark.parametrize("data_w", [64])
-def test_taxi_eth_mac_25g_us(request, data_w, low_latency, dic_en, pfc_en):
+@pytest.mark.parametrize(("low_latency", "combined_mac_pcs"), [(1, 1), (0, 1), (0, 0)])
+def test_taxi_eth_mac_25g_us(request, combined_mac_pcs, low_latency, dic_en, pfc_en):
     dut = "taxi_eth_mac_25g_us"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = module
@@ -922,6 +936,7 @@ def test_taxi_eth_mac_25g_us(request, data_w, low_latency, dic_en, pfc_en):
     parameters['QPLL1_PD'] = 1
     parameters['QPLL0_EXT_CTRL'] = 0
     parameters['QPLL1_EXT_CTRL'] = 0
+    parameters['COMBINED_MAC_PCS'] = combined_mac_pcs
     parameters['PADDING_EN'] = 1
     parameters['DIC_EN'] = dic_en
     parameters['MIN_FRAME_LEN'] = 64

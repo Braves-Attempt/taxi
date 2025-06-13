@@ -51,6 +51,7 @@ module taxi_eth_mac_25g_us_ch #
     parameter logic GT_RX_POLARITY = 1'b0,
 
     // MAC/PHY parameters
+    parameter logic COMBINED_MAC_PCS = 1'b1,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -516,204 +517,475 @@ end else begin : gt
 
 end
 
-taxi_eth_mac_phy_10g #(
-    .DATA_W(DATA_W),
-    .HDR_W(HDR_W),
-    .TX_GBX_IF_EN(CFG_LOW_LATENCY),
-    .RX_GBX_IF_EN(CFG_LOW_LATENCY),
-    .PADDING_EN(PADDING_EN),
-    .DIC_EN(DIC_EN),
-    .MIN_FRAME_LEN(MIN_FRAME_LEN),
-    .PTP_TS_EN(PTP_TS_EN),
-    .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
-    .PTP_TS_W(PTP_TS_W),
-    .BIT_REVERSE(1'b1),
-    .SCRAMBLER_DISABLE(1'b0),
-    .PRBS31_EN(PRBS31_EN),
-    .TX_SERDES_PIPELINE(TX_SERDES_PIPELINE),
-    .RX_SERDES_PIPELINE(RX_SERDES_PIPELINE),
-    .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
-    .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES),
-    .COUNT_125US(COUNT_125US),
-    .PFC_EN(PFC_EN),
-    .PAUSE_EN(PAUSE_EN),
-    .STAT_EN(STAT_EN),
-    .STAT_TX_LEVEL(STAT_TX_LEVEL),
-    .STAT_RX_LEVEL(STAT_RX_LEVEL),
-    .STAT_ID_BASE(STAT_ID_BASE),
-    .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
-    .STAT_STR_EN(STAT_STR_EN),
-    .STAT_PREFIX_STR(STAT_PREFIX_STR)
-)
-eth_mac_phy_10g_inst (
-    .tx_clk(tx_clk),
-    .tx_rst(tx_rst_out),
-    .rx_clk(rx_clk),
-    .rx_rst(rx_rst_out),
+if (COMBINED_MAC_PCS) begin : mac
 
-    /*
-     * Transmit interface (AXI stream)
-     */
-    .s_axis_tx(s_axis_tx),
-    .m_axis_tx_cpl(m_axis_tx_cpl),
+    taxi_eth_mac_phy_10g #(
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W),
+        .TX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .RX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .PADDING_EN(PADDING_EN),
+        .DIC_EN(DIC_EN),
+        .MIN_FRAME_LEN(MIN_FRAME_LEN),
+        .PTP_TS_EN(PTP_TS_EN),
+        .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
+        .PTP_TS_W(PTP_TS_W),
+        .BIT_REVERSE(1'b1),
+        .SCRAMBLER_DISABLE(1'b0),
+        .PRBS31_EN(PRBS31_EN),
+        .TX_SERDES_PIPELINE(TX_SERDES_PIPELINE),
+        .RX_SERDES_PIPELINE(RX_SERDES_PIPELINE),
+        .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
+        .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES),
+        .COUNT_125US(COUNT_125US),
+        .PFC_EN(PFC_EN),
+        .PAUSE_EN(PAUSE_EN),
+        .STAT_EN(STAT_EN),
+        .STAT_TX_LEVEL(STAT_TX_LEVEL),
+        .STAT_RX_LEVEL(STAT_RX_LEVEL),
+        .STAT_ID_BASE(STAT_ID_BASE),
+        .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+        .STAT_STR_EN(STAT_STR_EN),
+        .STAT_PREFIX_STR(STAT_PREFIX_STR)
+    )
+    mac_phy_inst (
+        .tx_clk(tx_clk),
+        .tx_rst(tx_rst_out),
+        .rx_clk(rx_clk),
+        .rx_rst(rx_rst_out),
 
-    /*
-     * Receive interface (AXI stream)
-     */
-    .m_axis_rx(m_axis_rx),
+        /*
+         * Transmit interface (AXI stream)
+         */
+        .s_axis_tx(s_axis_tx),
+        .m_axis_tx_cpl(m_axis_tx_cpl),
 
-    /*
-     * Serdes interface
-     */
-    .serdes_tx_data(serdes_tx_data),
-    .serdes_tx_data_valid(serdes_tx_data_valid),
-    .serdes_tx_hdr(serdes_tx_hdr),
-    .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
-    .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
-    .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
-    .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
-    .serdes_rx_data(serdes_rx_data),
-    .serdes_rx_data_valid(serdes_rx_data_valid),
-    .serdes_rx_hdr(serdes_rx_hdr),
-    .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
-    .serdes_rx_bitslip(serdes_rx_bitslip),
-    .serdes_rx_reset_req(rx_reset_req),
+        /*
+         * Receive interface (AXI stream)
+         */
+        .m_axis_rx(m_axis_rx),
 
-    /*
-     * PTP
-     */
-    .tx_ptp_ts(tx_ptp_ts),
-    .rx_ptp_ts(rx_ptp_ts),
+        /*
+         * Serdes interface
+         */
+        .serdes_tx_data(serdes_tx_data),
+        .serdes_tx_data_valid(serdes_tx_data_valid),
+        .serdes_tx_hdr(serdes_tx_hdr),
+        .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+        .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
+        .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+        .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
+        .serdes_rx_data(serdes_rx_data),
+        .serdes_rx_data_valid(serdes_rx_data_valid),
+        .serdes_rx_hdr(serdes_rx_hdr),
+        .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
+        .serdes_rx_bitslip(serdes_rx_bitslip),
+        .serdes_rx_reset_req(rx_reset_req),
 
-    /*
-     * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
-     */
-    .tx_lfc_req(tx_lfc_req),
-    .tx_lfc_resend(tx_lfc_resend),
-    .rx_lfc_en(rx_lfc_en),
-    .rx_lfc_req(rx_lfc_req),
-    .rx_lfc_ack(rx_lfc_ack),
+        /*
+         * PTP
+         */
+        .tx_ptp_ts(tx_ptp_ts),
+        .rx_ptp_ts(rx_ptp_ts),
 
-    /*
-     * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
-     */
-    .tx_pfc_req(tx_pfc_req),
-    .tx_pfc_resend(tx_pfc_resend),
-    .rx_pfc_en(rx_pfc_en),
-    .rx_pfc_req(rx_pfc_req),
-    .rx_pfc_ack(rx_pfc_ack),
+        /*
+         * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
+         */
+        .tx_lfc_req(tx_lfc_req),
+        .tx_lfc_resend(tx_lfc_resend),
+        .rx_lfc_en(rx_lfc_en),
+        .rx_lfc_req(rx_lfc_req),
+        .rx_lfc_ack(rx_lfc_ack),
 
-    /*
-     * Pause interface
-     */
-    .tx_lfc_pause_en(tx_lfc_pause_en),
-    .tx_pause_req(tx_pause_req),
-    .tx_pause_ack(tx_pause_ack),
+        /*
+         * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
+         */
+        .tx_pfc_req(tx_pfc_req),
+        .tx_pfc_resend(tx_pfc_resend),
+        .rx_pfc_en(rx_pfc_en),
+        .rx_pfc_req(rx_pfc_req),
+        .rx_pfc_ack(rx_pfc_ack),
 
-    /*
-     * Statistics
-     */
-    .stat_clk(stat_clk),
-    .stat_rst(stat_rst),
-    .m_axis_stat(m_axis_stat),
+        /*
+         * Pause interface
+         */
+        .tx_lfc_pause_en(tx_lfc_pause_en),
+        .tx_pause_req(tx_pause_req),
+        .tx_pause_ack(tx_pause_ack),
 
-    /*
-     * Status
-     */
-    .tx_start_packet(tx_start_packet),
-    .stat_tx_byte(stat_tx_byte),
-    .stat_tx_pkt_len(stat_tx_pkt_len),
-    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
-    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
-    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
-    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
-    .stat_tx_pkt_good(stat_tx_pkt_good),
-    .stat_tx_pkt_bad(stat_tx_pkt_bad),
-    .stat_tx_err_oversize(stat_tx_err_oversize),
-    .stat_tx_err_user(stat_tx_err_user),
-    .stat_tx_err_underflow(stat_tx_err_underflow),
-    .rx_start_packet(rx_start_packet),
-    .rx_error_count(rx_error_count),
-    .rx_block_lock(rx_block_lock),
-    .rx_high_ber(rx_high_ber),
-    .rx_status(rx_status),
-    .stat_rx_byte(stat_rx_byte),
-    .stat_rx_pkt_len(stat_rx_pkt_len),
-    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
-    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
-    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
-    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
-    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
-    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
-    .stat_rx_pkt_good(stat_rx_pkt_good),
-    .stat_rx_pkt_bad(stat_rx_pkt_bad),
-    .stat_rx_err_oversize(stat_rx_err_oversize),
-    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
-    .stat_rx_err_bad_block(stat_rx_err_bad_block),
-    .stat_rx_err_framing(stat_rx_err_framing),
-    .stat_rx_err_preamble(stat_rx_err_preamble),
-    .stat_rx_fifo_drop(stat_rx_fifo_drop),
-    .stat_tx_mcf(stat_tx_mcf),
-    .stat_rx_mcf(stat_rx_mcf),
-    .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
-    .stat_tx_lfc_xon(stat_tx_lfc_xon),
-    .stat_tx_lfc_xoff(stat_tx_lfc_xoff),
-    .stat_tx_lfc_paused(stat_tx_lfc_paused),
-    .stat_tx_pfc_pkt(stat_tx_pfc_pkt),
-    .stat_tx_pfc_xon(stat_tx_pfc_xon),
-    .stat_tx_pfc_xoff(stat_tx_pfc_xoff),
-    .stat_tx_pfc_paused(stat_tx_pfc_paused),
-    .stat_rx_lfc_pkt(stat_rx_lfc_pkt),
-    .stat_rx_lfc_xon(stat_rx_lfc_xon),
-    .stat_rx_lfc_xoff(stat_rx_lfc_xoff),
-    .stat_rx_lfc_paused(stat_rx_lfc_paused),
-    .stat_rx_pfc_pkt(stat_rx_pfc_pkt),
-    .stat_rx_pfc_xon(stat_rx_pfc_xon),
-    .stat_rx_pfc_xoff(stat_rx_pfc_xoff),
-    .stat_rx_pfc_paused(stat_rx_pfc_paused),
+        /*
+         * Statistics
+         */
+        .stat_clk(stat_clk),
+        .stat_rst(stat_rst),
+        .m_axis_stat(m_axis_stat),
 
-    /*
-     * Configuration
-     */
-    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
-    .cfg_tx_ifg(cfg_tx_ifg),
-    .cfg_tx_enable(cfg_tx_enable),
-    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
-    .cfg_rx_enable(cfg_rx_enable),
-    .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable),
-    .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable),
-    .cfg_mcf_rx_eth_dst_mcast(cfg_mcf_rx_eth_dst_mcast),
-    .cfg_mcf_rx_check_eth_dst_mcast(cfg_mcf_rx_check_eth_dst_mcast),
-    .cfg_mcf_rx_eth_dst_ucast(cfg_mcf_rx_eth_dst_ucast),
-    .cfg_mcf_rx_check_eth_dst_ucast(cfg_mcf_rx_check_eth_dst_ucast),
-    .cfg_mcf_rx_eth_src(cfg_mcf_rx_eth_src),
-    .cfg_mcf_rx_check_eth_src(cfg_mcf_rx_check_eth_src),
-    .cfg_mcf_rx_eth_type(cfg_mcf_rx_eth_type),
-    .cfg_mcf_rx_opcode_lfc(cfg_mcf_rx_opcode_lfc),
-    .cfg_mcf_rx_check_opcode_lfc(cfg_mcf_rx_check_opcode_lfc),
-    .cfg_mcf_rx_opcode_pfc(cfg_mcf_rx_opcode_pfc),
-    .cfg_mcf_rx_check_opcode_pfc(cfg_mcf_rx_check_opcode_pfc),
-    .cfg_mcf_rx_forward(cfg_mcf_rx_forward),
-    .cfg_mcf_rx_enable(cfg_mcf_rx_enable),
-    .cfg_tx_lfc_eth_dst(cfg_tx_lfc_eth_dst),
-    .cfg_tx_lfc_eth_src(cfg_tx_lfc_eth_src),
-    .cfg_tx_lfc_eth_type(cfg_tx_lfc_eth_type),
-    .cfg_tx_lfc_opcode(cfg_tx_lfc_opcode),
-    .cfg_tx_lfc_en(cfg_tx_lfc_en),
-    .cfg_tx_lfc_quanta(cfg_tx_lfc_quanta),
-    .cfg_tx_lfc_refresh(cfg_tx_lfc_refresh),
-    .cfg_tx_pfc_eth_dst(cfg_tx_pfc_eth_dst),
-    .cfg_tx_pfc_eth_src(cfg_tx_pfc_eth_src),
-    .cfg_tx_pfc_eth_type(cfg_tx_pfc_eth_type),
-    .cfg_tx_pfc_opcode(cfg_tx_pfc_opcode),
-    .cfg_tx_pfc_en(cfg_tx_pfc_en),
-    .cfg_tx_pfc_quanta(cfg_tx_pfc_quanta),
-    .cfg_tx_pfc_refresh(cfg_tx_pfc_refresh),
-    .cfg_rx_lfc_opcode(cfg_rx_lfc_opcode),
-    .cfg_rx_lfc_en(cfg_rx_lfc_en),
-    .cfg_rx_pfc_opcode(cfg_rx_pfc_opcode),
-    .cfg_rx_pfc_en(cfg_rx_pfc_en)
-);
+        /*
+         * Status
+         */
+        .tx_start_packet(tx_start_packet),
+        .stat_tx_byte(stat_tx_byte),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow),
+        .rx_start_packet(rx_start_packet),
+        .rx_error_count(rx_error_count),
+        .rx_block_lock(rx_block_lock),
+        .rx_high_ber(rx_high_ber),
+        .rx_status(rx_status),
+        .stat_rx_byte(stat_rx_byte),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble),
+        .stat_rx_fifo_drop(stat_rx_fifo_drop),
+        .stat_tx_mcf(stat_tx_mcf),
+        .stat_rx_mcf(stat_rx_mcf),
+        .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
+        .stat_tx_lfc_xon(stat_tx_lfc_xon),
+        .stat_tx_lfc_xoff(stat_tx_lfc_xoff),
+        .stat_tx_lfc_paused(stat_tx_lfc_paused),
+        .stat_tx_pfc_pkt(stat_tx_pfc_pkt),
+        .stat_tx_pfc_xon(stat_tx_pfc_xon),
+        .stat_tx_pfc_xoff(stat_tx_pfc_xoff),
+        .stat_tx_pfc_paused(stat_tx_pfc_paused),
+        .stat_rx_lfc_pkt(stat_rx_lfc_pkt),
+        .stat_rx_lfc_xon(stat_rx_lfc_xon),
+        .stat_rx_lfc_xoff(stat_rx_lfc_xoff),
+        .stat_rx_lfc_paused(stat_rx_lfc_paused),
+        .stat_rx_pfc_pkt(stat_rx_pfc_pkt),
+        .stat_rx_pfc_xon(stat_rx_pfc_xon),
+        .stat_rx_pfc_xoff(stat_rx_pfc_xoff),
+        .stat_rx_pfc_paused(stat_rx_pfc_paused),
+
+        /*
+         * Configuration
+         */
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+        .cfg_tx_ifg(cfg_tx_ifg),
+        .cfg_tx_enable(cfg_tx_enable),
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
+        .cfg_rx_enable(cfg_rx_enable),
+        .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable),
+        .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable),
+        .cfg_mcf_rx_eth_dst_mcast(cfg_mcf_rx_eth_dst_mcast),
+        .cfg_mcf_rx_check_eth_dst_mcast(cfg_mcf_rx_check_eth_dst_mcast),
+        .cfg_mcf_rx_eth_dst_ucast(cfg_mcf_rx_eth_dst_ucast),
+        .cfg_mcf_rx_check_eth_dst_ucast(cfg_mcf_rx_check_eth_dst_ucast),
+        .cfg_mcf_rx_eth_src(cfg_mcf_rx_eth_src),
+        .cfg_mcf_rx_check_eth_src(cfg_mcf_rx_check_eth_src),
+        .cfg_mcf_rx_eth_type(cfg_mcf_rx_eth_type),
+        .cfg_mcf_rx_opcode_lfc(cfg_mcf_rx_opcode_lfc),
+        .cfg_mcf_rx_check_opcode_lfc(cfg_mcf_rx_check_opcode_lfc),
+        .cfg_mcf_rx_opcode_pfc(cfg_mcf_rx_opcode_pfc),
+        .cfg_mcf_rx_check_opcode_pfc(cfg_mcf_rx_check_opcode_pfc),
+        .cfg_mcf_rx_forward(cfg_mcf_rx_forward),
+        .cfg_mcf_rx_enable(cfg_mcf_rx_enable),
+        .cfg_tx_lfc_eth_dst(cfg_tx_lfc_eth_dst),
+        .cfg_tx_lfc_eth_src(cfg_tx_lfc_eth_src),
+        .cfg_tx_lfc_eth_type(cfg_tx_lfc_eth_type),
+        .cfg_tx_lfc_opcode(cfg_tx_lfc_opcode),
+        .cfg_tx_lfc_en(cfg_tx_lfc_en),
+        .cfg_tx_lfc_quanta(cfg_tx_lfc_quanta),
+        .cfg_tx_lfc_refresh(cfg_tx_lfc_refresh),
+        .cfg_tx_pfc_eth_dst(cfg_tx_pfc_eth_dst),
+        .cfg_tx_pfc_eth_src(cfg_tx_pfc_eth_src),
+        .cfg_tx_pfc_eth_type(cfg_tx_pfc_eth_type),
+        .cfg_tx_pfc_opcode(cfg_tx_pfc_opcode),
+        .cfg_tx_pfc_en(cfg_tx_pfc_en),
+        .cfg_tx_pfc_quanta(cfg_tx_pfc_quanta),
+        .cfg_tx_pfc_refresh(cfg_tx_pfc_refresh),
+        .cfg_rx_lfc_opcode(cfg_rx_lfc_opcode),
+        .cfg_rx_lfc_en(cfg_rx_lfc_en),
+        .cfg_rx_pfc_opcode(cfg_rx_pfc_opcode),
+        .cfg_rx_pfc_en(cfg_rx_pfc_en)
+    );
+
+end else begin : mac
+
+    if (CFG_LOW_LATENCY)
+        $fatal(0, "Split MAC/PCS does not currently support low latency mode");
+
+    localparam CTRL_W = DATA_W / 8;
+
+    wire [DATA_W-1:0]  xgmii_txd;
+    wire [CTRL_W-1:0]  xgmii_txc;
+    wire               xgmii_tx_valid = 1'b1;
+    wire [DATA_W-1:0]  xgmii_rxd;
+    wire [CTRL_W-1:0]  xgmii_rxc;
+    wire               xgmii_rx_valid = 1'b1;
+    wire               tx_gbx_req_sync;
+    wire               tx_gbx_req_stall;
+    wire               tx_gbx_sync = 1'b0;
+
+    taxi_eth_phy_10g #(
+        .DATA_W(DATA_W),
+        .CTRL_W(CTRL_W),
+        .HDR_W(HDR_W),
+        .TX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .RX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .BIT_REVERSE(1'b1),
+        .SCRAMBLER_DISABLE(1'b0),
+        .PRBS31_EN(PRBS31_EN),
+        .TX_SERDES_PIPELINE(TX_SERDES_PIPELINE),
+        .RX_SERDES_PIPELINE(RX_SERDES_PIPELINE),
+        .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
+        .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES),
+        .COUNT_125US(COUNT_125US)
+    )
+    phy_inst (
+        .tx_clk(tx_clk),
+        .tx_rst(tx_rst_out),
+        .rx_clk(rx_clk),
+        .rx_rst(rx_rst_out),
+
+        /*
+         * XGMII interface
+         */
+        .xgmii_txd(xgmii_txd),
+        .xgmii_txc(xgmii_txc),
+        .xgmii_tx_valid(xgmii_tx_valid),
+        .xgmii_rxd(xgmii_rxd),
+        .xgmii_rxc(xgmii_rxc),
+        .xgmii_rx_valid(xgmii_rx_valid),
+        .tx_gbx_req_sync(tx_gbx_req_sync),
+        .tx_gbx_req_stall(tx_gbx_req_stall),
+        .tx_gbx_sync(tx_gbx_sync),
+
+        /*
+         * SERDES interface
+         */
+        .serdes_tx_data(serdes_tx_data),
+        .serdes_tx_data_valid(serdes_tx_data_valid),
+        .serdes_tx_hdr(serdes_tx_hdr),
+        .serdes_tx_hdr_valid(serdes_tx_hdr_valid),
+        .serdes_tx_gbx_req_sync(serdes_tx_gbx_req_sync),
+        .serdes_tx_gbx_req_stall(serdes_tx_gbx_req_stall),
+        .serdes_tx_gbx_sync(serdes_tx_gbx_sync),
+        .serdes_rx_data(serdes_rx_data),
+        .serdes_rx_data_valid(serdes_rx_data_valid),
+        .serdes_rx_hdr(serdes_rx_hdr),
+        .serdes_rx_hdr_valid(serdes_rx_hdr_valid),
+        .serdes_rx_bitslip(serdes_rx_bitslip),
+        .serdes_rx_reset_req(rx_reset_req),
+
+        /*
+         * Status
+         */
+        .tx_bad_block(),
+        .rx_error_count(rx_error_count),
+        .rx_bad_block(),
+        .rx_sequence_error(),
+        .rx_block_lock(rx_block_lock),
+        .rx_high_ber(rx_high_ber),
+        .rx_status(rx_status),
+
+        /*
+         * Configuration
+         */
+        .cfg_tx_prbs31_enable(cfg_tx_prbs31_enable),
+        .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable)
+    );
+
+    taxi_eth_mac_10g #(
+        .DATA_W(DATA_W),
+        .CTRL_W(CTRL_W),
+        // .TX_GBX_IF_EN(CFG_LOW_LATENCY),
+        // .RX_GBX_IF_EN(CFG_LOW_LATENCY),
+        .PADDING_EN(PADDING_EN),
+        .DIC_EN(DIC_EN),
+        .MIN_FRAME_LEN(MIN_FRAME_LEN),
+        .PTP_TS_EN(PTP_TS_EN),
+        .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
+        .PTP_TS_W(PTP_TS_W),
+        .PFC_EN(PFC_EN),
+        .PAUSE_EN(PAUSE_EN),
+        .STAT_EN(STAT_EN),
+        .STAT_TX_LEVEL(STAT_TX_LEVEL),
+        .STAT_RX_LEVEL(STAT_RX_LEVEL),
+        .STAT_ID_BASE(STAT_ID_BASE),
+        .STAT_UPDATE_PERIOD(STAT_UPDATE_PERIOD),
+        .STAT_STR_EN(STAT_STR_EN),
+        .STAT_PREFIX_STR(STAT_PREFIX_STR)
+    )
+    mac_inst (
+        .tx_clk(tx_clk),
+        .tx_rst(tx_rst_out),
+        .rx_clk(rx_clk),
+        .rx_rst(rx_rst_out),
+
+        /*
+         * Transmit interface (AXI stream)
+         */
+        .s_axis_tx(s_axis_tx),
+        .m_axis_tx_cpl(m_axis_tx_cpl),
+
+        /*
+         * Receive interface (AXI stream)
+         */
+        .m_axis_rx(m_axis_rx),
+
+        /*
+         * XGMII interface
+         */
+        .xgmii_txd(xgmii_txd),
+        .xgmii_txc(xgmii_txc),
+        // .xgmii_tx_valid(xgmii_tx_valid),
+        .xgmii_rxd(xgmii_rxd),
+        .xgmii_rxc(xgmii_rxc),
+        // .xgmii_rx_valid(xgmii_rx_valid),
+        // .tx_gbx_req_sync(tx_gbx_req_sync),
+        // .tx_gbx_req_stall(tx_gbx_req_stall),
+        // .tx_gbx_sync(tx_gbx_sync),
+
+        /*
+         * PTP
+         */
+        .tx_ptp_ts(tx_ptp_ts),
+        .rx_ptp_ts(rx_ptp_ts),
+
+        /*
+         * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
+         */
+        .tx_lfc_req(tx_lfc_req),
+        .tx_lfc_resend(tx_lfc_resend),
+        .rx_lfc_en(rx_lfc_en),
+        .rx_lfc_req(rx_lfc_req),
+        .rx_lfc_ack(rx_lfc_ack),
+
+        /*
+         * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
+         */
+        .tx_pfc_req(tx_pfc_req),
+        .tx_pfc_resend(tx_pfc_resend),
+        .rx_pfc_en(rx_pfc_en),
+        .rx_pfc_req(rx_pfc_req),
+        .rx_pfc_ack(rx_pfc_ack),
+
+        /*
+         * Pause interface
+         */
+        .tx_lfc_pause_en(tx_lfc_pause_en),
+        .tx_pause_req(tx_pause_req),
+        .tx_pause_ack(tx_pause_ack),
+
+        /*
+         * Statistics
+         */
+        .stat_clk(stat_clk),
+        .stat_rst(stat_rst),
+        .m_axis_stat(m_axis_stat),
+
+        /*
+         * Status
+         */
+        .tx_start_packet(tx_start_packet),
+        .stat_tx_byte(stat_tx_byte),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow),
+        .rx_start_packet(rx_start_packet),
+        .stat_rx_byte(stat_rx_byte),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble),
+        .stat_rx_fifo_drop(stat_rx_fifo_drop),
+        .stat_tx_mcf(stat_tx_mcf),
+        .stat_rx_mcf(stat_rx_mcf),
+        .stat_tx_lfc_pkt(stat_tx_lfc_pkt),
+        .stat_tx_lfc_xon(stat_tx_lfc_xon),
+        .stat_tx_lfc_xoff(stat_tx_lfc_xoff),
+        .stat_tx_lfc_paused(stat_tx_lfc_paused),
+        .stat_tx_pfc_pkt(stat_tx_pfc_pkt),
+        .stat_tx_pfc_xon(stat_tx_pfc_xon),
+        .stat_tx_pfc_xoff(stat_tx_pfc_xoff),
+        .stat_tx_pfc_paused(stat_tx_pfc_paused),
+        .stat_rx_lfc_pkt(stat_rx_lfc_pkt),
+        .stat_rx_lfc_xon(stat_rx_lfc_xon),
+        .stat_rx_lfc_xoff(stat_rx_lfc_xoff),
+        .stat_rx_lfc_paused(stat_rx_lfc_paused),
+        .stat_rx_pfc_pkt(stat_rx_pfc_pkt),
+        .stat_rx_pfc_xon(stat_rx_pfc_xon),
+        .stat_rx_pfc_xoff(stat_rx_pfc_xoff),
+        .stat_rx_pfc_paused(stat_rx_pfc_paused),
+
+        /*
+         * Configuration
+         */
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+        .cfg_tx_ifg(cfg_tx_ifg),
+        .cfg_tx_enable(cfg_tx_enable),
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
+        .cfg_rx_enable(cfg_rx_enable),
+        .cfg_mcf_rx_eth_dst_mcast(cfg_mcf_rx_eth_dst_mcast),
+        .cfg_mcf_rx_check_eth_dst_mcast(cfg_mcf_rx_check_eth_dst_mcast),
+        .cfg_mcf_rx_eth_dst_ucast(cfg_mcf_rx_eth_dst_ucast),
+        .cfg_mcf_rx_check_eth_dst_ucast(cfg_mcf_rx_check_eth_dst_ucast),
+        .cfg_mcf_rx_eth_src(cfg_mcf_rx_eth_src),
+        .cfg_mcf_rx_check_eth_src(cfg_mcf_rx_check_eth_src),
+        .cfg_mcf_rx_eth_type(cfg_mcf_rx_eth_type),
+        .cfg_mcf_rx_opcode_lfc(cfg_mcf_rx_opcode_lfc),
+        .cfg_mcf_rx_check_opcode_lfc(cfg_mcf_rx_check_opcode_lfc),
+        .cfg_mcf_rx_opcode_pfc(cfg_mcf_rx_opcode_pfc),
+        .cfg_mcf_rx_check_opcode_pfc(cfg_mcf_rx_check_opcode_pfc),
+        .cfg_mcf_rx_forward(cfg_mcf_rx_forward),
+        .cfg_mcf_rx_enable(cfg_mcf_rx_enable),
+        .cfg_tx_lfc_eth_dst(cfg_tx_lfc_eth_dst),
+        .cfg_tx_lfc_eth_src(cfg_tx_lfc_eth_src),
+        .cfg_tx_lfc_eth_type(cfg_tx_lfc_eth_type),
+        .cfg_tx_lfc_opcode(cfg_tx_lfc_opcode),
+        .cfg_tx_lfc_en(cfg_tx_lfc_en),
+        .cfg_tx_lfc_quanta(cfg_tx_lfc_quanta),
+        .cfg_tx_lfc_refresh(cfg_tx_lfc_refresh),
+        .cfg_tx_pfc_eth_dst(cfg_tx_pfc_eth_dst),
+        .cfg_tx_pfc_eth_src(cfg_tx_pfc_eth_src),
+        .cfg_tx_pfc_eth_type(cfg_tx_pfc_eth_type),
+        .cfg_tx_pfc_opcode(cfg_tx_pfc_opcode),
+        .cfg_tx_pfc_en(cfg_tx_pfc_en),
+        .cfg_tx_pfc_quanta(cfg_tx_pfc_quanta),
+        .cfg_tx_pfc_refresh(cfg_tx_pfc_refresh),
+        .cfg_rx_lfc_opcode(cfg_rx_lfc_opcode),
+        .cfg_rx_lfc_en(cfg_rx_lfc_en),
+        .cfg_rx_pfc_opcode(cfg_rx_pfc_opcode),
+        .cfg_rx_pfc_en(cfg_rx_pfc_en)
+    );
+
+end
 
 endmodule
 
