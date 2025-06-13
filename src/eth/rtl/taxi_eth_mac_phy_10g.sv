@@ -653,7 +653,7 @@ if (MAC_CTRL_EN) begin : mac_ctrl
         .cfg_tx_pfc_quanta(cfg_tx_pfc_quanta),
         .cfg_tx_pfc_refresh(cfg_tx_pfc_refresh),
         .cfg_quanta_step(10'((DATA_W*256)/512)),
-        .cfg_quanta_clk_en(!RX_GBX_IF_EN || serdes_tx_data_valid),
+        .cfg_quanta_clk_en(!TX_GBX_IF_EN || serdes_tx_data_valid),
 
         /*
          * Status
