@@ -77,7 +77,7 @@ module taxi_eth_mac_10g_fifo #
     input  wire logic                 xgmii_rx_valid = 1'b1,
     output wire logic [DATA_W-1:0]    xgmii_txd,
     output wire logic [CTRL_W-1:0]    xgmii_txc,
-    output wire logic                 xgmii_tx_valid = 1'b1,
+    output wire logic                 xgmii_tx_valid,
     input  wire logic [GBX_CNT-1:0]   tx_gbx_req_sync = '0,
     input  wire logic                 tx_gbx_req_stall = 1'b0,
     output wire logic [GBX_CNT-1:0]   tx_gbx_sync,

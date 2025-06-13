@@ -45,7 +45,7 @@ module taxi_eth_phy_10g #
     input  wire logic               xgmii_tx_valid = 1'b1,
     output wire logic [DATA_W-1:0]  xgmii_rxd,
     output wire logic [CTRL_W-1:0]  xgmii_rxc,
-    output wire logic               xgmii_rx_valid = 1'b1,
+    output wire logic               xgmii_rx_valid,
     output wire logic               tx_gbx_req_sync,
     output wire logic               tx_gbx_req_stall,
     input  wire logic               tx_gbx_sync = 1'b0,
