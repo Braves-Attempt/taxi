@@ -273,7 +273,7 @@ async def run_test_tx_alignment(dut, gbx_cfg=None, payload_data=None, ifg=12):
 
             if rx_frame.start_lane == 4:
                 # start in lane 4 reports 1 full cycle delay, so subtract half clock period
-                rx_frame_sfd_ns -= 3.2
+                rx_frame_sfd_ns -= tb.clk_period/2
 
             tb.log.info("TX frame PTP TS: %f ns", ptp_ts_ns)
             tb.log.info("RX frame SFD sim time: %f ns", rx_frame_sfd_ns)
