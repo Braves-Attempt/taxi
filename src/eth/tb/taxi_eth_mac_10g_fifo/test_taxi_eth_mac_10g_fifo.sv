@@ -72,8 +72,13 @@ taxi_axis_if #(.DATA_W(AXIS_DATA_W), .USER_EN(1), .USER_W(RX_USER_W)) m_axis_rx(
 
 logic [DATA_W-1:0] xgmii_rxd;
 logic [CTRL_W-1:0] xgmii_rxc;
+logic xgmii_rx_valid;
 logic [DATA_W-1:0] xgmii_txd;
 logic [CTRL_W-1:0] xgmii_txc;
+logic xgmii_tx_valid;
+logic [GBX_CNT-1:0] tx_gbx_req_sync;
+logic tx_gbx_req_stall;
+logic [GBX_CNT-1:0] tx_gbx_sync;
 
 logic [PTP_TS_W-1:0] ptp_ts;
 logic ptp_ts_step;
@@ -156,8 +161,13 @@ uut (
      */
     .xgmii_rxd(xgmii_rxd),
     .xgmii_rxc(xgmii_rxc),
+    .xgmii_rx_valid(xgmii_rx_valid),
     .xgmii_txd(xgmii_txd),
     .xgmii_txc(xgmii_txc),
+    .xgmii_tx_valid(xgmii_tx_valid),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
+    .tx_gbx_req_stall(tx_gbx_req_stall),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * PTP clock

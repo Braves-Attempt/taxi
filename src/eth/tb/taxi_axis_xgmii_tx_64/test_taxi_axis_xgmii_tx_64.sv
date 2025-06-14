@@ -20,6 +20,7 @@ module test_taxi_axis_xgmii_tx_64 #
     /* verilator lint_off WIDTHTRUNC */
     parameter DATA_W = 64,
     parameter logic GBX_IF_EN = 1'b0,
+    parameter GBX_CNT = 1,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -43,6 +44,10 @@ taxi_axis_if #(.DATA_W(PTP_TS_W), .KEEP_W(1), .ID_EN(1), .ID_W(TX_TAG_W)) m_axis
 
 logic [DATA_W-1:0] xgmii_txd;
 logic [CTRL_W-1:0] xgmii_txc;
+logic xgmii_tx_valid;
+logic [GBX_CNT-1:0] tx_gbx_req_sync;
+logic tx_gbx_req_stall;
+logic [GBX_CNT-1:0] tx_gbx_sync;
 
 logic [PTP_TS_W-1:0] ptp_ts;
 
@@ -67,6 +72,7 @@ taxi_axis_xgmii_tx_64 #(
     .DATA_W(DATA_W),
     .CTRL_W(CTRL_W),
     .GBX_IF_EN(GBX_IF_EN),
+    .GBX_CNT(GBX_CNT),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -89,6 +95,10 @@ uut (
      */
     .xgmii_txd(xgmii_txd),
     .xgmii_txc(xgmii_txc),
+    .xgmii_tx_valid(xgmii_tx_valid),
+    .tx_gbx_req_sync(tx_gbx_req_sync),
+    .tx_gbx_req_stall(tx_gbx_req_stall),
+    .tx_gbx_sync(tx_gbx_sync),
 
     /*
      * PTP
