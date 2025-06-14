@@ -1023,7 +1023,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
     assign xcvr_qpll0refclk_out = 1'b0;
 
 end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
-    // UltraScale/UltraScale+ GTY (channel only)
+    // UltraScale/UltraScale+ GTH (channel only)
 
     taxi_eth_phy_25g_us_gth_ll_ch
     taxi_eth_phy_25g_us_gth_ll_ch_inst (
