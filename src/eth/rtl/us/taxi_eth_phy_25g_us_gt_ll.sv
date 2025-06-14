@@ -126,6 +126,13 @@ module taxi_eth_phy_25g_us_gt_ll #
 localparam GT_USP = FAMILY == "kintexuplus" || FAMILY == "virtexuplus" || FAMILY == "virtexuplusHBM"
     || FAMILY == "virtexuplus58G" || FAMILY == "zynquplus" || FAMILY == "zynquplusRFSOC";
 
+// check configuration
+if (DATA_W != 64)
+    $fatal(0, "Error: Interface width must be 64");
+
+if (HDR_W != 2)
+    $fatal(0, "Error: HDR_W must be 2");
+
 wire xcvr_ctrl_rst_sync;
 
 taxi_sync_reset #(

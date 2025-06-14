@@ -42,6 +42,7 @@ module test_taxi_eth_mac_25g_us #
     parameter logic [CNT-1:0] GT_RX_LPM_EN = '0,
     parameter logic [CNT-1:0] GT_RX_POLARITY = '0,
     parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter DATA_W = 64,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -68,7 +69,6 @@ module test_taxi_eth_mac_25g_us #
 )
 ();
 
-localparam DATA_W = 64;
 localparam TX_USER_W = 1;
 localparam RX_USER_W = (PTP_TS_EN ? PTP_TS_W : 0) + 1;
 
@@ -247,6 +247,7 @@ taxi_eth_mac_25g_us #(
     .GT_RX_LPM_EN(GT_RX_LPM_EN),
     .GT_RX_POLARITY(GT_RX_POLARITY),
     .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .DATA_W(DATA_W),
     .PADDING_EN(PADDING_EN),
     .DIC_EN(DIC_EN),
     .MIN_FRAME_LEN(MIN_FRAME_LEN),

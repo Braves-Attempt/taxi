@@ -52,6 +52,7 @@ module taxi_eth_mac_25g_us_ch #
 
     // MAC/PHY parameters
     parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter DATA_W = 64,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -279,7 +280,6 @@ module taxi_eth_mac_25g_us_ch #
     input  wire logic                 cfg_rx_pfc_en = 1'b0
 );
 
-localparam DATA_W = 64;
 localparam HDR_W = 2;
 
 wire rx_reset_req;

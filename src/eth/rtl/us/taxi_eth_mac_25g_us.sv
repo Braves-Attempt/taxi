@@ -52,6 +52,7 @@ module taxi_eth_mac_25g_us #
 
     // MAC/PHY parameters
     parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter DATA_W = 64,
     parameter logic PADDING_EN = 1'b1,
     parameter logic DIC_EN = 1'b1,
     parameter MIN_FRAME_LEN = 64,
@@ -368,6 +369,7 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
 
         // MAC/PHY parameters
         .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+        .DATA_W(DATA_W),
         .PADDING_EN(PADDING_EN),
         .DIC_EN(DIC_EN),
         .MIN_FRAME_LEN(MIN_FRAME_LEN),

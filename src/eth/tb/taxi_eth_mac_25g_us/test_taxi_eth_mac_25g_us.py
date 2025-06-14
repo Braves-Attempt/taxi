@@ -913,7 +913,8 @@ def process_f_files(files):
 @pytest.mark.parametrize(("dic_en", "pfc_en"), [(1, 1), (1, 0), (0, 0)])
 @pytest.mark.parametrize("low_latency", [1, 0])
 @pytest.mark.parametrize("combined_mac_pcs", [1, 0])
-def test_taxi_eth_mac_25g_us(request, combined_mac_pcs, low_latency, dic_en, pfc_en):
+@pytest.mark.parametrize("data_w", [64])
+def test_taxi_eth_mac_25g_us(request, data_w, combined_mac_pcs, low_latency, dic_en, pfc_en):
     dut = "taxi_eth_mac_25g_us"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = module
@@ -938,6 +939,7 @@ def test_taxi_eth_mac_25g_us(request, combined_mac_pcs, low_latency, dic_en, pfc
     parameters['QPLL0_EXT_CTRL'] = 0
     parameters['QPLL1_EXT_CTRL'] = 0
     parameters['COMBINED_MAC_PCS'] = combined_mac_pcs
+    parameters['DATA_W'] = data_w
     parameters['PADDING_EN'] = 1
     parameters['DIC_EN'] = dic_en
     parameters['MIN_FRAME_LEN'] = 64
