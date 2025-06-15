@@ -366,6 +366,7 @@ wire [1:0] gt_rxheadervalid;
 wire [63:0] gt_rxdata;
 wire [1:0] gt_rxdatavalid;
 
+assign gt_txsequence = '0;
 assign gt_txdata = serdes_tx_data;
 assign gt_txheader = {4'd0, serdes_tx_hdr};
 assign gt_rxgearboxslip = serdes_rx_bitslip;
@@ -466,7 +467,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -567,7 +568,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -668,7 +669,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTY" && !GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -769,7 +770,7 @@ end else if (HAS_COMMON && GT_TYPE == "GTH" && !GT_USP) begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -858,7 +859,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
@@ -951,7 +952,7 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
 
         .gtwiz_userdata_tx_in(gt_txdata),
         .txheader_in(gt_txheader),
-        .txsequence_in(7'b0),
+        .txsequence_in(gt_txsequence),
 
         // Receive
         .gtwiz_userclk_rx_reset_in(gt_rx_reset),
