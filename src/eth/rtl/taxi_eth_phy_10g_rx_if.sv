@@ -66,9 +66,11 @@ module taxi_eth_phy_10g_rx_if #
     input  wire logic               cfg_rx_prbs31_enable
 );
 
+localparam USE_HDR_VLD = GBX_IF_EN || DATA_W != 64;
+
 // check configuration
-if (DATA_W != 64)
-    $fatal(0, "Error: Interface width must be 64");
+if (DATA_W != 32 && DATA_W != 64)
+    $fatal(0, "Error: Interface width must be 32 or 64");
 
 if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
@@ -118,14 +120,14 @@ if (SERDES_PIPELINE > 0) begin
     end
 
     assign serdes_rx_data_int = serdes_rx_data_pipe_reg[SERDES_PIPELINE-1];
-    assign serdes_rx_data_valid_int = serdes_rx_data_valid_pipe_reg[SERDES_PIPELINE-1];
+    assign serdes_rx_data_valid_int = GBX_IF_EN ? serdes_rx_data_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
     assign serdes_rx_hdr_int = serdes_rx_hdr_pipe_reg[SERDES_PIPELINE-1];
-    assign serdes_rx_hdr_valid_int = serdes_rx_hdr_valid_pipe_reg[SERDES_PIPELINE-1];
+    assign serdes_rx_hdr_valid_int = USE_HDR_VLD ? serdes_rx_hdr_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
 end else begin
     assign serdes_rx_data_int = serdes_rx_data_rev;
-    assign serdes_rx_data_valid_int = serdes_rx_data_valid;
+    assign serdes_rx_data_valid_int = GBX_IF_EN ? serdes_rx_data_valid : 1'b1;
     assign serdes_rx_hdr_int = serdes_rx_hdr_rev;
-    assign serdes_rx_hdr_valid_int = serdes_rx_hdr_valid;
+    assign serdes_rx_hdr_valid_int = USE_HDR_VLD ? serdes_rx_hdr_valid : 1'b1;
 end
 
 wire [DATA_W-1:0] descrambled_rx_data;
@@ -226,7 +228,7 @@ end
 assign encoded_rx_data = encoded_rx_data_reg;
 assign encoded_rx_data_valid = GBX_IF_EN ? encoded_rx_data_valid_reg : 1'b1;
 assign encoded_rx_hdr = encoded_rx_hdr_reg;
-assign encoded_rx_hdr_valid = GBX_IF_EN ? encoded_rx_hdr_valid_reg : 1'b1;
+assign encoded_rx_hdr_valid = USE_HDR_VLD ? encoded_rx_hdr_valid_reg : 1'b1;
 
 assign rx_error_count = rx_error_count_reg;
 
@@ -237,7 +239,6 @@ assign serdes_rx_reset_req = serdes_rx_reset_req_int && !(PRBS31_EN && cfg_rx_pr
 
 taxi_eth_phy_10g_rx_frame_sync #(
     .HDR_W(HDR_W),
-    .GBX_IF_EN(GBX_IF_EN),
     .BITSLIP_HIGH_CYCLES(BITSLIP_HIGH_CYCLES),
     .BITSLIP_LOW_CYCLES(BITSLIP_LOW_CYCLES)
 )
@@ -264,7 +265,6 @@ eth_phy_10g_rx_ber_mon_inst (
 
 taxi_eth_phy_10g_rx_watchdog #(
     .HDR_W(HDR_W),
-    .GBX_IF_EN(GBX_IF_EN),
     .COUNT_125US(COUNT_125US)
 )
 eth_phy_10g_rx_watchdog_inst (

@@ -18,7 +18,6 @@ Authors:
 module taxi_eth_phy_10g_rx_watchdog #
 (
     parameter HDR_W = 2,
-    parameter logic GBX_IF_EN = 1'b0,
     parameter COUNT_125US = 125000/6.4
 )
 (
@@ -84,7 +83,7 @@ always_comb begin
     rx_status_next = rx_status_reg;
 
     if (rx_block_lock) begin
-        if (serdes_rx_hdr == SYNC_CTRL && (!GBX_IF_EN || serdes_rx_hdr_valid)) begin
+        if (serdes_rx_hdr == SYNC_CTRL && serdes_rx_hdr_valid) begin
             saw_ctrl_sh_next = 1'b1;
         end
         if ((rx_bad_block || rx_sequence_error) && !(&block_error_count_reg)) begin

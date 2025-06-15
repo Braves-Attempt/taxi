@@ -56,9 +56,11 @@ module taxi_eth_phy_10g_tx_if #
     input  wire logic               cfg_tx_prbs31_enable
 );
 
+localparam USE_HDR_VLD = GBX_IF_EN || DATA_W != 64;
+
 // check configuration
-if (DATA_W != 64)
-    $fatal(0, "Error: Interface width must be 64");
+if (DATA_W != 32 && DATA_W != 64)
+    $fatal(0, "Error: Interface width must be 32 or 64");
 
 if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
@@ -129,13 +131,13 @@ if (SERDES_PIPELINE > 0) begin
     assign serdes_tx_data = serdes_tx_data_pipe_reg[SERDES_PIPELINE-1];
     assign serdes_tx_data_valid = GBX_IF_EN ? serdes_tx_data_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
     assign serdes_tx_hdr = serdes_tx_hdr_pipe_reg[SERDES_PIPELINE-1];
-    assign serdes_tx_hdr_valid = GBX_IF_EN ? serdes_tx_hdr_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
+    assign serdes_tx_hdr_valid = USE_HDR_VLD ? serdes_tx_hdr_valid_pipe_reg[SERDES_PIPELINE-1] : 1'b1;
     assign serdes_tx_gbx_sync = GBX_IF_EN ? serdes_tx_gbx_sync_pipe_reg[SERDES_PIPELINE-1] : 1'b0;
 end else begin
     assign serdes_tx_data = serdes_tx_data_int;
     assign serdes_tx_data_valid = GBX_IF_EN ? serdes_tx_data_valid_reg : 1'b1;
     assign serdes_tx_hdr = serdes_tx_hdr_int;
-    assign serdes_tx_hdr_valid = GBX_IF_EN ? serdes_tx_hdr_valid_reg : 1'b1;
+    assign serdes_tx_hdr_valid = USE_HDR_VLD ? serdes_tx_hdr_valid_reg : 1'b1;
     assign serdes_tx_gbx_sync = GBX_IF_EN ? serdes_tx_gbx_sync_reg : 1'b0;
 end
 

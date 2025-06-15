@@ -18,7 +18,6 @@ Authors:
 module taxi_eth_phy_10g_rx_ber_mon #
 (
     parameter HDR_W = 2,
-    parameter logic GBX_IF_EN = 1'b0,
     parameter COUNT_125US = 125000/6.4
 )
 (
@@ -65,7 +64,7 @@ always_comb begin
 
     rx_high_ber_next = rx_high_ber_reg;
 
-    if (GBX_IF_EN && !serdes_rx_hdr_valid) begin
+    if (!serdes_rx_hdr_valid) begin
         // wait for header
     end else if (serdes_rx_hdr == SYNC_CTRL || serdes_rx_hdr == SYNC_DATA) begin
         // valid header

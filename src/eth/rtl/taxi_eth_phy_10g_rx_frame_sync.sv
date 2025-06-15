@@ -18,7 +18,6 @@ Authors:
 module taxi_eth_phy_10g_rx_frame_sync #
 (
     parameter HDR_W = 2,
-    parameter logic GBX_IF_EN = 1'b0,
     parameter BITSLIP_HIGH_CYCLES = 1,
     parameter BITSLIP_LOW_CYCLES = 7
 )
@@ -75,7 +74,7 @@ always_comb begin
     end else if (serdes_rx_bitslip_reg) begin
         serdes_rx_bitslip_next = 1'b0;
         bitslip_count_next = BITSLIP_COUNT_W'(BITSLIP_LOW_CYCLES);
-    end else if (GBX_IF_EN && !serdes_rx_hdr_valid) begin
+    end else if (!serdes_rx_hdr_valid) begin
         // wait for header
     end else if (serdes_rx_hdr == SYNC_CTRL || serdes_rx_hdr == SYNC_DATA) begin
         // valid header
