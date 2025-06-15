@@ -84,7 +84,7 @@ always_comb begin
             end
         end
     end
-    if (time_count_reg == 0) begin
+    if (time_count_reg == 0 && serdes_rx_hdr_valid) begin
         // 125 us timer expired
         ber_count_next = 4'd0;
         time_count_next = COUNT_125US_INT;
