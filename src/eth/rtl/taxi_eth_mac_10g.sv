@@ -341,6 +341,7 @@ end else if (DATA_W == 32) begin
     taxi_axis_xgmii_rx_32 #(
         .DATA_W(DATA_W),
         .CTRL_W(CTRL_W),
+        .GBX_IF_EN(RX_GBX_IF_EN),
         .PTP_TS_EN(PTP_TS_EN),
         .PTP_TS_W(PTP_TS_W)
     )
@@ -353,6 +354,7 @@ end else if (DATA_W == 32) begin
          */
         .xgmii_rxd(xgmii_rxd),
         .xgmii_rxc(xgmii_rxc),
+        .xgmii_rx_valid(xgmii_rx_valid),
 
         /*
          * Receive interface (AXI stream)
@@ -397,6 +399,8 @@ end else if (DATA_W == 32) begin
     taxi_axis_xgmii_tx_32 #(
         .DATA_W(DATA_W),
         .CTRL_W(CTRL_W),
+        .GBX_IF_EN(TX_GBX_IF_EN),
+        .GBX_CNT(GBX_CNT),
         .PADDING_EN(PADDING_EN),
         .DIC_EN(DIC_EN),
         .MIN_FRAME_LEN(MIN_FRAME_LEN),
@@ -419,6 +423,10 @@ end else if (DATA_W == 32) begin
          */
         .xgmii_txd(xgmii_txd),
         .xgmii_txc(xgmii_txc),
+        .xgmii_tx_valid(xgmii_tx_valid),
+        .tx_gbx_req_sync(tx_gbx_req_sync),
+        .tx_gbx_req_stall(tx_gbx_req_stall),
+        .tx_gbx_sync(tx_gbx_sync),
 
         /*
          * PTP

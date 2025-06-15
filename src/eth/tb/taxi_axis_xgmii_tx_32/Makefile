@@ -35,6 +35,8 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
 export PARAM_DATA_W := 32
+export PARAM_GBX_IF_EN := 0
+export PARAM_GBX_CNT := 1
 export PARAM_PADDING_EN := 1
 export PARAM_DIC_EN := 1
 export PARAM_MIN_FRAME_LEN := 64
