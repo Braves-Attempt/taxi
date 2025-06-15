@@ -17,7 +17,7 @@ RTL_DIR = ../../rtl
 LIB_DIR = ../../lib
 TAXI_SRC_DIR = $(LIB_DIR)/taxi/src
 
-DUT      = taxi_xgmii_baser_dec_64
+DUT      = taxi_xgmii_baser_dec
 COCOTB_TEST_MODULES = test_$(DUT)
 COCOTB_TOPLEVEL     = $(DUT)
 MODULE   = $(COCOTB_TEST_MODULES)

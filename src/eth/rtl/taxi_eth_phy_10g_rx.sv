@@ -66,16 +66,6 @@ module taxi_eth_phy_10g_rx #
     input  wire logic               cfg_rx_prbs31_enable
 );
 
-// check configuration
-if (DATA_W != 64)
-    $fatal(0, "Error: Interface width must be 64");
-
-if (CTRL_W * 8 != DATA_W)
-    $fatal(0, "Error: Interface requires byte (8-bit) granularity");
-
-if (HDR_W != 2)
-    $fatal(0, "Error: HDR_W must be 2");
-
 wire [DATA_W-1:0] encoded_rx_data;
 wire encoded_rx_data_valid;
 wire [HDR_W-1:0] encoded_rx_hdr;
@@ -131,7 +121,7 @@ eth_phy_10g_rx_if_inst (
     .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable)
 );
 
-taxi_xgmii_baser_dec_64 #(
+taxi_xgmii_baser_dec #(
     .DATA_W(DATA_W),
     .CTRL_W(CTRL_W),
     .HDR_W(HDR_W),

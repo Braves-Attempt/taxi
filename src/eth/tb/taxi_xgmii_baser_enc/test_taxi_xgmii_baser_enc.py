@@ -14,6 +14,7 @@ import logging
 import os
 import sys
 
+import pytest
 import cocotb_test.simulator
 
 import cocotb
@@ -21,15 +22,15 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.regression import TestFactory
 
-from cocotbext.eth import XgmiiSink, XgmiiFrame
+from cocotbext.eth import XgmiiSource, XgmiiFrame
 
 try:
-    from baser import BaseRSerdesSource
+    from baser import BaseRSerdesSink
 except ImportError:
     # attempt import from current directory
     sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
     try:
-        from baser import BaseRSerdesSource
+        from baser import BaseRSerdesSink
     finally:
         del sys.path[0]
 
@@ -41,13 +42,25 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.start_soon(Clock(dut.clk, 6.4, units="ns").start())
+        if len(dut.xgmii_txd) == 64:
+            self.clk_period = 6.4
+        else:
+            self.clk_period = 3.2
 
-        self.source = BaseRSerdesSource(dut.encoded_rx_data, dut.encoded_rx_hdr, dut.clk, scramble=False)
-        self.sink = XgmiiSink(dut.xgmii_rxd, dut.xgmii_rxc, dut.clk, dut.rst)
+        cocotb.start_soon(Clock(dut.clk, self.clk_period, units="ns").start())
 
-        dut.encoded_rx_data_valid.setimmediatevalue(1)
-        dut.encoded_rx_hdr_valid.setimmediatevalue(1)
+        self.source = XgmiiSource(dut.xgmii_txd, dut.xgmii_txc, dut.clk, dut.rst)
+        self.sink = BaseRSerdesSink(
+            data=dut.encoded_tx_data,
+            data_valid=dut.encoded_tx_data_valid,
+            hdr=dut.encoded_tx_hdr,
+            hdr_valid=dut.encoded_tx_hdr_valid,
+            clock=dut.clk,
+            scramble=False
+        )
+
+        dut.xgmii_tx_valid.setimmediatevalue(1)
+        dut.tx_gbx_sync_in.setimmediatevalue(0)
 
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)
@@ -185,12 +198,13 @@ if cocotb.SIM_NAME:
     factory.add_option("force_offset_start", [False, True])
     factory.generate_tests()
 
-    factory = TestFactory(run_test_alignment)
-    factory.add_option("payload_data", [incrementing_payload])
-    factory.add_option("ifg", [12])
-    factory.add_option("enable_dic", [True, False])
-    factory.add_option("force_offset_start", [False, True])
-    factory.generate_tests()
+    if len(cocotb.top.xgmii_txd) == 64:
+        factory = TestFactory(run_test_alignment)
+        factory.add_option("payload_data", [incrementing_payload])
+        factory.add_option("ifg", [12])
+        factory.add_option("enable_dic", [True, False])
+        factory.add_option("force_offset_start", [False, True])
+        factory.generate_tests()
 
 
 # cocotb-test
@@ -214,8 +228,9 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_taxi_xgmii_baser_dec_64(request):
-    dut = "taxi_xgmii_baser_dec_64"
+@pytest.mark.parametrize("data_w", [32, 64])
+def test_taxi_xgmii_baser_enc(request, data_w):
+    dut = "taxi_xgmii_baser_enc"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
 
@@ -227,10 +242,11 @@ def test_taxi_xgmii_baser_dec_64(request):
 
     parameters = {}
 
-    parameters['DATA_W'] = 64
+    parameters['DATA_W'] = data_w
     parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['HDR_W'] = 2
     parameters['GBX_IF_EN'] = 0
+    parameters['GBX_CNT'] = 1
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

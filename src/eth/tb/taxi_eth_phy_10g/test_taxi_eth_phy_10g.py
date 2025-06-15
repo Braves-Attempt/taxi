@@ -16,6 +16,7 @@ import sys
 
 import cocotb_test.simulator
 
+import pytest
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
@@ -41,8 +42,13 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.start_soon(Clock(dut.tx_clk, 6.4, units="ns").start())
-        cocotb.start_soon(Clock(dut.rx_clk, 6.4, units="ns").start())
+        if len(dut.xgmii_txd) == 64:
+            self.clk_period = 6.4
+        else:
+            self.clk_period = 3.2
+
+        cocotb.start_soon(Clock(dut.tx_clk, self.clk_period, units="ns").start())
+        cocotb.start_soon(Clock(dut.rx_clk, self.clk_period, units="ns").start())
 
         self.xgmii_source = XgmiiSource(dut.xgmii_txd, dut.xgmii_txc, dut.tx_clk, dut.tx_rst)
         self.xgmii_sink = XgmiiSink(dut.xgmii_rxd, dut.xgmii_rxc, dut.rx_clk, dut.rx_rst)
@@ -232,7 +238,8 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_taxi_eth_phy_10g(request):
+@pytest.mark.parametrize("data_w", [32, 64])
+def test_taxi_eth_phy_10g(request, data_w):
     dut = "taxi_eth_phy_10g"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
@@ -246,7 +253,7 @@ def test_taxi_eth_phy_10g(request):
 
     parameters = {}
 
-    parameters['DATA_W'] = 64
+    parameters['DATA_W'] = data_w
     parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['HDR_W'] = 2
     parameters['TX_GBX_IF_EN'] = 0

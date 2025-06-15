@@ -14,6 +14,7 @@ import logging
 import os
 import sys
 
+import pytest
 import cocotb_test.simulator
 
 import cocotb
@@ -21,15 +22,15 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.regression import TestFactory
 
-from cocotbext.eth import XgmiiSource, XgmiiFrame
+from cocotbext.eth import XgmiiSink, XgmiiFrame
 
 try:
-    from baser import BaseRSerdesSink
+    from baser import BaseRSerdesSource
 except ImportError:
     # attempt import from current directory
     sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
     try:
-        from baser import BaseRSerdesSink
+        from baser import BaseRSerdesSource
     finally:
         del sys.path[0]
 
@@ -41,13 +42,25 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.start_soon(Clock(dut.clk, 6.4, units="ns").start())
+        if len(dut.xgmii_rxd) == 64:
+            self.clk_period = 6.4
+        else:
+            self.clk_period = 3.2
 
-        self.source = XgmiiSource(dut.xgmii_txd, dut.xgmii_txc, dut.clk, dut.rst)
-        self.sink = BaseRSerdesSink(dut.encoded_tx_data, dut.encoded_tx_hdr, dut.clk, scramble=False)
+        cocotb.start_soon(Clock(dut.clk, self.clk_period, units="ns").start())
 
-        dut.xgmii_tx_valid.setimmediatevalue(1)
-        dut.tx_gbx_sync_in.setimmediatevalue(0)
+        self.source = BaseRSerdesSource(
+            data=dut.encoded_rx_data,
+            data_valid=dut.encoded_rx_data_valid,
+            hdr=dut.encoded_rx_hdr,
+            hdr_valid=dut.encoded_rx_hdr_valid,
+            clock=dut.clk,
+            scramble=False
+        )
+        self.sink = XgmiiSink(dut.xgmii_rxd, dut.xgmii_rxc, dut.clk, dut.rst)
+
+        dut.encoded_rx_data_valid.setimmediatevalue(1)
+        dut.encoded_rx_hdr_valid.setimmediatevalue(1)
 
     async def reset(self):
         self.dut.rst.setimmediatevalue(0)
@@ -214,8 +227,9 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_taxi_xgmii_baser_enc_64(request):
-    dut = "taxi_xgmii_baser_enc_64"
+@pytest.mark.parametrize("data_w", [32, 64])
+def test_taxi_xgmii_baser_dec(request, data_w):
+    dut = "taxi_xgmii_baser_dec"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
 
@@ -227,11 +241,10 @@ def test_taxi_xgmii_baser_enc_64(request):
 
     parameters = {}
 
-    parameters['DATA_W'] = 64
+    parameters['DATA_W'] = data_w
     parameters['CTRL_W'] = parameters['DATA_W'] // 8
     parameters['HDR_W'] = 2
     parameters['GBX_IF_EN'] = 0
-    parameters['GBX_CNT'] = 1
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
