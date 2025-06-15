@@ -73,8 +73,13 @@ class BaseRSerdesSource():
 
         self.width = len(self.data)
         self.byte_size = 8
-        self.byte_lanes = 8
+        self.byte_lanes = self.width // self.byte_size
 
+        self.pack_seq = 0
+        self.pack_cnt = 8 // self.byte_lanes
+        self.data_mask = (2**self.width)-1
+
+        assert self.byte_lanes in [1, 2, 4, 8]
         assert self.width == self.byte_lanes * self.byte_size
 
         self.log.info("BASE-R serdes source model configuration")
@@ -203,6 +208,9 @@ class BaseRSerdesSource():
         last_clk = 0
         gbx_delay = 0
 
+        data = 0
+        hdr = 0
+
         while True:
             await RisingEdge(self.clock)
 
@@ -245,9 +253,27 @@ class BaseRSerdesSource():
                 if self.gbx_sync is not None:
                     self.gbx_sync.value = 0
 
-            if ifg_cnt + deficit_idle_cnt > self.byte_lanes-1 or (not self.enable_dic and ifg_cnt > 4):
+            if self.pack_seq:
+                # output data
+                data_out = data >> (self.width*(self.pack_cnt-self.pack_seq))
+                self.pack_seq = self.pack_seq-1
+
+                if self.reverse:
+                    # bit reverse
+                    data_out = sum(1 << (self.width-1-i) for i in range(self.width) if (data_out >> i) & 1)
+
+                self.data.value = data_out & self.data_mask
+                if self.data_valid is not None:
+                    self.data_valid.value = 1
+                self.hdr.value = 0
+                if self.hdr_valid is not None:
+                    self.hdr_valid.value = 0
+
+                continue
+
+            if ifg_cnt + deficit_idle_cnt > 8-1 or (not self.enable_dic and ifg_cnt > 4):
                 # in IFG
-                ifg_cnt = ifg_cnt - self.byte_lanes
+                ifg_cnt = ifg_cnt - 8
                 if ifg_cnt < 0:
                     if self.enable_dic:
                         deficit_idle_cnt = max(deficit_idle_cnt+ifg_cnt, 0)
@@ -281,7 +307,7 @@ class BaseRSerdesSource():
                     else:
                         min_ifg = 0
 
-                    if self.byte_lanes > 4 and (ifg_cnt > min_ifg or self.force_offset_start):
+                    if ifg_cnt > min_ifg or self.force_offset_start:
                         ifg_cnt = ifg_cnt-4
                         frame.start_lane = 4
                         frame.data = bytearray([XgmiiCtrl.IDLE]*4)+frame.data
@@ -301,7 +327,7 @@ class BaseRSerdesSource():
                 dl = bytearray()
                 cl = []
 
-                for k in range(self.byte_lanes):
+                for k in range(8):
                     if frame is not None:
                         d = frame.data[frame_offset]
                         if frame.sim_time_sfd is None and d == EthPre.SFD:
@@ -311,7 +337,7 @@ class BaseRSerdesSource():
                         frame_offset += 1
 
                         if frame_offset >= len(frame.data):
-                            ifg_cnt = max(self.ifg - (self.byte_lanes-k), 0)
+                            ifg_cnt = max(self.ifg - (8-k), 0)
                             frame.sim_time_end = get_sim_time() - gbx_delay
                             frame.handle_tx_complete()
                             frame = None
@@ -424,7 +450,7 @@ class BaseRSerdesSource():
             if self.scramble:
                 # 64b/66b scrambler
                 b = 0
-                for i in range(len(self.data)):
+                for i in range(64):
                     if bool(scrambler_state & (1 << 38)) ^ bool(scrambler_state & (1 << 57)) ^ bool(data & (1 << i)):
                         scrambler_state = ((scrambler_state & 0x1ffffffffffffff) << 1) | 1
                         b = b | (1 << i)
@@ -447,15 +473,20 @@ class BaseRSerdesSource():
                 data = out_d >> 2
                 hdr = out_d & 3
 
+            data_out = data
+            hdr_out = hdr
+
+            self.pack_seq = self.pack_cnt-1
+
             if self.reverse:
                 # bit reverse
-                data = sum(1 << (63-i) for i in range(64) if (data >> i) & 1)
-                hdr = sum(1 << (1-i) for i in range(2) if (hdr >> i) & 1)
+                data_out = sum(1 << (self.width-1-i) for i in range(self.width) if (data_out >> i) & 1)
+                hdr_out = sum(1 << (1-i) for i in range(2) if (hdr_out >> i) & 1)
 
-            self.data.value = data
+            self.data.value = data_out & self.data_mask
             if self.data_valid is not None:
                 self.data_valid.value = 1
-            self.hdr.value = hdr
+            self.hdr.value = hdr_out
             if self.hdr_valid is not None:
                 self.hdr_valid.value = 1
 
@@ -502,8 +533,12 @@ class BaseRSerdesSink:
 
         self.width = len(self.data)
         self.byte_size = 8
-        self.byte_lanes = 8
+        self.byte_lanes = self.width // self.byte_size
 
+        self.pack_seq = 0
+        self.pack_cnt = 8 // self.byte_lanes
+
+        assert self.byte_lanes in [1, 2, 4, 8]
         assert self.width == self.byte_lanes * self.byte_size
 
         self.log.info("BASE-R serdes sink model configuration")
@@ -614,6 +649,9 @@ class BaseRSerdesSink:
         gbx_delay = 0
         sync_bad = True
 
+        data = 0
+        hdr = 0
+
         while True:
             await RisingEdge(self.clock)
 
@@ -672,18 +710,36 @@ class BaseRSerdesSink:
 
             sync_bad = False
 
-            data = self.data.value.integer
-            hdr = self.hdr.value.integer
+            data_in = self.data.value.integer
+            hdr_in = self.hdr.value.integer
 
             if self.reverse:
                 # bit reverse
-                data = sum(1 << (63-i) for i in range(64) if (data >> i) & 1)
-                hdr = sum(1 << (1-i) for i in range(2) if (hdr >> i) & 1)
+                data_in = sum(1 << (self.width-1-i) for i in range(self.width) if (data_in >> i) & 1)
+                hdr_in = sum(1 << (1-i) for i in range(2) if (hdr_in >> i) & 1)
+
+            if self.pack_cnt > 1:
+                # pack input data
+                if self.hdr_valid is not None:
+                    if self.hdr_valid.value:
+                        data = data_in
+                        hdr = hdr_in
+                        self.pack_seq = 1
+                        continue
+
+                data |= data_in << (self.width*self.pack_seq)
+                self.pack_seq = self.pack_seq+1
+
+                if self.pack_seq < self.pack_cnt:
+                    continue
+            else:
+                data = data_in
+                hdr = hdr_in
 
             if self.scramble:
                 # 64b/66b descrambler
                 b = 0
-                for i in range(len(self.data)):
+                for i in range(64):
                     if bool(scrambler_state & (1 << 38)) ^ bool(scrambler_state & (1 << 57)) ^ bool(data & (1 << i)):
                         b = b | (1 << i)
                     scrambler_state = (scrambler_state & 0x1ffffffffffffff) << 1 | bool(data & (1 << i))
@@ -694,95 +750,95 @@ class BaseRSerdesSink:
             # remap control characters
             ctrl = bytearray(baser_ctrl_to_xgmii_mapping.get((data >> i*7+8) & 0x7f, XgmiiCtrl.ERROR) for i in range(8))
 
-            data = data.to_bytes(8, 'little')
+            db = data.to_bytes(8, 'little')
 
             dl = bytearray()
             cl = []
             if hdr == BaseRSync.DATA:
                 # data
-                dl = data
+                dl = db
                 cl = [0]*8
             elif hdr == BaseRSync.CTRL:
-                if data[0] == BaseRBlockType.CTRL:
+                if db[0] == BaseRBlockType.CTRL:
                     # C7 C6 C5 C4 C3 C2 C1 C0 BT
                     dl = ctrl
                     cl = [1]*8
-                elif data[0] == BaseRBlockType.OS_4:
+                elif db[0] == BaseRBlockType.OS_4:
                     # D7 D6 D5 O4 C3 C2 C1 C0 BT
                     dl = ctrl[0:4]
                     cl = [1]*4
-                    if (data[4] >> 4) & 0xf == BaseRO.SEQ_OS:
+                    if (db[4] >> 4) & 0xf == BaseRO.SEQ_OS:
                         dl.append(XgmiiCtrl.SEQ_OS)
-                    elif (data[4] >> 4) & 0xf == BaseRO.SIG_OS:
+                    elif (db[4] >> 4) & 0xf == BaseRO.SIG_OS:
                         dl.append(XgmiiCtrl.SIG_OS)
                     else:
                         dl.append(XgmiiCtrl.ERROR)
                     cl.append(1)
-                    dl += data[5:]
+                    dl += db[5:]
                     cl += [0]*3
-                elif data[0] == BaseRBlockType.START_4:
+                elif db[0] == BaseRBlockType.START_4:
                     # D7 D6 D5    C3 C2 C1 C0 BT
                     dl = ctrl[0:4]
                     cl = [1]*4
                     dl.append(XgmiiCtrl.START)
                     cl.append(1)
-                    dl += data[5:]
+                    dl += db[5:]
                     cl += [0]*3
-                elif data[0] == BaseRBlockType.OS_START:
+                elif db[0] == BaseRBlockType.OS_START:
                     # D7 D6 D5    O0 D3 D2 D1 BT
-                    if data[4] & 0xf == BaseRO.SEQ_OS:
+                    if db[4] & 0xf == BaseRO.SEQ_OS:
                         dl.append(XgmiiCtrl.SEQ_OS)
-                    elif data[4] & 0xf == BaseRO.SIG_OS:
+                    elif db[4] & 0xf == BaseRO.SIG_OS:
                         dl.append(XgmiiCtrl.SIG_OS)
                     else:
                         dl.append(XgmiiCtrl.ERROR)
                     cl.append(1)
-                    dl += data[1:4]
+                    dl += db[1:4]
                     cl += [0]*3
                     dl.append(XgmiiCtrl.START)
                     cl.append(1)
-                    dl += data[5:]
+                    dl += db[5:]
                     cl += [0]*3
-                elif data[0] == BaseRBlockType.OS_04:
+                elif db[0] == BaseRBlockType.OS_04:
                     # D7 D6 D5 O4 O0 D3 D2 D1 BT
-                    if data[4] & 0xf == BaseRO.SEQ_OS:
+                    if db[4] & 0xf == BaseRO.SEQ_OS:
                         dl.append(XgmiiCtrl.SEQ_OS)
-                    elif data[4] & 0xf == BaseRO.SIG_OS:
+                    elif db[4] & 0xf == BaseRO.SIG_OS:
                         dl.append(XgmiiCtrl.SIG_OS)
                     else:
                         dl.append(XgmiiCtrl.ERROR)
                     cl.append(1)
-                    dl += data[1:4]
+                    dl += db[1:4]
                     cl += [0]*3
-                    if (data[4] >> 4) & 0xf == BaseRO.SEQ_OS:
+                    if (db[4] >> 4) & 0xf == BaseRO.SEQ_OS:
                         dl.append(XgmiiCtrl.SEQ_OS)
-                    elif (data[4] >> 4) & 0xf == BaseRO.SIG_OS:
+                    elif (db[4] >> 4) & 0xf == BaseRO.SIG_OS:
                         dl.append(XgmiiCtrl.SIG_OS)
                     else:
                         dl.append(XgmiiCtrl.ERROR)
                     cl.append(1)
-                    dl += data[5:]
+                    dl += db[5:]
                     cl += [0]*3
-                elif data[0] == BaseRBlockType.START_0:
+                elif db[0] == BaseRBlockType.START_0:
                     # D7 D6 D5 D4 D3 D2 D1    BT
                     dl.append(XgmiiCtrl.START)
                     cl.append(1)
-                    dl += data[1:]
+                    dl += db[1:]
                     cl += [0]*7
-                elif data[0] == BaseRBlockType.OS_0:
+                elif db[0] == BaseRBlockType.OS_0:
                     # C7 C6 C5 C4 O0 D3 D2 D1 BT
-                    if data[4] & 0xf == BaseRO.SEQ_OS:
+                    if db[4] & 0xf == BaseRO.SEQ_OS:
                         dl.append(XgmiiCtrl.SEQ_OS)
-                    elif data[4] & 0xf == BaseRO.SIG_OS:
+                    elif db[4] & 0xf == BaseRO.SIG_OS:
                         dl.append(XgmiiCtrl.SEQ_OS)
                     else:
                         dl.append(XgmiiCtrl.ERROR)
                     cl.append(1)
-                    dl += data[1:4]
+                    dl += db[1:4]
                     cl += [0]*3
                     dl += ctrl[4:]
                     cl += [1]*4
-                elif data[0] in {BaseRBlockType.TERM_0, BaseRBlockType.TERM_1,
+                elif db[0] in {BaseRBlockType.TERM_0, BaseRBlockType.TERM_1,
                         BaseRBlockType.TERM_2, BaseRBlockType.TERM_3, BaseRBlockType.TERM_4,
                         BaseRBlockType.TERM_5, BaseRBlockType.TERM_6, BaseRBlockType.TERM_7}:
                     # C7 C6 C5 C4 C3 C2 C1    BT
@@ -793,8 +849,8 @@ class BaseRSerdesSink:
                     # C7 C6    D4 D3 D2 D1 D0 BT
                     # C7    D5 D4 D3 D2 D1 D0 BT
                     #    D6 D5 D4 D3 D2 D1 D0 BT
-                    term_lane = block_type_term_lane_mapping[data[0]]
-                    dl += data[1:term_lane+1]
+                    term_lane = block_type_term_lane_mapping[db[0]]
+                    dl += db[1:term_lane+1]
                     cl += [0]*term_lane
                     dl.append(XgmiiCtrl.TERM)
                     cl.append(1)
@@ -811,7 +867,7 @@ class BaseRSerdesSink:
                 dl = [XgmiiCtrl.ERROR]*8
                 cl = [1]*8
 
-            for offset in range(self.byte_lanes):
+            for offset in range(8):
                 d_val = dl[offset]
                 c_val = cl[offset]
 
