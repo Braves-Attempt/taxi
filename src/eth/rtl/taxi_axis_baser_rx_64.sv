@@ -97,12 +97,6 @@ localparam [7:0]
     ETH_PRE = 8'h55,
     ETH_SFD = 8'hD5;
 
-localparam [7:0]
-    XGMII_IDLE = 8'h07,
-    XGMII_START = 8'hfb,
-    XGMII_TERM = 8'hfd,
-    XGMII_ERROR = 8'hfe;
-
 localparam [6:0]
     CTRL_IDLE  = 7'h00,
     CTRL_LPI   = 7'h06,
