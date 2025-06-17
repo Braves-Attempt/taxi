@@ -903,13 +903,9 @@ always_ff @(posedge clk) begin
         encoded_tx_data_valid_reg <= 1'b1;
         encoded_tx_hdr_valid_reg <= 1'b1;
 
-        crc_state_reg[0] <= crc_state_next[0];
-        crc_state_reg[1] <= crc_state_next[1];
-        crc_state_reg[2] <= crc_state_next[2];
-        crc_state_reg[3] <= crc_state_next[3];
-        crc_state_reg[4] <= crc_state_next[4];
-        crc_state_reg[5] <= crc_state_next[5];
-        crc_state_reg[6] <= crc_state_next[6];
+        for (integer i = 0; i < 7; i = i + 1) begin
+            crc_state_reg[i] <= crc_state_next[i];
+        end
 
         if (update_crc) begin
             crc_state_reg[7] <= crc_state_next[7];
