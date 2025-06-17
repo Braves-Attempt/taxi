@@ -732,6 +732,8 @@ class BaseRSerdesSink:
 
                 if self.pack_seq < self.pack_cnt:
                     continue
+
+                self.pack_seq = 0
             else:
                 data = data_in
                 hdr = hdr_in
