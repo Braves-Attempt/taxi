@@ -153,8 +153,6 @@ logic [1:0] state_reg = STATE_IDLE, state_next;
 // datapath control signals
 logic reset_crc;
 
-logic [1:0] term_lane_reg = 0, term_lane_d0_reg = 0;
-logic term_present_reg = 1'b0;
 logic framing_error_reg = 1'b0;
 
 logic [DATA_W-1:0] input_data_d0 = '0;
@@ -187,6 +185,7 @@ logic m_axis_rx_tlast_reg = 1'b0, m_axis_rx_tlast_next;
 logic m_axis_rx_tuser_reg = 1'b0, m_axis_rx_tuser_next;
 
 logic start_packet_reg = 1'b0, start_packet_next;
+logic frame_reg = 1'b0;
 
 logic [2:0] stat_rx_byte_reg = '0, stat_rx_byte_next;
 logic [15:0] stat_rx_pkt_len_reg = '0, stat_rx_pkt_len_next;
@@ -200,7 +199,7 @@ logic stat_rx_pkt_good_reg = 1'b0, stat_rx_pkt_good_next;
 logic stat_rx_pkt_bad_reg = 1'b0, stat_rx_pkt_bad_next;
 logic stat_rx_err_oversize_reg = 1'b0, stat_rx_err_oversize_next;
 logic stat_rx_err_bad_fcs_reg = 1'b0, stat_rx_err_bad_fcs_next;
-logic stat_rx_err_bad_block_reg = 1'b0, stat_rx_err_bad_block_next;
+logic stat_rx_err_bad_block_reg = 1'b0;
 logic stat_rx_err_framing_reg = 1'b0, stat_rx_err_framing_next;
 logic stat_rx_err_preamble_reg = 1'b0, stat_rx_err_preamble_next;
 
@@ -303,7 +302,6 @@ always_comb begin
     stat_rx_pkt_bad_next = 1'b0;
     stat_rx_err_oversize_next = 1'b0;
     stat_rx_err_bad_fcs_next = 1'b0;
-    stat_rx_err_bad_block_next = 1'b0;
     stat_rx_err_framing_next = 1'b0;
     stat_rx_err_preamble_next = 1'b0;
 
@@ -549,7 +547,7 @@ always_ff @(posedge clk) begin
     stat_rx_pkt_bad_reg <= stat_rx_pkt_bad_next;
     stat_rx_err_oversize_reg <= stat_rx_err_oversize_next;
     stat_rx_err_bad_fcs_reg <= stat_rx_err_bad_fcs_next;
-    stat_rx_err_bad_block_reg <= stat_rx_err_bad_block_next;
+    stat_rx_err_bad_block_reg <= 1'b0;
     stat_rx_err_framing_reg <= stat_rx_err_framing_next;
     stat_rx_err_preamble_reg <= stat_rx_err_preamble_next;
 
@@ -575,6 +573,7 @@ always_ff @(posedge clk) begin
                 input_data_d0 <= encoded_rx_data_reg;
                 input_type_d0 <= INPUT_TYPE_DATA;
                 input_type_alt <= INPUT_TYPE_DATA;
+                framing_error_reg <= !frame_reg;
             end else begin
                 // control
                 case (encoded_rx_data_reg[7:4])
@@ -582,84 +581,147 @@ always_ff @(posedge clk) begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_IDLE;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_OS_4[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_IDLE;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_START_4[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_IDLE;
                         input_type_alt <= INPUT_TYPE_START;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b1;
                     end
                     BLOCK_TYPE_OS_START[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_IDLE;
                         input_type_alt <= INPUT_TYPE_START;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b1;
                     end
                     BLOCK_TYPE_OS_04[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_IDLE;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_START_0[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_START;
                         input_type_alt <= INPUT_TYPE_DATA;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b1;
                     end
                     BLOCK_TYPE_OS_0[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_IDLE;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_0[7:4]: begin
                         input_data_d0 <= 32'd0;
                         input_type_d0 <= INPUT_TYPE_TERM_0;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_1[7:4]: begin
                         input_data_d0 <= {24'd0, encoded_rx_data_reg[15:8]};
                         input_type_d0 <= INPUT_TYPE_TERM_1;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_2[7:4]: begin
                         input_data_d0 <= {16'd0, encoded_rx_data_reg[23:8]};
                         input_type_d0 <= INPUT_TYPE_TERM_2;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_3[7:4]: begin
                         input_data_d0 <= {8'd0, encoded_rx_data_reg[31:8]};
                         input_type_d0 <= INPUT_TYPE_TERM_3;
                         input_type_alt <= INPUT_TYPE_IDLE;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_4[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
                         input_type_d0 <= INPUT_TYPE_DATA;
                         input_type_alt <= INPUT_TYPE_TERM_0;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_5[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
                         input_type_d0 <= INPUT_TYPE_DATA;
                         input_type_alt <= INPUT_TYPE_TERM_1;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_6[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
                         input_type_d0 <= INPUT_TYPE_DATA;
                         input_type_alt <= INPUT_TYPE_TERM_2;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_7[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
                         input_type_d0 <= INPUT_TYPE_DATA;
                         input_type_alt <= INPUT_TYPE_TERM_3;
+                        framing_error_reg <= !frame_reg;
+                        frame_reg <= 1'b0;
                     end
                     default: begin
                         // invalid block type
                         input_data_d0 <= encoded_rx_data_reg;
                         input_type_d0 <= INPUT_TYPE_ERROR;
                         input_type_alt <= INPUT_TYPE_ERROR;
+                        framing_error_reg <= frame_reg;
+                        frame_reg <= 1'b0;
                     end
                 endcase
+            end
+
+            // check all block type bits to detect bad encodings
+            if (encoded_rx_hdr_reg == SYNC_DATA) begin
+                // data - nothing encoded
+            end else if (encoded_rx_hdr_reg == SYNC_CTRL) begin
+                // control - check for bad block types
+                case (encoded_rx_data_reg[7:0])
+                    BLOCK_TYPE_CTRL: begin end
+                    BLOCK_TYPE_OS_4: begin end
+                    BLOCK_TYPE_START_4: begin end
+                    BLOCK_TYPE_OS_START: begin end
+                    BLOCK_TYPE_OS_04: begin end
+                    BLOCK_TYPE_START_0: begin end
+                    BLOCK_TYPE_OS_0: begin end
+                    BLOCK_TYPE_TERM_0: begin end
+                    BLOCK_TYPE_TERM_1: begin end
+                    BLOCK_TYPE_TERM_2: begin end
+                    BLOCK_TYPE_TERM_3: begin end
+                    BLOCK_TYPE_TERM_4: begin end
+                    BLOCK_TYPE_TERM_5: begin end
+                    BLOCK_TYPE_TERM_6: begin end
+                    BLOCK_TYPE_TERM_7: begin end
+                    default: begin
+                        // invalid block type
+                        stat_rx_err_bad_block_reg <= 1'b1;
+                    end
+                endcase
+            end else begin
+                // invalid header
+                stat_rx_err_bad_block_reg <= 1'b1;
             end
         end else begin
             case (input_type_alt)
@@ -708,6 +770,7 @@ always_ff @(posedge clk) begin
         m_axis_rx_tvalid_reg <= 1'b0;
 
         start_packet_reg <= 1'b0;
+        frame_reg <= 1'b0;
 
         stat_rx_byte_reg <= '0;
         stat_rx_pkt_len_reg <= '0;
