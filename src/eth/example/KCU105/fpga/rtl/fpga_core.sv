@@ -487,9 +487,9 @@ end else begin : sfp_mac
 
     wire sfp_rst;
 
-    taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_tx[2]();
+    taxi_axis_if #(.DATA_W(32), .ID_W(8)) axis_sfp_tx[2]();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[2]();
-    taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[2]();
+    taxi_axis_if #(.DATA_W(32), .ID_W(8)) axis_sfp_rx[2]();
 
     if (SIM) begin
 
@@ -542,6 +542,7 @@ end else begin : sfp_mac
         .GT_TYPE("GTH"),
 
         // PHY parameters
+        .DATA_W(axis_sfp_tx[0].DATA_W),
         .PADDING_EN(1'b1),
         .DIC_EN(1'b1),
         .MIN_FRAME_LEN(64),

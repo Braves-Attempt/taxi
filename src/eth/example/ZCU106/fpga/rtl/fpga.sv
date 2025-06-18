@@ -27,7 +27,8 @@ module fpga #
     parameter logic SFP_RATE = 1'b1,
     // 10G MAC configuration
     parameter logic CFG_LOW_LATENCY = 1'b1,
-    parameter logic COMBINED_MAC_PCS = 1'b1
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 32
 )
 (
     /*
@@ -430,7 +431,8 @@ fpga_core #(
     .FAMILY(FAMILY),
     .SFP_RATE(SFP_RATE),
     .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
-    .COMBINED_MAC_PCS(COMBINED_MAC_PCS)
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 core_inst (
     /*

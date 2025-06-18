@@ -68,10 +68,10 @@ class TB:
                 gt_inst = ch.ch_inst.gt.gt_inst
 
                 if ch.ch_inst.CFG_LOW_LATENCY.value:
-                    clk = 6.206
-                    gbx_cfg = (33, [32])
+                    clk = 3.102
+                    gbx_cfg = (66, [64, 65])
                 else:
-                    clk = 6.4
+                    clk = 3.2
                     gbx_cfg = None
 
                 cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
@@ -289,6 +289,9 @@ def test_fpga_core(request, sfp_rate):
     parameters['VENDOR'] = "\"XILINX\""
     parameters['FAMILY'] = "\"zynquplus\""
     parameters['SFP_RATE'] = f"1'b{sfp_rate}"
+    parameters['CFG_LOW_LATENCY'] = "1'b1"
+    parameters['COMBINED_MAC_PCS'] = "1'b1"
+    parameters['MAC_DATA_W'] = 32
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

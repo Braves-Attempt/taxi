@@ -27,7 +27,8 @@ module fpga_core #
     parameter logic SFP_RATE = 1'b1,
     // 10G MAC configuration
     parameter logic CFG_LOW_LATENCY = 1'b1,
-    parameter logic COMBINED_MAC_PCS = 1'b1
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 32
 )
 (
     /*
@@ -387,9 +388,9 @@ end else begin : sfp_mac
 
     wire sfp_rst;
 
-    taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_tx[2]();
+    taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_tx[2]();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[2]();
-    taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[2]();
+    taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_rx[2]();
 
     if (SIM) begin
 
@@ -443,6 +444,7 @@ end else begin : sfp_mac
 
         // PHY parameters
         .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+        .DATA_W(MAC_DATA_W),
         .PADDING_EN(1'b1),
         .DIC_EN(1'b1),
         .MIN_FRAME_LEN(64),

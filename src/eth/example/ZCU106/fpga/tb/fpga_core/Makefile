@@ -43,6 +43,9 @@ export PARAM_SIM := "1'b1"
 export PARAM_VENDOR := "\"XILINX\""
 export PARAM_FAMILY := "\"zynquplus\""
 export PARAM_SFP_RATE := "1'b1"
+export PARAM_CFG_LOW_LATENCY := "1'b1"
+export PARAM_COMBINED_MAC_PCS := "1'b1"
+export PARAM_MAC_DATA_W := "32"
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

@@ -36,7 +36,7 @@ XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_signal.tcl
 
 # IP
 IP_TCL_FILES = ../ip/sgmii_pcs_pma_0.tcl
-IP_TCL_FILES += $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_25g_us_gth_10g_156.tcl
+IP_TCL_FILES += $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_10g_us_gth_156.tcl
 
 # Configuration
 CONFIG_TCL_FILES = ./config.tcl

@@ -7,7 +7,7 @@
 #
 
 # FPGA settings
-FPGA_PART = xck26-sfvc784-2LV-c
+FPGA_PART = xczu7ev-ffvc1156-2-e
 FPGA_TOP = fpga
 FPGA_ARCH = zynquplus
 
@@ -19,34 +19,37 @@ TAXI_SRC_DIR = $(LIB_DIR)/taxi/src
 SYN_FILES = $(RTL_DIR)/fpga.sv
 SYN_FILES += $(RTL_DIR)/fpga_core.sv
 SYN_FILES += $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_mac_25g_us.f
-SYN_FILES += $(TAXI_SRC_DIR)/eth/rtl/taxi_eth_mac_1g_rgmii_fifo.f
+SYN_FILES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_if_uart.f
+SYN_FILES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_switch.sv
+SYN_FILES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_mod_stats.f
+SYN_FILES += $(TAXI_SRC_DIR)/axis/rtl/taxi_axis_async_fifo.f
 SYN_FILES += $(TAXI_SRC_DIR)/sync/rtl/taxi_sync_reset.sv
 SYN_FILES += $(TAXI_SRC_DIR)/sync/rtl/taxi_sync_signal.sv
+SYN_FILES += $(TAXI_SRC_DIR)/io/rtl/taxi_debounce_switch.sv
 
 # XDC files
 XDC_FILES = ../fpga.xdc
-XDC_FILES += ../eth_rgmii.xdc
-XDC_FILES += $(TAXI_SRC_DIR)/eth/syn/vivado/taxi_rgmii_phy_if.tcl
 XDC_FILES += $(TAXI_SRC_DIR)/eth/syn/vivado/taxi_eth_mac_fifo.tcl
 XDC_FILES += $(TAXI_SRC_DIR)/axis/syn/vivado/taxi_axis_async_fifo.tcl
 XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_reset.tcl
 XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_signal.tcl
 
 # IP
-IP_TCL_FILES = $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_10g_us_gth_156.tcl
+IP_TCL_FILES = $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_25g_us_gth_10g_156.tcl
 
 # Configuration
 CONFIG_TCL_FILES = ./config.tcl
 
 include ../common/vivado.mk
 
-program: $(PROJECT).bit
+program: $(FPGA_TOP).bit
 	echo "open_hw_manager" > program.tcl
 	echo "connect_hw_server" >> program.tcl
 	echo "open_hw_target" >> program.tcl
 	echo "current_hw_device [lindex [get_hw_devices] 0]" >> program.tcl
 	echo "refresh_hw_device -update_hw_probes false [current_hw_device]" >> program.tcl
-	echo "set_property PROGRAM.FILE {$(PROJECT).bit} [current_hw_device]" >> program.tcl
+	echo "set_property PROGRAM.FILE {$(FPGA_TOP).bit} [current_hw_device]" >> program.tcl
 	echo "program_hw_devices [current_hw_device]" >> program.tcl
 	echo "exit" >> program.tcl
 	vivado -nojournal -nolog -mode batch -source program.tcl
+

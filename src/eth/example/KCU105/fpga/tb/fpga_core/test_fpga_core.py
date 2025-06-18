@@ -74,10 +74,10 @@ class TB:
                 gt_inst = ch.ch_inst.gt.gt_inst
 
                 if ch.ch_inst.CFG_LOW_LATENCY.value:
-                    clk = 6.206
-                    gbx_cfg = (33, [32])
+                    clk = 3.102
+                    gbx_cfg = (66, [64, 65])
                 else:
-                    clk = 6.4
+                    clk = 3.2
                     gbx_cfg = None
 
                 cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
