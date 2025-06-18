@@ -142,62 +142,127 @@ eth_phy_10g_rx_if_inst (
     .cfg_rx_prbs31_enable(cfg_rx_prbs31_enable)
 );
 
-taxi_axis_baser_rx_64 #(
-    .DATA_W(DATA_W),
-    .HDR_W(HDR_W),
-    .GBX_IF_EN(GBX_IF_EN),
-    .PTP_TS_EN(PTP_TS_EN),
-    .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
-    .PTP_TS_W(PTP_TS_W)
-)
-axis_baser_rx_inst (
-    .clk(clk),
-    .rst(rst),
+if (DATA_W == 64) begin
 
-    /*
-     * 10GBASE-R encoded input
-     */
-    .encoded_rx_data(encoded_rx_data),
-    .encoded_rx_data_valid(encoded_rx_data_valid),
-    .encoded_rx_hdr(encoded_rx_hdr),
-    .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
+    taxi_axis_baser_rx_64 #(
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W),
+        .GBX_IF_EN(GBX_IF_EN),
+        .PTP_TS_EN(PTP_TS_EN),
+        .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
+        .PTP_TS_W(PTP_TS_W)
+    )
+    axis_baser_rx_inst (
+        .clk(clk),
+        .rst(rst),
 
-    /*
-     * Receive interface (AXI stream)
-     */
-    .m_axis_rx(m_axis_rx),
+        /*
+         * 10GBASE-R encoded input
+         */
+        .encoded_rx_data(encoded_rx_data),
+        .encoded_rx_data_valid(encoded_rx_data_valid),
+        .encoded_rx_hdr(encoded_rx_hdr),
+        .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
 
-    /*
-     * PTP
-     */
-    .ptp_ts(ptp_ts),
+        /*
+         * Receive interface (AXI stream)
+         */
+        .m_axis_rx(m_axis_rx),
 
-    /*
-     * Configuration
-     */
-    .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
-    .cfg_rx_enable(cfg_rx_enable), 
+        /*
+         * PTP
+         */
+        .ptp_ts(ptp_ts),
 
-    /*
-     * Status
-     */
-    .rx_start_packet(rx_start_packet),
-    .stat_rx_byte(stat_rx_byte),
-    .stat_rx_pkt_len(stat_rx_pkt_len),
-    .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
-    .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
-    .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
-    .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
-    .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
-    .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
-    .stat_rx_pkt_good(stat_rx_pkt_good),
-    .stat_rx_pkt_bad(stat_rx_pkt_bad),
-    .stat_rx_err_oversize(stat_rx_err_oversize),
-    .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
-    .stat_rx_err_bad_block(stat_rx_err_bad_block),
-    .stat_rx_err_framing(stat_rx_err_framing),
-    .stat_rx_err_preamble(stat_rx_err_preamble)
-);
+        /*
+         * Configuration
+         */
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
+        .cfg_rx_enable(cfg_rx_enable),
+
+        /*
+         * Status
+         */
+        .rx_start_packet(rx_start_packet),
+        .stat_rx_byte(stat_rx_byte),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble)
+    );
+
+end else begin
+
+    taxi_axis_baser_rx_32 #(
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W),
+        .GBX_IF_EN(GBX_IF_EN),
+        .PTP_TS_EN(PTP_TS_EN),
+        .PTP_TS_W(PTP_TS_W)
+    )
+    axis_baser_rx_inst (
+        .clk(clk),
+        .rst(rst),
+
+        /*
+         * 10GBASE-R encoded input
+         */
+        .encoded_rx_data(encoded_rx_data),
+        .encoded_rx_data_valid(encoded_rx_data_valid),
+        .encoded_rx_hdr(encoded_rx_hdr),
+        .encoded_rx_hdr_valid(encoded_rx_hdr_valid),
+
+        /*
+         * Receive interface (AXI stream)
+         */
+        .m_axis_rx(m_axis_rx),
+
+        /*
+         * PTP
+         */
+        .ptp_ts(ptp_ts),
+
+        /*
+         * Configuration
+         */
+        .cfg_rx_max_pkt_len(cfg_rx_max_pkt_len),
+        .cfg_rx_enable(cfg_rx_enable),
+
+        /*
+         * Status
+         */
+        .rx_start_packet(rx_start_packet[0]),
+        .stat_rx_byte(stat_rx_byte[2:0]),
+        .stat_rx_pkt_len(stat_rx_pkt_len),
+        .stat_rx_pkt_fragment(stat_rx_pkt_fragment),
+        .stat_rx_pkt_jabber(stat_rx_pkt_jabber),
+        .stat_rx_pkt_ucast(stat_rx_pkt_ucast),
+        .stat_rx_pkt_mcast(stat_rx_pkt_mcast),
+        .stat_rx_pkt_bcast(stat_rx_pkt_bcast),
+        .stat_rx_pkt_vlan(stat_rx_pkt_vlan),
+        .stat_rx_pkt_good(stat_rx_pkt_good),
+        .stat_rx_pkt_bad(stat_rx_pkt_bad),
+        .stat_rx_err_oversize(stat_rx_err_oversize),
+        .stat_rx_err_bad_fcs(stat_rx_err_bad_fcs),
+        .stat_rx_err_bad_block(stat_rx_err_bad_block),
+        .stat_rx_err_framing(stat_rx_err_framing),
+        .stat_rx_err_preamble(stat_rx_err_preamble)
+    );
+
+    assign rx_start_packet[1] = 1'b0;
+    assign stat_rx_byte[3] = 1'b0;
+
+end
 
 endmodule
 

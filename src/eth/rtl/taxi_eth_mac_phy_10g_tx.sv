@@ -92,68 +92,139 @@ wire tx_gbx_req_sync;
 wire tx_gbx_req_stall;
 wire tx_gbx_sync;
 
-taxi_axis_baser_tx_64 #(
-    .DATA_W(DATA_W),
-    .HDR_W(HDR_W),
-    .GBX_IF_EN(GBX_IF_EN),
-    .GBX_CNT(1),
-    .PADDING_EN(PADDING_EN),
-    .DIC_EN(DIC_EN),
-    .MIN_FRAME_LEN(MIN_FRAME_LEN),
-    .PTP_TS_EN(PTP_TS_EN),
-    .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
-    .PTP_TS_W(PTP_TS_W),
-    .TX_CPL_CTRL_IN_TUSER(TX_CPL_CTRL_IN_TUSER)
-)
-axis_baser_tx_inst (
-    .clk(clk),
-    .rst(rst),
+if (DATA_W == 64) begin
 
-    /*
-     * Transmit interface (AXI stream)
-     */
-    .s_axis_tx(s_axis_tx),
-    .m_axis_tx_cpl(m_axis_tx_cpl),
+    taxi_axis_baser_tx_64 #(
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W),
+        .GBX_IF_EN(GBX_IF_EN),
+        .GBX_CNT(1),
+        .PADDING_EN(PADDING_EN),
+        .DIC_EN(DIC_EN),
+        .MIN_FRAME_LEN(MIN_FRAME_LEN),
+        .PTP_TS_EN(PTP_TS_EN),
+        .PTP_TS_FMT_TOD(PTP_TS_FMT_TOD),
+        .PTP_TS_W(PTP_TS_W),
+        .TX_CPL_CTRL_IN_TUSER(TX_CPL_CTRL_IN_TUSER)
+    )
+    axis_baser_tx_inst (
+        .clk(clk),
+        .rst(rst),
 
-    /*
-     * 10GBASE-R encoded interface
-     */
-    .encoded_tx_data(encoded_tx_data),
-    .encoded_tx_data_valid(encoded_tx_data_valid),
-    .encoded_tx_hdr(encoded_tx_hdr),
-    .encoded_tx_hdr_valid(encoded_tx_hdr_valid),
-    .tx_gbx_req_sync(tx_gbx_req_sync),
-    .tx_gbx_req_stall(tx_gbx_req_stall),
-    .tx_gbx_sync(tx_gbx_sync),
+        /*
+         * Transmit interface (AXI stream)
+         */
+        .s_axis_tx(s_axis_tx),
+        .m_axis_tx_cpl(m_axis_tx_cpl),
 
-    /*
-     * PTP
-     */
-    .ptp_ts(ptp_ts),
+        /*
+         * 10GBASE-R encoded interface
+         */
+        .encoded_tx_data(encoded_tx_data),
+        .encoded_tx_data_valid(encoded_tx_data_valid),
+        .encoded_tx_hdr(encoded_tx_hdr),
+        .encoded_tx_hdr_valid(encoded_tx_hdr_valid),
+        .tx_gbx_req_sync(tx_gbx_req_sync),
+        .tx_gbx_req_stall(tx_gbx_req_stall),
+        .tx_gbx_sync(tx_gbx_sync),
 
-    /*
-     * Configuration
-     */
-    .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
-    .cfg_tx_ifg(cfg_tx_ifg),
-    .cfg_tx_enable(cfg_tx_enable),
+        /*
+         * PTP
+         */
+        .ptp_ts(ptp_ts),
 
-    /*
-     * Status
-     */
-    .tx_start_packet(tx_start_packet),
-    .stat_tx_byte(stat_tx_byte),
-    .stat_tx_pkt_len(stat_tx_pkt_len),
-    .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
-    .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
-    .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
-    .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
-    .stat_tx_pkt_good(stat_tx_pkt_good),
-    .stat_tx_pkt_bad(stat_tx_pkt_bad),
-    .stat_tx_err_oversize(stat_tx_err_oversize),
-    .stat_tx_err_user(stat_tx_err_user),
-    .stat_tx_err_underflow(stat_tx_err_underflow)
-);
+        /*
+         * Configuration
+         */
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+        .cfg_tx_ifg(cfg_tx_ifg),
+        .cfg_tx_enable(cfg_tx_enable),
+
+        /*
+         * Status
+         */
+        .tx_start_packet(tx_start_packet),
+        .stat_tx_byte(stat_tx_byte),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow)
+    );
+
+end else begin
+
+    taxi_axis_baser_tx_32 #(
+        .DATA_W(DATA_W),
+        .HDR_W(HDR_W),
+        .GBX_IF_EN(GBX_IF_EN),
+        .GBX_CNT(1),
+        .PADDING_EN(PADDING_EN),
+        .DIC_EN(DIC_EN),
+        .MIN_FRAME_LEN(MIN_FRAME_LEN),
+        .PTP_TS_EN(PTP_TS_EN),
+        .PTP_TS_W(PTP_TS_W),
+        .TX_CPL_CTRL_IN_TUSER(TX_CPL_CTRL_IN_TUSER)
+    )
+    axis_baser_tx_inst (
+        .clk(clk),
+        .rst(rst),
+
+        /*
+         * Transmit interface (AXI stream)
+         */
+        .s_axis_tx(s_axis_tx),
+        .m_axis_tx_cpl(m_axis_tx_cpl),
+
+        /*
+         * 10GBASE-R encoded interface
+         */
+        .encoded_tx_data(encoded_tx_data),
+        .encoded_tx_data_valid(encoded_tx_data_valid),
+        .encoded_tx_hdr(encoded_tx_hdr),
+        .encoded_tx_hdr_valid(encoded_tx_hdr_valid),
+        .tx_gbx_req_sync(tx_gbx_req_sync),
+        .tx_gbx_req_stall(tx_gbx_req_stall),
+        .tx_gbx_sync(tx_gbx_sync),
+
+        /*
+         * PTP
+         */
+        .ptp_ts(ptp_ts),
+
+        /*
+         * Configuration
+         */
+        .cfg_tx_max_pkt_len(cfg_tx_max_pkt_len),
+        .cfg_tx_ifg(cfg_tx_ifg),
+        .cfg_tx_enable(cfg_tx_enable),
+
+        /*
+         * Status
+         */
+        .tx_start_packet(tx_start_packet[0]),
+        .stat_tx_byte(stat_tx_byte[2:0]),
+        .stat_tx_pkt_len(stat_tx_pkt_len),
+        .stat_tx_pkt_ucast(stat_tx_pkt_ucast),
+        .stat_tx_pkt_mcast(stat_tx_pkt_mcast),
+        .stat_tx_pkt_bcast(stat_tx_pkt_bcast),
+        .stat_tx_pkt_vlan(stat_tx_pkt_vlan),
+        .stat_tx_pkt_good(stat_tx_pkt_good),
+        .stat_tx_pkt_bad(stat_tx_pkt_bad),
+        .stat_tx_err_oversize(stat_tx_err_oversize),
+        .stat_tx_err_user(stat_tx_err_user),
+        .stat_tx_err_underflow(stat_tx_err_underflow)
+    );
+
+    assign tx_start_packet[1] = 1'b0;
+    assign stat_tx_byte[3] = 1'b0;
+
+end
 
 taxi_eth_phy_10g_tx_if #(
     .DATA_W(DATA_W),
