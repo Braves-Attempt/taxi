@@ -59,12 +59,20 @@ class TB:
         for ch in dut.uut.ch:
             gt_inst = ch.ch_inst.gt.gt_inst
 
-            if ch.ch_inst.CFG_LOW_LATENCY.value:
-                clk = 2.482
-                gbx_cfg = (66, [64, 65])
+            if ch.ch_inst.DATA_W.value == 64:
+                if ch.ch_inst.CFG_LOW_LATENCY.value:
+                    clk = 2.482
+                    gbx_cfg = (66, [64, 65])
+                else:
+                    clk = 2.56
+                    gbx_cfg = None
             else:
-                clk = 2.56
-                gbx_cfg = None
+                if ch.ch_inst.CFG_LOW_LATENCY.value:
+                    clk = 3.102
+                    gbx_cfg = (66, [64, 65])
+                else:
+                    clk = 3.2
+                    gbx_cfg = None
 
             self.clk_period.append(clk)
 
@@ -173,10 +181,16 @@ class TB:
 
 async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=12):
 
-    if dut.COMBINED_MAC_PCS.value:
-        pipe_delay = 4
+    if dut.DATA_W.value == 64:
+        if dut.COMBINED_MAC_PCS.value:
+            pipe_delay = 4
+        else:
+            pipe_delay = 5
     else:
-        pipe_delay = 5
+        if dut.COMBINED_MAC_PCS.value:
+            pipe_delay = 6
+        else:
+            pipe_delay = 7
 
     tb = TB(dut)
 
@@ -219,7 +233,10 @@ async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
 
         if tx_frame.start_lane == 4:
             # start in lane 4 reports 1 full cycle delay, so subtract half clock period
-            tx_frame_sfd_ns -= tb.clk_period[port]/2
+            if dut.DATA_W.value == 64:
+                tx_frame_sfd_ns -= tb.clk_period[port]/2
+            else:
+                tx_frame_sfd_ns -= tb.clk_period[port]
 
         tb.log.info("RX frame PTP TS: %f ns", ptp_ts_ns)
         tb.log.info("TX frame SFD sim time: %f ns", tx_frame_sfd_ns)
@@ -239,10 +256,16 @@ async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
 
 async def run_test_tx(dut, port=0, payload_lengths=None, payload_data=None, ifg=12):
 
-    if dut.COMBINED_MAC_PCS.value:
-        pipe_delay = 5
+    if dut.DATA_W.value == 64:
+        if dut.COMBINED_MAC_PCS.value:
+            pipe_delay = 5
+        else:
+            pipe_delay = 5
     else:
-        pipe_delay = 5
+        if dut.COMBINED_MAC_PCS.value:
+            pipe_delay = 5
+        else:
+            pipe_delay = 6
 
     tb = TB(dut)
 
@@ -261,6 +284,9 @@ async def run_test_tx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
 
     tb.dut.cfg_tx_enable.value = 1
 
+    for p in tb.serdes_sinks:
+        p.clear()
+
     test_frames = [payload_data(x) for x in payload_lengths()]
 
     for test_data in test_frames:
@@ -276,7 +302,10 @@ async def run_test_tx(dut, port=0, payload_lengths=None, payload_data=None, ifg=
 
         if rx_frame.start_lane == 4:
             # start in lane 4 reports 1 full cycle delay, so subtract half clock period
-            rx_frame_sfd_ns -= tb.clk_period[port]/2
+            if dut.DATA_W.value == 64:
+                rx_frame_sfd_ns -= tb.clk_period[port]/2
+            else:
+                rx_frame_sfd_ns -= tb.clk_period[port]
 
         tb.log.info("TX frame PTP TS: %f ns", ptp_ts_ns)
         tb.log.info("RX frame SFD sim time: %f ns", rx_frame_sfd_ns)
@@ -299,10 +328,16 @@ async def run_test_tx_alignment(dut, port=0, payload_data=None, ifg=12):
 
     dic_en = int(cocotb.top.DIC_EN.value)
 
-    if dut.COMBINED_MAC_PCS.value:
-        pipe_delay = 5
+    if dut.DATA_W.value == 64:
+        if dut.COMBINED_MAC_PCS.value:
+            pipe_delay = 5
+        else:
+            pipe_delay = 5
     else:
-        pipe_delay = 5
+        if dut.COMBINED_MAC_PCS.value:
+            pipe_delay = 5
+        else:
+            pipe_delay = 6
 
     tb = TB(dut)
 
@@ -322,6 +357,9 @@ async def run_test_tx_alignment(dut, port=0, payload_data=None, ifg=12):
         await RisingEdge(dut.xcvr_ctrl_clk)
 
     tb.dut.cfg_tx_enable.value = 1
+
+    for p in tb.serdes_sinks:
+        p.clear()
 
     for length in range(60, 92):
 
@@ -344,7 +382,10 @@ async def run_test_tx_alignment(dut, port=0, payload_data=None, ifg=12):
 
             if rx_frame.start_lane == 4:
                 # start in lane 4 reports 1 full cycle delay, so subtract half clock period
-                rx_frame_sfd_ns -= tb.clk_period[port]/2
+                if dut.DATA_W.value == 64:
+                    rx_frame_sfd_ns -= tb.clk_period[port]/2
+                else:
+                    rx_frame_sfd_ns -= tb.clk_period[port]
 
             tb.log.info("TX frame PTP TS: %f ns", ptp_ts_ns)
             tb.log.info("RX frame SFD sim time: %f ns", rx_frame_sfd_ns)
@@ -417,6 +458,9 @@ async def run_test_tx_underrun(dut, port=0, ifg=12):
 
     tb.dut.cfg_tx_enable.value = 1
 
+    for p in tb.serdes_sinks:
+        p.clear()
+
     test_data = bytes(x for x in range(60))
 
     for k in range(3):
@@ -468,6 +512,9 @@ async def run_test_tx_error(dut, port=0, ifg=12):
         await RisingEdge(dut.xcvr_ctrl_clk)
 
     tb.dut.cfg_tx_enable.value = 1
+
+    for p in tb.serdes_sinks:
+        p.clear()
 
     test_data = bytes(x for x in range(60))
 
@@ -561,6 +608,9 @@ async def run_test_lfc(dut, port=0, ifg=12):
 
     tb.dut.cfg_tx_enable.value = 1
     tb.dut.cfg_rx_enable.value = 1
+
+    for p in tb.serdes_sinks:
+        p.clear()
 
     dut.tx_lfc_req.value = 0
     dut.tx_lfc_resend.value = 0
@@ -721,6 +771,9 @@ async def run_test_pfc(dut, port=0, ifg=12):
     tb.dut.cfg_tx_enable.value = 1
     tb.dut.cfg_rx_enable.value = 1
 
+    for p in tb.serdes_sinks:
+        p.clear()
+
     dut.tx_pfc_req[port].value = 0x00
     dut.tx_pfc_resend.value = 0
     dut.rx_pfc_en[port].value = 0xff
@@ -868,10 +921,11 @@ if cocotb.SIM_NAME:
         factory.add_option("ifg", [12, 0])
         factory.generate_tests()
 
-    factory = TestFactory(run_test_tx_alignment)
-    factory.add_option("payload_data", [incrementing_payload])
-    factory.add_option("ifg", [12])
-    factory.generate_tests()
+    if cocotb.top.DATA_W.value == 64:
+        factory = TestFactory(run_test_tx_alignment)
+        factory.add_option("payload_data", [incrementing_payload])
+        factory.add_option("ifg", [12])
+        factory.generate_tests()
 
     for test in [run_test_tx_underrun, run_test_tx_error]:
 
@@ -913,7 +967,7 @@ def process_f_files(files):
 @pytest.mark.parametrize(("dic_en", "pfc_en"), [(1, 1), (1, 0), (0, 0)])
 @pytest.mark.parametrize("low_latency", [1, 0])
 @pytest.mark.parametrize("combined_mac_pcs", [1, 0])
-@pytest.mark.parametrize("data_w", [64])
+@pytest.mark.parametrize("data_w", [32, 64])
 def test_taxi_eth_mac_25g_us(request, data_w, combined_mac_pcs, low_latency, dic_en, pfc_en):
     dut = "taxi_eth_mac_25g_us"
     module = os.path.splitext(os.path.basename(__file__))[0]
