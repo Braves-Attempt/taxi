@@ -58,9 +58,13 @@ localparam M_ID_W = m_axis.ID_W;
 
 localparam CL_S_COUNT = $clog2(S_COUNT);
 
-localparam S_ID_W_INT = S_ID_W > 0 ? S_ID_W : 1;
-
 // check configuration
+if (m_axis.DATA_W != DATA_W)
+    $fatal(0, "Error: Interface DATA_W parameter mismatch (instance %m)");
+
+if (KEEP_EN && m_axis.KEEP_W != KEEP_W)
+    $fatal(0, "Error: Interface KEEP_W parameter mismatch (instance %m)");
+
 if (UPDATE_TID) begin
     if (!ID_EN)
         $fatal(0, "Error: UPDATE_TID set requires ID_EN set (instance %m)");
@@ -99,7 +103,7 @@ if (S_COUNT == 1) begin
     end
 
 end else begin
-    
+
     wire [S_COUNT-1:0] req;
     wire [S_COUNT-1:0] ack;
     wire [S_COUNT-1:0] grant;
