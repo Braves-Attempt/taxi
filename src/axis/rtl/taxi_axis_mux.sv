@@ -24,7 +24,6 @@ module taxi_axis_mux #
     input  wire logic                        clk,
     input  wire logic                        rst,
 
-
     /*
      * AXI4-Stream inputs (sinks)
      */
@@ -64,7 +63,7 @@ if (KEEP_EN && m_axis.KEEP_W != KEEP_W)
 
 parameter CL_S_COUNT = $clog2(S_COUNT);
 
-reg [CL_S_COUNT-1:0] select_reg = 2'd0, select_next;
+reg [CL_S_COUNT-1:0] select_reg = '0, select_next;
 reg frame_reg = 1'b0, frame_next;
 
 reg [S_COUNT-1:0] s_axis_tready_reg = 0, s_axis_tready_next;
@@ -121,7 +120,7 @@ always_comb begin
     select_next = select_reg;
     frame_next = frame_reg;
 
-    s_axis_tready_next = 0;
+    s_axis_tready_next = '0;
 
     if (current_s_tvalid & current_s_tready) begin
         // end of frame detection
@@ -156,9 +155,9 @@ always_ff @(posedge clk) begin
     s_axis_tready_reg <= s_axis_tready_next;
 
     if (rst) begin
-        select_reg <= 0;
+        select_reg <= '0;
         frame_reg <= 1'b0;
-        s_axis_tready_reg <= 0;
+        s_axis_tready_reg <= '0;
     end
 end
 
