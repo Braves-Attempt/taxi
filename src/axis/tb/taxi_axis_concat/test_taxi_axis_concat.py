@@ -153,7 +153,7 @@ def cycle_pause():
 def size_list():
     data_width = len(cocotb.top.m_axis.tdata)
     byte_width = data_width // 8
-    return list(range(1, byte_width*2+1))
+    return list(range(1, byte_width*3+1))
 
 
 def incrementing_payload(length):
