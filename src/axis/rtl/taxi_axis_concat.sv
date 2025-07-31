@@ -229,7 +229,7 @@ end else begin
             m_axis_tdest_int  = tdest_reg;
             m_axis_tuser_int  = tuser_reg;
 
-            output_ready = !tlast_reg[1];
+            output_ready = !tlast_reg[1] || m_axis_tready_int_reg;
 
             if (m_axis_tready_int_reg && (tkeep_reg[KEEP_W-1] || tlast_reg[0])) begin
                 // shift out full words
