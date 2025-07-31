@@ -45,6 +45,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  Demultiplexer
     *  Broadcaster
     *  Concatenator
+    *  Switch
     *  COBS encoder
     *  COBS decoder
     *  Pipeline register
