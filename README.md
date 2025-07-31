@@ -6,7 +6,7 @@ AXI, AXI stream, Ethernet, and PCIe components in System Verilog.
 
 GitHub repository: https://github.com/fpganinja/taxi
 
-Documentation: https://docs.taxi.fpga.ninja/
+Documentation: https://docs.fpga.taxi/
 
 ## Introduction
 
