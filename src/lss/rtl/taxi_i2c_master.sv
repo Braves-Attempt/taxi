@@ -151,6 +151,13 @@ I/O pin.  This would prevent devices from stretching the clock period.
 
 */
 
+// check configuration
+if (s_axis_cmd.DATA_W < 12)
+    $fatal(0, "Command interface width must be at least 12 bits (instance %m)");
+
+if (s_axis_tx.DATA_W != 8 || m_axis_rx.DATA_W != 8)
+    $fatal(0, "Data interface width must be 8 bits (instance %m)");
+
 localparam [3:0]
     STATE_IDLE = 4'd0,
     STATE_ACTIVE_WRITE = 4'd1,

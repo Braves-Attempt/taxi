@@ -135,6 +135,10 @@ I/O pin.  This would prevent devices from stretching the clock period.
 
 */
 
+// check configuration
+if (s_axis_tx.DATA_W != 8 || m_axis_rx.DATA_W != 8)
+    $fatal(0, "Data interface width must be 8 bits (instance %m)");
+
 localparam [2:0]
     STATE_IDLE = 3'd0,
     STATE_ADDRESS = 3'd1,
