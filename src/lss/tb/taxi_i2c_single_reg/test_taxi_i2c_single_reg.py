@@ -175,6 +175,8 @@ def test_taxi_i2c_single_reg(request):
         os.path.join(rtl_dir, f"{dut}.sv"),
     ]
 
+    verilog_sources = process_f_files(verilog_sources)
+
     parameters = {}
 
     parameters['FILTER_LEN'] = 4

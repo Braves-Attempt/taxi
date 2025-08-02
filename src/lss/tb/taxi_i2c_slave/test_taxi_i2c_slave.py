@@ -133,6 +133,8 @@ def test_taxi_i2c_slave(request):
         os.path.join(taxi_src_dir, "axis", "rtl", "taxi_axis_if.sv"),
     ]
 
+    verilog_sources = process_f_files(verilog_sources)
+
     parameters = {}
 
     parameters['FILTER_LEN'] = 4

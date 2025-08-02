@@ -172,6 +172,8 @@ def test_taxi_i2c_slave_axil_master(request):
         os.path.join(rtl_dir, f"{dut}.f"),
     ]
 
+    verilog_sources = process_f_files(verilog_sources)
+
     parameters = {}
 
     parameters['FILTER_LEN'] = 4

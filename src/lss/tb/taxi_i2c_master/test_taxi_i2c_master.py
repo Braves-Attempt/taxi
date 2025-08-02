@@ -204,6 +204,8 @@ def test_taxi_i2c_master(request):
         os.path.join(taxi_src_dir, "axis", "rtl", "taxi_axis_if.sv"),
     ]
 
+    verilog_sources = process_f_files(verilog_sources)
+
     parameters = {}
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
