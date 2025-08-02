@@ -784,8 +784,8 @@ i2c_master_inst (
      * Host interface
      */
     .s_axis_cmd(i2c_cmd),
-    .s_axis_data(i2c_wr_data),
-    .m_axis_data(i2c_rd_data),
+    .s_axis_tx(i2c_wr_data),
+    .m_axis_rx(i2c_rd_data),
 
     /*
      * I2C interface

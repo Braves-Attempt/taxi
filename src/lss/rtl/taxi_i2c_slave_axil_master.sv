@@ -206,20 +206,20 @@ logic m_axil_rready_reg = 1'b0, m_axil_rready_next;
 
 logic busy_reg = 1'b0;
 
-taxi_axis_if #(.DATA_W(8)) data_in();
-taxi_axis_if #(.DATA_W(8)) data_out();
+taxi_axis_if #(.DATA_W(8)) axis_tx();
+taxi_axis_if #(.DATA_W(8)) axis_rx();
 
-logic [7:0] data_in_reg = '0, data_in_next;
-logic data_in_valid_reg = 1'b0, data_in_valid_next;
-assign data_in.tdata = data_in_reg;
-assign data_in.tvalid = data_in_valid_reg;
-assign data_in.tlast = 1'b1;
-assign data_in.tid = '0;
-assign data_in.tdest = '0;
-assign data_in.tuser = '0;
+logic [7:0] axis_tx_reg = '0, axis_tx_next;
+logic axis_tx_valid_reg = 1'b0, axis_tx_valid_next;
+assign axis_tx.tdata = axis_tx_reg;
+assign axis_tx.tvalid = axis_tx_valid_reg;
+assign axis_tx.tlast = 1'b1;
+assign axis_tx.tid = '0;
+assign axis_tx.tdest = '0;
+assign axis_tx.tuser = '0;
 
-logic data_out_ready_reg = 1'b0, data_out_ready_next;
-assign data_out.tready = data_out_ready_reg;
+logic axis_rx_ready_reg = 1'b0, axis_rx_ready_next;
+assign axis_rx.tready = axis_rx_ready_reg;
 
 assign m_axil_wr.awaddr = addr_reg;
 assign m_axil_wr.awprot = 3'b010;
@@ -241,10 +241,10 @@ always_comb begin
 
     count_next = count_reg;
 
-    data_in_next = data_in_reg;
-    data_in_valid_next = data_in_valid_reg && !data_in.tready;
+    axis_tx_next = axis_tx_reg;
+    axis_tx_valid_next = axis_tx_valid_reg && !axis_tx.tready;
 
-    data_out_ready_next = 1'b0;
+    axis_rx_ready_next = 1'b0;
 
     addr_next = addr_reg;
     data_next = data_reg;
@@ -260,11 +260,11 @@ always_comb begin
         STATE_IDLE: begin
             // idle, wait for I2C interface
 
-            if (data_out.tvalid) begin
+            if (axis_rx.tvalid) begin
                 // store address and write
                 count_next = 8'(ADDR_WORD_W-1);
                 state_next = STATE_ADDRESS;
-            end else if (data_in.tready && !data_in_valid_reg) begin
+            end else if (axis_tx.tready && !axis_tx_valid_reg) begin
                 // read
                 m_axil_arvalid_next = 1'b1;
                 m_axil_rready_next = 1'b1;
@@ -273,11 +273,11 @@ always_comb begin
         end
         STATE_ADDRESS: begin
             // store address
-            data_out_ready_next = 1'b1;
+            axis_rx_ready_next = 1'b1;
 
-            if (data_out_ready_reg && data_out.tvalid) begin
+            if (axis_rx_ready_reg && axis_rx.tvalid) begin
                 // store pointers
-                addr_next[8*count_reg +: 8] = data_out.tdata;
+                addr_next[8*count_reg +: 8] = axis_rx.tdata;
                 count_next = count_reg - 1;
                 if (count_reg == 0) begin
                     // end of header
@@ -289,7 +289,7 @@ always_comb begin
                     end
                     m_axil_wstrb_next = 'd0;
                     data_next = 'd0;
-                    if (data_out.tlast) begin
+                    if (axis_rx.tlast) begin
                         // end of transaction
                         state_next = STATE_IDLE;
                     end else begin
@@ -297,7 +297,7 @@ always_comb begin
                         state_next = STATE_WRITE_1;
                     end
                 end else begin
-                    if (data_out.tlast) begin
+                    if (axis_rx.tlast) begin
                         // end of transaction
                         state_next = STATE_IDLE;
                     end else begin
@@ -324,13 +324,13 @@ always_comb begin
         end
         STATE_READ_2: begin
             // send data
-            if (data_out.tvalid || !bus_addressed) begin
+            if (axis_rx.tvalid || !bus_addressed) begin
                 // no longer addressed or now addressed for write, return to idle
                 state_next = STATE_IDLE;
-            end else if (data_in.tready && !data_in_valid_reg) begin
+            end else if (axis_tx.tready && !axis_tx_valid_reg) begin
                 // transfer word and update pointers
-                data_in_next = data_reg[8*count_reg +: 8];
-                data_in_valid_next = 1'b1;
+                axis_tx_next = data_reg[8*count_reg +: 8];
+                axis_tx_valid_next = 1'b1;
                 count_next = count_reg + 1;
                 if (count_reg == 8'((STRB_W*BYTE_SIZE/8)-1)) begin
                     // end of stored data word; return to idle
@@ -345,14 +345,14 @@ always_comb begin
         end
         STATE_WRITE_1: begin
             // write data
-            data_out_ready_next = 1'b1;
+            axis_rx_ready_next = 1'b1;
 
-            if (data_out_ready_reg && data_out.tvalid) begin
+            if (axis_rx_ready_reg && axis_rx.tvalid) begin
                 // store word
-                data_next[8*count_reg +: 8] = data_out.tdata;
+                data_next[8*count_reg +: 8] = axis_rx.tdata;
                 count_next = count_reg + 1;
                 m_axil_wstrb_next[count_reg >> ((BYTE_SIZE/8)-1)] = 1'b1;
-                if (count_reg == 8'((STRB_W*BYTE_SIZE/8)-1) || data_out.tlast) begin
+                if (count_reg == 8'((STRB_W*BYTE_SIZE/8)-1) || axis_rx.tlast) begin
                     // have full word or at end of block, start write operation
                     count_next = 0;
                     m_axil_awvalid_next = 1'b1;
@@ -398,8 +398,8 @@ always_ff @(posedge clk) begin
 
     count_reg <= count_next;
 
-    if (data_out_ready_reg & data_out.tvalid) begin
-        last_cycle_reg <= data_out.tlast;
+    if (axis_rx_ready_reg & axis_rx.tvalid) begin
+        last_cycle_reg <= axis_rx.tlast;
     end
 
     addr_reg <= addr_next;
@@ -414,15 +414,15 @@ always_ff @(posedge clk) begin
 
     busy_reg <= state_next != STATE_IDLE;
 
-    data_in_reg <= data_in_next;
-    data_in_valid_reg <= data_in_valid_next;
+    axis_tx_reg <= axis_tx_next;
+    axis_tx_valid_reg <= axis_tx_valid_next;
 
-    data_out_ready_reg <= data_out_ready_next;
+    axis_rx_ready_reg <= axis_rx_ready_next;
 
     if (rst) begin
         state_reg <= STATE_IDLE;
-        data_in_valid_reg <= 1'b0;
-        data_out_ready_reg <= 1'b0;
+        axis_tx_valid_reg <= 1'b0;
+        axis_rx_ready_reg <= 1'b0;
         m_axil_awvalid_reg <= 1'b0;
         m_axil_wvalid_reg <= 1'b0;
         m_axil_bready_reg <= 1'b0;
@@ -441,8 +441,8 @@ i2c_slave_inst (
 
     // Host interface
     .release_bus(1'b0),
-    .s_axis_data(data_in),
-    .m_axis_data(data_out),
+    .s_axis_tx(axis_tx),
+    .m_axis_rx(axis_rx),
 
     // I2C Interface
     .scl_i(i2c_scl_i),

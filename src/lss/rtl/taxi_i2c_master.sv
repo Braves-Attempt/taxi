@@ -23,8 +23,8 @@ module taxi_i2c_master (
      * Host interface
      */
     taxi_axis_if.snk          s_axis_cmd,
-    taxi_axis_if.snk          s_axis_data,
-    taxi_axis_if.src          m_axis_data,
+    taxi_axis_if.snk          s_axis_tx,
+    taxi_axis_if.src          m_axis_rx,
 
     /*
      * I2C interface
@@ -81,7 +81,7 @@ read
     set start to force generation of a start condition
     start is implied when bus is inactive or active with write or different address
     set stop to issue a stop condition after reading current byte
-    if stop is set with read command, then m_axis_data_tlast will be set
+    if stop is set with read command, then m_axis_rx.tlast will be set
 
 write
     write data byte
@@ -90,7 +90,7 @@ write
     set stop to issue a stop condition after writing current byte
 
 write multiple
-    write multiple data bytes (until s_axis_data_tlast)
+    write multiple data bytes (until s_axis_tx.tlast)
     set start to force generation of a start condition
     start is implied when bus is inactive or active with read or different address
     set stop to issue a stop condition after writing block
@@ -213,11 +213,11 @@ logic [3:0] bit_count_reg = '0, bit_count_next;
 
 logic s_axis_cmd_ready_reg = 1'b0, s_axis_cmd_ready_next;
 
-logic s_axis_data_tready_reg = 1'b0, s_axis_data_tready_next;
+logic s_axis_tx_tready_reg = 1'b0, s_axis_tx_tready_next;
 
-logic [7:0] m_axis_data_tdata_reg = '0, m_axis_data_tdata_next;
-logic m_axis_data_tvalid_reg = 1'b0, m_axis_data_tvalid_next;
-logic m_axis_data_tlast_reg = 1'b0, m_axis_data_tlast_next;
+logic [7:0] m_axis_rx_tdata_reg = '0, m_axis_rx_tdata_next;
+logic m_axis_rx_tvalid_reg = 1'b0, m_axis_rx_tvalid_next;
+logic m_axis_rx_tlast_reg = 1'b0, m_axis_rx_tlast_next;
 
 logic scl_i_reg = 1'b1;
 logic sda_i_reg = 1'b1;
@@ -242,16 +242,16 @@ wire        s_axis_cmd_stop = s_axis_cmd.tdata[11];
 
 assign s_axis_cmd.tready = s_axis_cmd_ready_reg;
 
-assign s_axis_data.tready = s_axis_data_tready_reg;
+assign s_axis_tx.tready = s_axis_tx_tready_reg;
 
-assign m_axis_data.tdata = m_axis_data_tdata_reg;
-assign m_axis_data.tkeep = '1;
-assign m_axis_data.tstrb = m_axis_data.tkeep;
-assign m_axis_data.tvalid = m_axis_data_tvalid_reg;
-assign m_axis_data.tlast = m_axis_data_tlast_reg;
-assign m_axis_data.tid = '0;
-assign m_axis_data.tdest = '0;
-assign m_axis_data.tuser = '0;
+assign m_axis_rx.tdata = m_axis_rx_tdata_reg;
+assign m_axis_rx.tkeep = '1;
+assign m_axis_rx.tstrb = m_axis_rx.tkeep;
+assign m_axis_rx.tvalid = m_axis_rx_tvalid_reg;
+assign m_axis_rx.tlast = m_axis_rx_tlast_reg;
+assign m_axis_rx.tid = '0;
+assign m_axis_rx.tdest = '0;
+assign m_axis_rx.tuser = '0;
 
 assign scl_o = scl_o_reg;
 assign sda_o = sda_o_reg;
@@ -291,11 +291,11 @@ always_comb begin
 
     s_axis_cmd_ready_next = 1'b0;
 
-    s_axis_data_tready_next = 1'b0;
+    s_axis_tx_tready_next = 1'b0;
 
-    m_axis_data_tdata_next = m_axis_data_tdata_reg;
-    m_axis_data_tvalid_next = m_axis_data_tvalid_reg && !m_axis_data.tready;
-    m_axis_data_tlast_next = m_axis_data_tlast_reg;
+    m_axis_rx_tdata_next = m_axis_rx_tdata_reg;
+    m_axis_rx_tvalid_next = m_axis_rx_tvalid_reg && !m_axis_rx.tready;
+    m_axis_rx_tlast_next = m_axis_rx_tlast_reg;
 
     missed_ack_next = 1'b0;
 
@@ -363,7 +363,7 @@ always_comb begin
                             // address and mode match
 
                             // start write
-                            s_axis_data_tready_next = 1'b1;
+                            s_axis_tx_tready_next = 1'b1;
                             state_next = STATE_WRITE_1;
                         end
                     end else if (s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multi)) begin
@@ -386,7 +386,7 @@ always_comb begin
             end
             STATE_ACTIVE_READ: begin
                 // line active to current address
-                s_axis_cmd_ready_next = !m_axis_data.tvalid;
+                s_axis_cmd_ready_next = !m_axis_rx.tvalid;
 
                 if (s_axis_cmd.tready && s_axis_cmd.tvalid) begin
                     // command valid
@@ -490,19 +490,19 @@ always_comb begin
                     state_next = STATE_READ;
                 end else begin
                     // start write
-                    s_axis_data_tready_next = 1'b1;
+                    s_axis_tx_tready_next = 1'b1;
                     state_next = STATE_WRITE_1;
                 end
             end
             STATE_WRITE_1: begin
-                s_axis_data_tready_next = 1'b1;
+                s_axis_tx_tready_next = 1'b1;
 
-                if (s_axis_data.tready && s_axis_data.tvalid) begin
+                if (s_axis_tx.tready && s_axis_tx.tvalid) begin
                     // got data, start write
-                    data_next = s_axis_data.tdata;
-                    last_next = s_axis_data.tlast;
+                    data_next = s_axis_tx.tdata;
+                    last_next = s_axis_tx.tlast;
                     bit_count_next = 4'd8;
-                    s_axis_data_tready_next = 1'b0;
+                    s_axis_tx_tready_next = 1'b0;
                     state_next = STATE_WRITE_2;
                 end else begin
                     // wait for data
@@ -550,12 +550,12 @@ always_comb begin
                     state_next = STATE_READ;
                 end else begin
                     // output data word
-                    m_axis_data_tdata_next = data_next;
-                    m_axis_data_tvalid_next = 1'b1;
-                    m_axis_data_tlast_next = 1'b0;
+                    m_axis_rx_tdata_next = data_next;
+                    m_axis_rx_tvalid_next = 1'b1;
+                    m_axis_rx_tlast_next = 1'b0;
                     if (mode_stop_reg) begin
                         // send nack and stop
-                        m_axis_data_tlast_next = 1'b1;
+                        m_axis_rx_tlast_next = 1'b1;
                         phy_write_bit = 1'b1;
                         phy_tx_data = 1'b1;
                         state_next = STATE_STOP;
@@ -832,11 +832,11 @@ always_ff @(posedge clk) begin
 
     s_axis_cmd_ready_reg <= s_axis_cmd_ready_next;
 
-    s_axis_data_tready_reg <= s_axis_data_tready_next;
+    s_axis_tx_tready_reg <= s_axis_tx_tready_next;
 
-    m_axis_data_tdata_reg <= m_axis_data_tdata_next;
-    m_axis_data_tlast_reg <= m_axis_data_tlast_next;
-    m_axis_data_tvalid_reg <= m_axis_data_tvalid_next;
+    m_axis_rx_tdata_reg <= m_axis_rx_tdata_next;
+    m_axis_rx_tlast_reg <= m_axis_rx_tlast_next;
+    m_axis_rx_tvalid_reg <= m_axis_rx_tvalid_next;
 
     scl_i_reg <= scl_i;
     sda_i_reg <= sda_i;
@@ -867,8 +867,8 @@ always_ff @(posedge clk) begin
         delay_scl_reg <= 1'b0;
         delay_sda_reg <= 1'b0;
         s_axis_cmd_ready_reg <= 1'b0;
-        s_axis_data_tready_reg <= 1'b0;
-        m_axis_data_tvalid_reg <= 1'b0;
+        s_axis_tx_tready_reg <= 1'b0;
+        m_axis_rx_tvalid_reg <= 1'b0;
         scl_o_reg <= 1'b1;
         sda_o_reg <= 1'b1;
         busy_reg <= 1'b0;

@@ -22,8 +22,8 @@ logic clk;
 logic rst;
 
 taxi_axis_if #(.DATA_W(12), .KEEP_W(1)) s_axis_cmd();
-taxi_axis_if #(.DATA_W(8)) s_axis_data();
-taxi_axis_if #(.DATA_W(8)) m_axis_data();
+taxi_axis_if #(.DATA_W(8)) s_axis_tx();
+taxi_axis_if #(.DATA_W(8)) m_axis_rx();
 
 logic scl_i;
 logic scl_o;
@@ -47,8 +47,8 @@ uut (
      * Host interface
      */
     .s_axis_cmd(s_axis_cmd),
-    .s_axis_data(s_axis_data),
-    .m_axis_data(m_axis_data),
+    .s_axis_tx(s_axis_tx),
+    .m_axis_rx(m_axis_rx),
 
     /*
      * I2C interface

@@ -32,8 +32,8 @@ class TB:
 
         cocotb.fork(Clock(dut.clk, 8, units="ns").start())
 
-        self.data_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_data), dut.clk, dut.rst)
-        self.data_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_data), dut.clk, dut.rst)
+        self.data_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.clk, dut.rst)
+        self.data_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.clk, dut.rst)
 
         self.i2c_master = I2cMaster(sda=dut.sda_o, sda_o=dut.sda_i,
             scl=dut.scl_o, scl_o=dut.scl_i, speed=4000e3)

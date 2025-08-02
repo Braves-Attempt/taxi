@@ -41,8 +41,8 @@ class TB:
 
         self.cmd_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_cmd), dut.clk, dut.rst)
 
-        self.data_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_data), dut.clk, dut.rst)
-        self.data_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_data), dut.clk, dut.rst)
+        self.data_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_tx), dut.clk, dut.rst)
+        self.data_sink = AxiStreamSink(AxiStreamBus.from_entity(dut.m_axis_rx), dut.clk, dut.rst)
 
         self.i2c_mem = []
 
