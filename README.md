@@ -91,6 +91,7 @@ To facilitate the dual-license model, contributions to the project can only be a
 *  Low-speed serial
     *  I2C master
     *  I2C single register
+    *  I2C slave
     *  MDIO master
     *  UART
 *  Primitives
