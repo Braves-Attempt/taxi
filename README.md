@@ -148,8 +148,17 @@ Example designs are provided for several different FPGA boards, showcasing many 
 *  Xilinx VCU1525 (Xilinx Virtex UltraScale+ XCVU9P)
 *  Xilinx ZCU102 (Xilinx Zynq UltraScale+ XCZU9EG)
 *  Xilinx ZCU106 (Xilinx Zynq UltraScale+ XCZU7EV)
-*  Xilinx ZCU111 (Xilinx Zynq UltraScale+ XCZU28DR)
+*  Xilinx ZCU111 (Xilinx Zynq UltraScale+ RFSoC XCZU28DR)
 
 ## Testing
 
-Running the included testbenches requires [cocotb](https://github.com/cocotb/cocotb), [cocotbext-axi](https://github.com/alexforencich/cocotbext-axi), [cocotbext-eth](https://github.com/alexforencich/cocotbext-eth), [cocotbext-uart](https://github.com/alexforencich/cocotbext-uart), [cocotbext-pcie](https://github.com/alexforencich/cocotbext-pcie), and [Verilator](https://www.veripool.org/verilator/).  The testbenches can be run with pytest directly (requires [cocotb-test](https://github.com/themperek/cocotb-test)), pytest via tox, or via cocotb makefiles.
+Running the included testbenches requires the following packages:
+
+*  [cocotb](https://github.com/cocotb/cocotb)
+*  [cocotbext-axi](https://github.com/alexforencich/cocotbext-axi)
+*  [cocotbext-eth](https://github.com/alexforencich/cocotbext-eth)
+*  [cocotbext-uart](https://github.com/alexforencich/cocotbext-uart)
+*  [cocotbext-pcie](https://github.com/alexforencich/cocotbext-pcie)
+*  [Verilator](https://www.veripool.org/verilator/)
+
+The testbenches can be run with pytest directly (requires [cocotb-test](https://github.com/themperek/cocotb-test)), pytest via tox, or via cocotb makefiles.
