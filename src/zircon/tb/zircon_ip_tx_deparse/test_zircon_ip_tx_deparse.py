@@ -355,8 +355,8 @@ def process_f_files(files):
     return list(lst.values())
 
 
-def test_zircon_ip_rx_parse(request):
-    dut = "zircon_ip_rx_parse"
+def test_zircon_ip_tx_deparse(request):
+    dut = "zircon_ip_tx_deparse"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = module
 
