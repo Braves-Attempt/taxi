@@ -455,9 +455,9 @@ always_comb begin
                 ip_hdr_cksum_next = '0;
                 corr_cksum_next = '0;
 
-                s_axis_pkt_tready_next = frame_reg || !meta_full;
+                s_axis_pkt_tready_next = frame_next || !meta_full;
 
-                if (s_axis_pkt.tready && s_axis_pkt.tvalid && !frame_reg) begin
+                if (s_axis_pkt.tready && s_axis_pkt.tvalid && !frame_reg && !meta_full) begin
                     run_next = 1'b1;
                     state_next = STATE_ETH_1;
                 end else begin
