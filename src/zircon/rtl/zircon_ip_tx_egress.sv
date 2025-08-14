@@ -17,7 +17,9 @@ Authors:
  */
 module zircon_ip_tx_egress #
 (
-    parameter logic IPV6_EN = 1'b1
+    parameter logic IPV6_EN = 1'b1,
+    parameter MAC_TX_FIFO_DEPTH = 32,
+    parameter logic MAC_TX_FIFO_EB_MODE = 1'b1
 )
 (
     input  wire logic  clk,
@@ -116,14 +118,14 @@ tx_hdr_concat_inst (
 
 // TX FIFO
 taxi_axis_async_fifo #(
-    .DEPTH((MAC_DATA_W > DATA_W ? MAC_DATA_W : DATA_W)/8*32),
+    .DEPTH(MAC_TX_FIFO_EB_MODE ? (MAC_DATA_W > DATA_W ? MAC_DATA_W : DATA_W)/8*MAC_TX_FIFO_DEPTH : MAC_TX_FIFO_DEPTH),
     .RAM_PIPELINE(1),
     .OUTPUT_FIFO_EN(1'b0),
     .FRAME_FIFO(1'b1),
     .USER_BAD_FRAME_VALUE(1'b1),
     .USER_BAD_FRAME_MASK(1'b1),
-    .DROP_OVERSIZE_FRAME(1'b0),
-    .DROP_BAD_FRAME(1'b0),
+    .DROP_OVERSIZE_FRAME(!MAC_TX_FIFO_EB_MODE),
+    .DROP_BAD_FRAME(!MAC_TX_FIFO_EB_MODE),
     .DROP_WHEN_FULL(1'b0),
     .MARK_WHEN_FULL(1'b0),
     .PAUSE_EN(1'b0)

@@ -18,7 +18,9 @@ Authors:
 module zircon_ip_rx_ingress #
 (
     parameter logic IPV6_EN = 1'b1,
-    parameter logic HASH_EN = 1'b1
+    parameter logic HASH_EN = 1'b1,
+    parameter MAC_RX_FIFO_DEPTH = 32,
+    parameter logic MAC_RX_FIFO_EB_MODE = 1'b1
 )
 (
     input  wire logic  clk,
@@ -49,16 +51,16 @@ taxi_axis_if #(.DATA_W(32), .USER_EN(1), .USER_W(RX_USER_W)) rx_pkt_hdr();
 taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(RX_USER_W)) rx_bcast_int[2]();
 
 taxi_axis_async_fifo_adapter #(
-    .DEPTH((MAC_DATA_W > DATA_W ? MAC_DATA_W : DATA_W)/8*32),
+    .DEPTH(MAC_RX_FIFO_EB_MODE ? (MAC_DATA_W > DATA_W ? MAC_DATA_W : DATA_W)/8*MAC_RX_FIFO_DEPTH : MAC_RX_FIFO_DEPTH),
     .RAM_PIPELINE(1),
     .OUTPUT_FIFO_EN(1'b0),
-    .FRAME_FIFO(1'b0),
+    .FRAME_FIFO(!MAC_RX_FIFO_EB_MODE),
     .USER_BAD_FRAME_VALUE(1'b1),
     .USER_BAD_FRAME_MASK(1'b1),
-    .DROP_OVERSIZE_FRAME(1'b0),
-    .DROP_BAD_FRAME(1'b0),
-    .DROP_WHEN_FULL(1'b0),
-    .MARK_WHEN_FULL(1'b1),
+    .DROP_OVERSIZE_FRAME(!MAC_RX_FIFO_EB_MODE),
+    .DROP_BAD_FRAME(!MAC_RX_FIFO_EB_MODE),
+    .DROP_WHEN_FULL(!MAC_RX_FIFO_EB_MODE),
+    .MARK_WHEN_FULL(MAC_RX_FIFO_EB_MODE),
     .PAUSE_EN(1'b0)
 )
 rx_fifo_inst (

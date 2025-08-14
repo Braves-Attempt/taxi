@@ -17,7 +17,9 @@ Authors:
  */
 module zircon_ip_rx_egress #
 (
-    parameter N_UI = 4
+    parameter N_UI = 4,
+    parameter UI_RX_FIFO_DEPTH = 32,
+    parameter logic UI_RX_FIFO_EB_MODE = 1'b1
 )
 (
     input  wire logic  clk,
@@ -41,14 +43,14 @@ localparam DATA_W = s_axis_pkt.DATA_W;
 
 // RX FIFO
 taxi_axis_async_fifo #(
-    .DEPTH((UI_DATA_W > DATA_W ? UI_DATA_W : DATA_W)/8*32),
+    .DEPTH(UI_RX_FIFO_EB_MODE ? (UI_DATA_W > DATA_W ? UI_DATA_W : DATA_W)/8*UI_RX_FIFO_DEPTH : UI_RX_FIFO_DEPTH),
     .RAM_PIPELINE(1),
     .OUTPUT_FIFO_EN(1'b0),
     .FRAME_FIFO(1'b0),
     .USER_BAD_FRAME_VALUE(1'b1),
     .USER_BAD_FRAME_MASK(1'b1),
-    .DROP_OVERSIZE_FRAME(1'b0),
-    .DROP_BAD_FRAME(1'b0),
+    .DROP_OVERSIZE_FRAME(!UI_RX_FIFO_EB_MODE),
+    .DROP_BAD_FRAME(!UI_RX_FIFO_EB_MODE),
     .DROP_WHEN_FULL(1'b0),
     .MARK_WHEN_FULL(1'b0),
     .PAUSE_EN(1'b0)
