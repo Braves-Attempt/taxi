@@ -46,7 +46,7 @@ localparam TX_TAG_W = m_axis_pkt.ID_W;
 localparam TX_DEST_W = s_axis_pkt_ui[0].DEST_W;
 
 taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(TX_USER_W), .ID_EN(1), .ID_W(TX_TAG_W), .DEST_EN(1), .DEST_W(TX_DEST_W)) axis_pkt_1();
-taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(TX_USER_W), .ID_EN(1), .ID_W(TX_TAG_W), .DEST_EN(1), .DEST_W(TX_DEST_W)) axis_pkt_2();
+taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(TX_USER_W), .ID_EN(1), .ID_W(TX_TAG_W)) axis_pkt_2();
 
 taxi_axis_arb_mux #(
     .S_COUNT(N_UI),
