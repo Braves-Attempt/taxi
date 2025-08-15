@@ -39,12 +39,15 @@ localparam DATA_W = s_axis_pkt.DATA_W;
 localparam KEEP_W = s_axis_pkt.KEEP_W;
 localparam META_W = m_axis_meta.DATA_W;
 
-localparam ID_W = m_axis_meta.ID_W;
-localparam ID_EN = s_axis_pkt.ID_EN && m_axis_meta.ID_EN;
-localparam DEST_W = m_axis_meta.DEST_W;
-localparam DEST_EN = s_axis_pkt.DEST_EN && m_axis_meta.DEST_EN;
-localparam USER_W = m_axis_meta.USER_W;
-localparam USER_EN = s_axis_pkt.USER_EN && m_axis_meta.USER_EN;
+localparam ID_W = s_axis_pkt.ID_W;
+localparam ID_EN = s_axis_pkt.ID_EN && m_axis_pkt.ID_EN;
+localparam META_ID_EN = s_axis_pkt.ID_EN && m_axis_meta.ID_EN;
+localparam DEST_W = s_axis_pkt.DEST_W;
+localparam DEST_EN = s_axis_pkt.DEST_EN && m_axis_pkt.DEST_EN;
+localparam META_DEST_EN = s_axis_pkt.DEST_EN && m_axis_meta.DEST_EN;
+localparam USER_W = s_axis_pkt.USER_W;
+localparam USER_EN = s_axis_pkt.USER_EN && m_axis_pkt.USER_EN;
+localparam META_USER_EN = s_axis_pkt.USER_EN && m_axis_meta.USER_EN;
 
 parameter LEVELS = $clog2(DATA_W/8);
 parameter OFFSET_W = START_OFFSET/KEEP_W > 1 ? $clog2(START_OFFSET/KEEP_W) : 1;
@@ -84,9 +87,21 @@ logic [USER_W-1:0] m_axis_meta_user_reg = '0;
 assign m_axis_pkt.tdata = s_axis_pkt.tdata;
 assign m_axis_pkt.tkeep = s_axis_pkt.tkeep;
 assign m_axis_pkt.tstrb = s_axis_pkt.tstrb;
-assign m_axis_pkt.tid = s_axis_pkt.tid;
-assign m_axis_pkt.tdest = s_axis_pkt.tdest;
-assign m_axis_pkt.tuser = s_axis_pkt.tuser;
+if (ID_EN) begin
+    assign m_axis_pkt.tid = s_axis_pkt.tid;
+end else begin
+    assign m_axis_pkt.tid = '0;
+end
+if (DEST_EN) begin
+    assign m_axis_pkt.tdest = s_axis_pkt.tdest;
+end else begin
+    assign m_axis_pkt.tdest = '0;
+end
+if (USER_EN) begin
+    assign m_axis_pkt.tuser = s_axis_pkt.tuser;
+end else begin
+    assign m_axis_pkt.tuser = '0;
+end
 assign m_axis_pkt.tlast = s_axis_pkt.tlast;
 assign m_axis_pkt.tvalid = s_axis_pkt.tvalid;
 assign s_axis_pkt.tready = m_axis_pkt.tready;
@@ -94,9 +109,21 @@ assign s_axis_pkt.tready = m_axis_pkt.tready;
 assign m_axis_meta.tdata = {m_axis_meta_csum_reg, m_axis_meta_len_reg};
 assign m_axis_meta.tkeep = '1;
 assign m_axis_meta.tstrb = m_axis_meta.tkeep;
-assign m_axis_meta.tid = ID_EN ? m_axis_meta_id_reg : '0;
-assign m_axis_meta.tdest = DEST_EN ? m_axis_meta_dest_reg : '0;
-assign m_axis_meta.tuser = USER_EN ? m_axis_meta_user_reg : '0;
+if (META_ID_EN) begin
+    assign m_axis_meta.tid = m_axis_meta_id_reg;
+end else begin
+    assign m_axis_meta.tid = '0;
+end
+if (META_DEST_EN) begin
+    assign m_axis_meta.tdest = m_axis_meta_dest_reg;
+end else begin
+    assign m_axis_meta.tdest = '0;
+end
+if (META_USER_EN) begin
+    assign m_axis_meta.tuser = m_axis_meta_user_reg;
+end else begin
+    assign m_axis_meta.tuser = '0;
+end
 assign m_axis_meta.tlast = 1'b1;
 assign m_axis_meta.tvalid = m_axis_meta_valid_reg;
 
@@ -117,9 +144,9 @@ always_ff @(posedge clk) begin
         end
         sum_valid_reg[0] <= 1'b1;
         sum_last_reg[0] <= s_axis_pkt.tlast;
-        id_reg[0] <= ID_W'(s_axis_pkt.tid);
-        dest_reg[0] <= DEST_W'(s_axis_pkt.tdest);
-        user_reg[0] <= USER_W'(s_axis_pkt.tuser);
+        id_reg[0] <= s_axis_pkt.tid;
+        dest_reg[0] <= s_axis_pkt.tdest;
+        user_reg[0] <= s_axis_pkt.tuser;
 
         if (s_axis_pkt.tlast) begin
             offset_reg <= OFFSET_W'(START_OFFSET/KEEP_W);
