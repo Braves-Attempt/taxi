@@ -361,6 +361,12 @@ localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP6[4] = '{"QSFP6.1", "QSFP6.2", "Q
 localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP7[4] = '{"QSFP7.1", "QSFP7.2", "QSFP7.3",  "QSFP7.4"};
 localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP8[4] = '{"QSFP8.1", "QSFP8.2", "QSFP8.3",  "QSFP8.4"};
 localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP9[4] = '{"QSFP9.1", "QSFP9.2", "QSFP9.3",  "QSFP9.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP10[4] = '{"QSFP10.1", "QSFP10.2", "QSFP10.3",  "QSFP10.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP11[4] = '{"QSFP11.1", "QSFP11.2", "QSFP11.3",  "QSFP11.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP12[4] = '{"QSFP12.1", "QSFP12.2", "QSFP12.3",  "QSFP12.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP13[4] = '{"QSFP13.1", "QSFP13.2", "QSFP13.3",  "QSFP13.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP14[4] = '{"QSFP14.1", "QSFP14.2", "QSFP14.3",  "QSFP14.4"};
+localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP15[4] = '{"QSFP15.1", "QSFP15.2", "QSFP15.3",  "QSFP15.4"};
 
 for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
 
@@ -406,7 +412,13 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
             n == 5 ? STAT_PREFIX_STR_QSFP6 :
             n == 6 ? STAT_PREFIX_STR_QSFP7 :
             n == 7 ? STAT_PREFIX_STR_QSFP8 :
-            STAT_PREFIX_STR_QSFP9
+            n == 8 ? STAT_PREFIX_STR_QSFP9 :
+            n == 9 ? STAT_PREFIX_STR_QSFP10 :
+            n == 10 ? STAT_PREFIX_STR_QSFP11 :
+            n == 11 ? STAT_PREFIX_STR_QSFP12 :
+            n == 12 ? STAT_PREFIX_STR_QSFP13 :
+            n == 13 ? STAT_PREFIX_STR_QSFP14 :
+            STAT_PREFIX_STR_QSFP15
         )
     )
     mac_inst (

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This example design targets the HiTech Global HTG-9200 FPGA board.
+This example design targets the HiTech Global HTG-9200 FPGA board.  Design variants are provided for both the bare HTG-9200, as well as the HTG-9200 with the HiTech Global HTG-FMC-X6QSFP28 FMC+ board installed on J9.
 
 The design places looped-back MACs on the Ethernet ports, as well as XFCP on the USB UART for monitoring and control.
 
@@ -62,5 +62,7 @@ The table below contains the power rail test points and feedback resistor values
 ## How to test
 
 Run `make program` to program the board with Vivado.
+
+LED D46 on the HTG-9200 indicates that the Si5341 PLL is locked and providing stable reference clocks to the transceivers.  On the HTG-FMC-X6QSFP28 FMC+ board, LED D10 indicates that the Si5341 PLL is locked.
 
 To test the looped-back MAC, it is recommended to use a network tester like the Viavi T-BERD 5800 that supports basic layer 2 tests with a loopback.  Do not connect the looped-back MAC to a network as the reflected packets may cause problems.

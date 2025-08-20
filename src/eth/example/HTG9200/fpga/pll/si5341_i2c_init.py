@@ -71,7 +71,17 @@ def main():
     cmds.extend(mux_cmds(0x04, 0x71))
 
     cmds.extend(si5341_cmds("HTG9200_161-9k2_161-Registers.txt", 0x77))
-    generate(cmds)
+
+    generate(cmds, output="si5341_i2c_init.sv")
+
+    # Si5341 on FMC+
+    cmds.append("// Set muxes to select U7 Si5341 on HTG-FMC-x6-QSFP28")
+    cmds.extend(mux_cmds(0x00, 0x70))
+    cmds.extend(mux_cmds(0x02, 0x71))
+
+    cmds.extend(si5341_cmds("HTG9200_HTG_FMC_6QSFP_161-HTG6Q161-Registers.txt", 0x77))
+
+    generate(cmds, output="si5341_i2c_init_6qsfp.sv")
 
 
 def generate(cmds=None, name=None, output=None):
@@ -86,6 +96,7 @@ def generate(cmds=None, name=None, output=None):
 
     print(f"Generating Si5341 I2C init module {name}...")
 
+    cmds = cmds.copy()
     cmds.append("cmd_halt(); // end")
 
     cmd_str = ""
