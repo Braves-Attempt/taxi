@@ -49,17 +49,6 @@ module fpga_core #
     output wire logic                    i2c_sda_o,
 
     /*
-     * PLL
-     */
-    output wire logic                    clk_gty2_fdec,
-    output wire logic                    clk_gty2_finc,
-    input  wire logic                    clk_gty2_intr_n,
-    input  wire logic                    clk_gty2_lol_n,
-    output wire logic                    clk_gty2_oe_n,
-    output wire logic                    clk_gty2_sync_n,
-    output wire logic                    clk_gty2_rst_n,
-
-    /*
      * UART: 921600 bps, 8N1
      */
     output wire logic                    uart_rxd,
@@ -72,6 +61,8 @@ module fpga_core #
     /*
      * Ethernet: QSFP28
      */
+    input  wire logic                    eth_pll_locked,
+
     output wire logic [GTY_CNT-1:0]      eth_gty_tx_p,
     output wire logic [GTY_CNT-1:0]      eth_gty_tx_n,
     input  wire logic [GTY_CNT-1:0]      eth_gty_rx_p,
@@ -165,12 +156,6 @@ si5341_i2c_init_inst (
      */
     .start(1'b1)
 );
-
-assign clk_gty2_fdec = 1'b0;
-assign clk_gty2_finc = 1'b0;
-assign clk_gty2_oe_n = 1'b0;
-assign clk_gty2_sync_n = 1'b1;
-assign clk_gty2_rst_n = !rst_125mhz;
 
 // XFCP
 taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_ds(), xfcp_us();
@@ -301,7 +286,7 @@ xfcp_mod_i2c_inst (
 );
 
 // Ethernet
-wire eth_reset = SIM ? 1'b0 : (si5341_i2c_busy || !clk_gty2_lol_n);
+wire eth_reset = SIM ? 1'b0 : (si5341_i2c_busy || !eth_pll_locked);
 assign eth_port_resetl = {PORT_CNT{~eth_reset}};
 
 wire [GTY_CNT-1:0] eth_gty_tx_clk;

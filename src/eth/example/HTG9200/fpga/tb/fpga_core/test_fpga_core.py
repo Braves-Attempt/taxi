@@ -86,9 +86,8 @@ class TB:
 
         dut.i2c_scl_i.setimmediatevalue(1)
         dut.i2c_sda_i.setimmediatevalue(1)
-        dut.clk_gty2_intr_n.setimmediatevalue(1)
-        dut.clk_gty2_lol_n.setimmediatevalue(1)
         dut.sw.setimmediatevalue(0)
+        dut.eth_pll_locked.setimmediatevalue(1)
         dut.eth_port_modprsl.setimmediatevalue(0)
         dut.eth_port_intl.setimmediatevalue(0)
 

@@ -315,7 +315,28 @@ assign i2c_sda_i = i2c_main_sda;
 assign i2c_main_sda = i2c_sda_o ? 1'bz : 1'b0;
 assign i2c_main_rst_n = 1'b1;
 
-fpga_core
+localparam PORT_CNT = 9;
+localparam GTY_QUAD_CNT = PORT_CNT;
+localparam GTY_CNT = GTY_QUAD_CNT*4;
+localparam GTY_CLK_CNT = GTY_QUAD_CNT;
+
+assign clk_gty2_fdec = 1'b0;
+assign clk_gty2_finc = 1'b0;
+assign clk_gty2_oe_n = 1'b0;
+assign clk_gty2_sync_n = 1'b1;
+assign clk_gty2_rst_n = !rst_125mhz_int;
+
+wire eth_pll_locked = clk_gty2_lol_n;
+
+fpga_core #(
+    .SIM(SIM),
+    .VENDOR(VENDOR),
+    .FAMILY(FAMILY),
+    .PORT_CNT(PORT_CNT),
+    .GTY_QUAD_CNT(GTY_QUAD_CNT),
+    .GTY_CNT(GTY_CNT),
+    .GTY_CLK_CNT(GTY_CLK_CNT)
+)
 core_inst (
     /*
      * Clock: 125MHz
@@ -340,17 +361,6 @@ core_inst (
     .i2c_sda_o(i2c_sda_o),
 
     /*
-     * PLL
-     */
-    .clk_gty2_fdec(clk_gty2_fdec),
-    .clk_gty2_finc(clk_gty2_finc),
-    .clk_gty2_intr_n(clk_gty2_intr_n),
-    .clk_gty2_lol_n(clk_gty2_lol_n),
-    .clk_gty2_oe_n(clk_gty2_oe_n),
-    .clk_gty2_sync_n(clk_gty2_sync_n),
-    .clk_gty2_rst_n(clk_gty2_rst_n),
-
-    /*
      * UART: 921600 bps, 8N1
      */
     .uart_rxd(uart_rxd),
@@ -363,6 +373,8 @@ core_inst (
     /*
      * Ethernet: QSFP28
      */
+    .eth_pll_locked(eth_pll_locked),
+
     .eth_gty_tx_p({qsfp_9_tx_p, qsfp_8_tx_p, qsfp_7_tx_p, qsfp_6_tx_p, qsfp_5_tx_p, qsfp_4_tx_p, qsfp_3_tx_p, qsfp_2_tx_p, qsfp_1_tx_p}),
     .eth_gty_tx_n({qsfp_9_tx_n, qsfp_8_tx_n, qsfp_7_tx_n, qsfp_6_tx_n, qsfp_5_tx_n, qsfp_4_tx_n, qsfp_3_tx_n, qsfp_2_tx_n, qsfp_1_tx_n}),
     .eth_gty_rx_p({qsfp_9_rx_p, qsfp_8_rx_p, qsfp_7_rx_p, qsfp_6_rx_p, qsfp_5_rx_p, qsfp_4_rx_p, qsfp_3_rx_p, qsfp_2_rx_p, qsfp_1_rx_p}),

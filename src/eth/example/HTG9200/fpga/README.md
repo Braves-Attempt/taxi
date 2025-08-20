@@ -15,7 +15,6 @@ The design places looped-back MACs on the Ethernet ports, as well as XFCP on the
 
 *  FPGA: xcvu9p-flgb2104-2-e
 *  USB UART: Silicon Labs CP2103
-*  1000BASE-T PHY: TI DP83867IRPAP via RGMII
 
 ## Licensing
 
