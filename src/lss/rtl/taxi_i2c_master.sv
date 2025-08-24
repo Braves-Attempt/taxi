@@ -212,7 +212,8 @@ logic mode_read_reg = 1'b0, mode_read_next;
 logic mode_write_multiple_reg = 1'b0, mode_write_multiple_next;
 logic mode_stop_reg = 1'b0, mode_stop_next;
 
-logic [16:0] delay_reg = '0, delay_next;
+logic [15:0] delay_count_reg = '0, delay_count_next;
+logic delay_run_reg = 1'b0, delay_run_next;
 logic delay_scl_reg = 1'b0, delay_scl_next;
 logic delay_sda_reg = 1'b0, delay_sda_next;
 
@@ -589,7 +590,8 @@ always_comb begin
 
     phy_rx_data_next = phy_rx_data_reg;
 
-    delay_next = delay_reg;
+    delay_count_next = delay_count_reg;
+    delay_run_next = delay_run_reg;
     delay_scl_next = delay_scl_reg;
     delay_sda_next = delay_sda_reg;
 
@@ -598,25 +600,39 @@ always_comb begin
 
     bus_control_next = bus_control_reg;
 
+    if (delay_scl_reg) begin
+        // wait for SCL to match command
+        delay_scl_next = scl_o_reg && !scl_i_reg;
+    end else if (delay_sda_reg) begin
+        // wait for SDA to match command
+        delay_sda_next = sda_o_reg && !sda_i_reg;
+    end else if (delay_run_reg) begin
+        // time delay
+        if (delay_count_reg != 0) begin
+            delay_count_next = delay_count_reg - 1;
+        end else begin
+            delay_run_next = 1'b0;
+        end
+    end else begin
+        delay_count_next = prescale;
+    end
+
     if (phy_release_bus) begin
         // release bus and return to idle state
         sda_o_next = 1'b1;
         scl_o_next = 1'b1;
         delay_scl_next = 1'b0;
         delay_sda_next = 1'b0;
-        delay_next = '0;
+        delay_run_next = '0;
         phy_state_next = PHY_STATE_IDLE;
     end else if (delay_scl_reg) begin
         // wait for SCL to match command
-        delay_scl_next = scl_o_reg && !scl_i_reg;
         phy_state_next = phy_state_reg;
     end else if (delay_sda_reg) begin
         // wait for SDA to match command
-        delay_sda_next = sda_o_reg && !sda_i_reg;
         phy_state_next = phy_state_reg;
-    end else if (delay_reg != 0) begin
+    end else if (delay_run_reg) begin
         // time delay
-        delay_next = delay_reg - 1;
         phy_state_next = phy_state_reg;
     end else begin
         case (phy_state_reg)
@@ -626,7 +642,7 @@ always_comb begin
                 scl_o_next = 1'b1;
                 if (phy_start_bit) begin
                     sda_o_next = 1'b0;
-                    delay_next = 17'(prescale);
+                    delay_run_next = 1'b1;
                     phy_state_next = PHY_STATE_START_1;
                 end else begin
                     phy_state_next = PHY_STATE_IDLE;
@@ -636,19 +652,19 @@ always_comb begin
                 // bus active
                 if (phy_start_bit) begin
                     sda_o_next = 1'b1;
-                    delay_next = 17'(prescale);
+                    delay_run_next = 1'b1;
                     phy_state_next = PHY_STATE_REPEATED_START_1;
                 end else if (phy_write_bit) begin
                     sda_o_next = phy_tx_data;
-                    delay_next = 17'(prescale);
+                    delay_run_next = 1'b1;
                     phy_state_next = PHY_STATE_WRITE_BIT_1;
                 end else if (phy_read_bit) begin
                     sda_o_next = 1'b1;
-                    delay_next = 17'(prescale);
+                    delay_run_next = 1'b1;
                     phy_state_next = PHY_STATE_READ_BIT_1;
                 end else if (phy_stop_bit) begin
                     sda_o_next = 1'b0;
-                    delay_next = 17'(prescale);
+                    delay_run_next = 1'b1;
                     phy_state_next = PHY_STATE_STOP_1;
                 end else begin
                     phy_state_next = PHY_STATE_ACTIVE;
@@ -664,7 +680,7 @@ always_comb begin
 
                 scl_o_next = 1'b1;
                 delay_scl_next = 1'b1;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_REPEATED_START_2;
             end
             PHY_STATE_REPEATED_START_2: begin
@@ -676,7 +692,7 @@ always_comb begin
                 //
 
                 sda_o_next = 1'b0;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_START_1;
             end
             PHY_STATE_START_1: begin
@@ -688,7 +704,7 @@ always_comb begin
                 //
 
                 scl_o_next = 1'b0;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_START_2;
             end
             PHY_STATE_START_2: begin
@@ -711,7 +727,7 @@ always_comb begin
 
                 scl_o_next = 1'b1;
                 delay_scl_next = 1'b1;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_WRITE_BIT_2;
             end
             PHY_STATE_WRITE_BIT_2: begin
@@ -722,7 +738,7 @@ always_comb begin
                 // scl __/    \__
 
                 scl_o_next = 1'b0;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_WRITE_BIT_3;
             end
             PHY_STATE_WRITE_BIT_3: begin
@@ -743,7 +759,7 @@ always_comb begin
 
                 scl_o_next = 1'b1;
                 delay_scl_next = 1'b1;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_READ_BIT_2;
             end
             PHY_STATE_READ_BIT_2: begin
@@ -754,7 +770,7 @@ always_comb begin
                 // scl __/    \__
 
                 phy_rx_data_next = sda_i_reg;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_READ_BIT_3;
             end
             PHY_STATE_READ_BIT_3: begin
@@ -765,7 +781,7 @@ always_comb begin
                 // scl __/    \__
 
                 scl_o_next = 1'b0;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_READ_BIT_4;
             end
             PHY_STATE_READ_BIT_4: begin
@@ -786,7 +802,7 @@ always_comb begin
 
                 scl_o_next = 1'b1;
                 delay_scl_next = 1'b1;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_STOP_2;
             end
             PHY_STATE_STOP_2: begin
@@ -797,7 +813,7 @@ always_comb begin
                 // scl _______/
 
                 sda_o_next = 1'b1;
-                delay_next = 17'(prescale);
+                delay_run_next = 1'b1;
                 phy_state_next = PHY_STATE_STOP_3;
             end
             PHY_STATE_STOP_3: begin
@@ -831,7 +847,8 @@ always_ff @(posedge clk) begin
     mode_write_multiple_reg <= mode_write_multiple_next;
     mode_stop_reg <= mode_stop_next;
 
-    delay_reg <= delay_next;
+    delay_count_reg <= delay_count_next;
+    delay_run_reg <= delay_run_next;
     delay_scl_reg <= delay_scl_next;
     delay_sda_reg <= delay_sda_next;
 
@@ -870,7 +887,8 @@ always_ff @(posedge clk) begin
     if (rst) begin
         state_reg <= STATE_IDLE;
         phy_state_reg <= PHY_STATE_IDLE;
-        delay_reg <= '0;
+        delay_count_reg <= '0;
+        delay_run_reg <= 1'b0;
         delay_scl_reg <= 1'b0;
         delay_sda_reg <= 1'b0;
         s_axis_cmd_ready_reg <= 1'b0;
