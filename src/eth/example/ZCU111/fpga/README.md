@@ -4,7 +4,7 @@
 
 This example design targets the Xilinx ZCU111 FPGA board.
 
-The design places looped-back MACs on the SFP+ ports, as well as XFCP on the USB UART for monitoring and control.
+The design places looped-back MACs on the SFP+ ports, as well as XFCP on the USB UART for monitoring and control.  The RF data converters are also enabled at 1 Gsps per channel.
 
 *  USB UART
     *  XFCP (3 Mbaud)

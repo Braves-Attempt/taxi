@@ -22,7 +22,11 @@ module fpga_core #
     // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
     // device family
-    parameter string FAMILY = "zynquplusRFSOC"
+    parameter string FAMILY = "zynquplusRFSOC",
+    // number of RFDC ADC channels
+    parameter ADC_CNT = 8,
+    // number of RFDC DAC channels
+    parameter DAC_CNT = ADC_CNT
 )
 (
     /*
@@ -31,6 +35,8 @@ module fpga_core #
      */
     input  wire logic        clk_125mhz,
     input  wire logic        rst_125mhz,
+    input  wire logic        fpga_refclk,
+    input  wire logic        fpga_sysref,
 
     /*
      * GPIO
@@ -42,6 +48,18 @@ module fpga_core #
     input  wire logic        btnc,
     input  wire logic [7:0]  sw,
     output wire logic [7:0]  led,
+
+    /*
+     * I2C for board management
+     */
+    input  wire logic        i2c0_scl_i,
+    output wire logic        i2c0_scl_o,
+    input  wire logic        i2c0_sda_i,
+    output wire logic        i2c0_sda_o,
+    input  wire logic        i2c1_scl_i,
+    output wire logic        i2c1_scl_o,
+    input  wire logic        i2c1_sda_i,
+    output wire logic        i2c1_sda_o,
 
     /*
      * UART: 115200 bps, 8N1
@@ -61,7 +79,23 @@ module fpga_core #
     input  wire logic        sfp_mgt_refclk_0_p,
     input  wire logic        sfp_mgt_refclk_0_n,
 
-    output wire logic [3:0]  sfp_tx_disable_b
+    output wire logic [3:0]  sfp_tx_disable_b,
+
+    /*
+     * RFDC
+     */
+    input  wire logic        axil_rfdc_clk,
+    input  wire logic        axil_rfdc_rst,
+    taxi_axil_if.wr_mst      m_axil_rfdc_wr,
+    taxi_axil_if.rd_mst      m_axil_rfdc_rd,
+
+    input  wire logic        axis_adc_clk[ADC_CNT],
+    input  wire logic        axis_adc_rst[ADC_CNT],
+    taxi_axis_if.snk         s_axis_adc[ADC_CNT],
+
+    input  wire logic        axis_dac_clk[DAC_CNT],
+    input  wire logic        axis_dac_rst[DAC_CNT],
+    taxi_axis_if.src         m_axis_dac[DAC_CNT]
 );
 
 assign led = sw;
@@ -97,7 +131,7 @@ xfcp_if_uart_inst (
     .prescale(16'(125000000/3000000))
 );
 
-taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[1](), xfcp_sw_us[1]();
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[4](), xfcp_sw_us[4]();
 
 taxi_xfcp_switch #(
     .XFCP_ID_STR("ZCU111"),
@@ -168,6 +202,78 @@ stat_mux_inst (
      * AXI4-Stream output (source)
      */
     .m_axis(axis_stat)
+);
+
+// I2C
+taxi_xfcp_mod_i2c_master #(
+    .XFCP_EXT_ID_STR("I2C0"),
+    .DEFAULT_PRESCALE(16'(125000000/200000/4))
+)
+xfcp_mod_i2c0_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_sw_ds[1]),
+    .xfcp_usp_us(xfcp_sw_us[1]),
+
+    /*
+     * I2C interface
+     */
+    .i2c_scl_i(i2c0_scl_i),
+    .i2c_scl_o(i2c0_scl_o),
+    .i2c_sda_i(i2c0_sda_i),
+    .i2c_sda_o(i2c0_sda_o)
+);
+
+taxi_xfcp_mod_i2c_master #(
+    .XFCP_EXT_ID_STR("I2C1"),
+    .DEFAULT_PRESCALE(16'(125000000/200000/4))
+)
+xfcp_mod_i2c1_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_sw_ds[2]),
+    .xfcp_usp_us(xfcp_sw_us[2]),
+
+    /*
+     * I2C interface
+     */
+    .i2c_scl_i(i2c1_scl_i),
+    .i2c_scl_o(i2c1_scl_o),
+    .i2c_sda_i(i2c1_sda_i),
+    .i2c_sda_o(i2c1_sda_o)
+);
+
+// RFDC control
+taxi_xfcp_mod_axil #(
+    // .XFCP_ID_TYPE(16'h8080),
+    .XFCP_ID_STR("RFDC"),
+    // .XFCP_EXT_ID(XFCP_EXT_ID),
+    // .XFCP_EXT_ID_STR(XFCP_EXT_ID_STR),
+    .COUNT_SIZE(16)
+)
+xfcp_mod_axil_inst (
+    .clk(clk_125mhz),
+    .rst(rst_125mhz),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_sw_ds[3]),
+    .xfcp_usp_us(xfcp_sw_us[3]),
+
+    /*
+     * AXI lite master interface
+     */
+    .m_axil_wr(m_axil_rfdc_wr),
+    .m_axil_rd(m_axil_rfdc_rd)
 );
 
 // SFP+
@@ -478,6 +584,53 @@ for (genvar n = 0; n < 4; n = n + 1) begin : sfp_ch
         .m_clk(sfp_tx_clk[n]),
         .m_rst(sfp_tx_rst[n]),
         .m_axis(axis_sfp_tx[n]),
+
+        /*
+         * Pause
+         */
+        .s_pause_req(1'b0),
+        .s_pause_ack(),
+        .m_pause_req(1'b0),
+        .m_pause_ack(),
+
+        /*
+         * Status
+         */
+        .s_status_depth(),
+        .s_status_depth_commit(),
+        .s_status_overflow(),
+        .s_status_bad_frame(),
+        .s_status_good_frame(),
+        .m_status_depth(),
+        .m_status_depth_commit(),
+        .m_status_overflow(),
+        .m_status_bad_frame(),
+        .m_status_good_frame()
+    );
+
+end
+
+for (genvar n = 0; n < ADC_CNT; n = n + 1) begin : rfdc_lpbk
+
+    taxi_axis_async_fifo #(
+        .DEPTH(256),
+        .RAM_PIPELINE(2),
+        .FRAME_FIFO(0)
+    )
+    ch_fifo (
+        /*
+         * AXI4-Stream input (sink)
+         */
+        .s_clk(axis_adc_clk[n]),
+        .s_rst(axis_adc_rst[n]),
+        .s_axis(s_axis_adc[n]),
+
+        /*
+         * AXI4-Stream output (source)
+         */
+        .m_clk(axis_dac_clk[n]),
+        .m_rst(axis_dac_rst[n]),
+        .m_axis(m_axis_dac[n]),
 
         /*
          * Pause

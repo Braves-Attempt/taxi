@@ -48,7 +48,7 @@ class TB:
 
         cocotb.start_soon(Clock(dut.sfp_mgt_refclk_0_p, 6.4, units="ns").start())
 
-        for ch in dut.sfp_mac_inst.ch:
+        for ch in dut.uut.sfp_mac_inst.ch:
             gt_inst = ch.ch_inst.gt.gt_inst
 
             if ch.ch_inst.CFG_LOW_LATENCY.value:
@@ -198,14 +198,16 @@ def process_f_files(files):
 def test_fpga_core(request):
     dut = "fpga_core"
     module = os.path.splitext(os.path.basename(__file__))[0]
-    toplevel = dut
+    toplevel = module
 
     verilog_sources = [
+        os.path.join(tests_dir, f"{toplevel}.sv"),
         os.path.join(rtl_dir, f"{dut}.sv"),
         os.path.join(taxi_src_dir, "eth", "rtl", "us", "taxi_eth_mac_25g_us.f"),
         os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_if_uart.f"),
         os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_switch.sv"),
         os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_mod_stats.f"),
+        os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_mod_i2c_master.f"),
         os.path.join(taxi_src_dir, "axis", "rtl", "taxi_axis_async_fifo.f"),
         os.path.join(taxi_src_dir, "sync", "rtl", "taxi_sync_reset.sv"),
         os.path.join(taxi_src_dir, "sync", "rtl", "taxi_sync_signal.sv"),

@@ -32,6 +32,10 @@ module fpga #
     input  wire logic        clk_125mhz_p,
     input  wire logic        clk_125mhz_n,
     input  wire logic        reset,
+    input  wire logic        fpga_refclk_p,
+    input  wire logic        fpga_refclk_n,
+    input  wire logic        fpga_sysref_p,
+    input  wire logic        fpga_sysref_n,
 
     /*
      * GPIO
@@ -43,6 +47,14 @@ module fpga #
     input  wire logic        btnc,
     input  wire logic [7:0]  sw,
     output wire logic [7:0]  led,
+
+    /*
+     * I2C for board management
+     */
+    inout  wire logic        i2c0_scl,
+    inout  wire logic        i2c0_sda,
+    inout  wire logic        i2c1_scl,
+    inout  wire logic        i2c1_sda,
 
     /*
      * UART: 115200 bps, 8N1
@@ -61,7 +73,33 @@ module fpga #
     output wire logic [3:0]  sfp_tx_n,
     input  wire logic        sfp_mgt_refclk_0_p,
     input  wire logic        sfp_mgt_refclk_0_n,
-    output wire logic [3:0]  sfp_tx_disable_b
+    output wire logic [3:0]  sfp_tx_disable_b,
+
+    /*
+     * RFDC
+     */
+    input  wire logic [7:0]  adc_vin_p,
+    input  wire logic [7:0]  adc_vin_n,
+
+    input  wire logic        adc_refclk_0_p,
+    input  wire logic        adc_refclk_0_n,
+    input  wire logic        adc_refclk_1_p,
+    input  wire logic        adc_refclk_1_n,
+    input  wire logic        adc_refclk_2_p,
+    input  wire logic        adc_refclk_2_n,
+    input  wire logic        adc_refclk_3_p,
+    input  wire logic        adc_refclk_3_n,
+
+    output wire logic [7:0]  dac_vout_p,
+    output wire logic [7:0]  dac_vout_n,
+
+    input  wire logic        dac_refclk_0_p,
+    input  wire logic        dac_refclk_0_n,
+    input  wire logic        dac_refclk_1_p,
+    input  wire logic        dac_refclk_1_n,
+
+    input  wire logic        rfdc_sysref_p,
+    input  wire logic        rfdc_sysref_n
 );
 
 wire clk_125mhz_ibufg;
@@ -78,12 +116,12 @@ wire mmcm_clkfb;
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 clk_125mhz_ibufg_inst (
    .O   (clk_125mhz_ibufg),
    .I   (clk_125mhz_p),
-   .IB  (clk_125mhz_n) 
+   .IB  (clk_125mhz_n)
 );
 
 BUFG
@@ -185,6 +223,43 @@ sync_reset_125mhz_inst (
     .out(rst_125mhz_int)
 );
 
+wire fpga_refclk_ibufg;
+wire fpga_refclk_int;
+wire fpga_sysref_ibufg;
+wire fpga_sysref_int;
+
+IBUFGDS #(
+   .DIFF_TERM("FALSE"),
+   .IBUF_LOW_PWR("FALSE")
+)
+fpga_refclk_ibufg_inst (
+   .O   (fpga_refclk_ibufg),
+   .I   (fpga_refclk_p),
+   .IB  (fpga_refclk_n)
+);
+
+BUFG
+fpga_refclk_bufg_inst (
+    .I(fpga_refclk_ibufg),
+    .O(fpga_refclk_int)
+);
+
+IBUFGDS #(
+   .DIFF_TERM("FALSE"),
+   .IBUF_LOW_PWR("FALSE")
+)
+fpga_sysref_ibufg_inst (
+   .O   (fpga_sysref_ibufg),
+   .I   (fpga_sysref_p),
+   .IB  (fpga_sysref_n)
+);
+
+BUFG
+fpga_sysref_bufg_inst (
+    .I(fpga_sysref_ibufg),
+    .O(fpga_sysref_int)
+);
+
 // GPIO
 wire btnu_int;
 wire btnl_int;
@@ -228,10 +303,629 @@ sync_signal_inst (
     .out({uart_rxd_int, uart_rts_int})
 );
 
+wire i2c0_scl_i;
+wire i2c0_scl_o;
+wire i2c0_sda_i;
+wire i2c0_sda_o;
+
+assign i2c0_scl_i = i2c0_scl;
+assign i2c0_scl = i2c0_scl_o ? 1'bz : 1'b0;
+assign i2c0_sda_i = i2c0_sda;
+assign i2c0_sda = i2c0_sda_o ? 1'bz : 1'b0;
+
+wire i2c1_scl_i;
+wire i2c1_scl_o;
+wire i2c1_sda_i;
+wire i2c1_sda_o;
+
+assign i2c1_scl_i = i2c1_scl;
+assign i2c1_scl = i2c1_scl_o ? 1'bz : 1'b0;
+assign i2c1_sda_i = i2c1_sda;
+assign i2c1_sda = i2c1_sda_o ? 1'bz : 1'b0;
+
+wire i2c1_init_scl_i = i2c1_scl_i;
+wire i2c1_init_scl_o;
+wire i2c1_init_sda_i = i2c1_sda_i;
+wire i2c1_init_sda_o;
+
+wire i2c1_int_scl_i = i2c1_scl_i;
+wire i2c1_int_scl_o;
+wire i2c1_int_sda_i = i2c1_sda_i;
+wire i2c1_int_sda_o;
+
+assign i2c1_scl_o = i2c1_init_scl_o & i2c1_int_scl_o;
+assign i2c1_sda_o = i2c1_init_sda_o & i2c1_int_sda_o;
+
+// PLL init
+taxi_axis_if #(.DATA_W(12)) pll_i2c_cmd();
+taxi_axis_if #(.DATA_W(8)) pll_i2c_tx();
+taxi_axis_if #(.DATA_W(8)) pll_i2c_rx();
+
+assign pll_i2c_rx.tready = 1'b1;
+
+wire pll_i2c_busy;
+
+taxi_i2c_master
+pll_i2c_master_inst (
+    .clk(clk_125mhz_int),
+    .rst(rst_125mhz_int),
+
+    /*
+     * Host interface
+     */
+    .s_axis_cmd(pll_i2c_cmd),
+    .s_axis_tx(pll_i2c_tx),
+    .m_axis_rx(pll_i2c_rx),
+
+    /*
+     * I2C interface
+     */
+    .scl_i(i2c1_init_scl_i),
+    .scl_o(i2c1_init_scl_o),
+    .sda_i(i2c1_init_sda_i),
+    .sda_o(i2c1_init_sda_o),
+
+    /*
+     * Status
+     */
+    .busy(),
+    .bus_control(),
+    .bus_active(),
+    .missed_ack(),
+
+    /*
+     * Configuration
+     */
+    .prescale(SIM ? 32 : 312),
+    .stop_on_idle(1)
+);
+
+pll_i2c_init #(
+    .SIM_SPEEDUP(SIM)
+)
+pll_i2c_init_inst (
+    .clk(clk_125mhz_int),
+    .rst(rst_125mhz_int),
+
+    /*
+     * I2C master interface
+     */
+    .m_axis_cmd(pll_i2c_cmd),
+    .m_axis_tx(pll_i2c_tx),
+
+    /*
+     * Status
+     */
+    .busy(pll_i2c_busy),
+
+    /*
+     * Configuration
+     */
+    .start(1'b1)
+);
+
+// RF data converters
+localparam ADC_CNT = 8;
+localparam ADC_SAMPLE_W = 16;
+localparam ADC_SAMPLE_CNT = 4;
+localparam ADC_DATA_W = ADC_SAMPLE_W*ADC_SAMPLE_CNT;
+
+localparam DAC_CNT = ADC_CNT;
+localparam DAC_SAMPLE_W = ADC_SAMPLE_W;
+localparam DAC_SAMPLE_CNT = ADC_SAMPLE_CNT;
+localparam DAC_DATA_W = DAC_SAMPLE_W*DAC_SAMPLE_CNT;
+
+taxi_axil_if #(
+    .DATA_W(32),
+    .ADDR_W(18)
+) axil_rfdc();
+
+taxi_axis_if #(
+    .DATA_W(ADC_DATA_W),
+    .KEEP_EN(1),
+    .KEEP_W(ADC_SAMPLE_CNT),
+    .LAST_EN(0),
+    .USER_EN(0),
+    .ID_EN(0),
+    .DEST_EN(0)
+) axis_adc[ADC_CNT]();
+
+// for probing with ILA
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_0 = axis_adc[0].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_1 = axis_adc[1].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_2 = axis_adc[2].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_3 = axis_adc[3].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_4 = axis_adc[4].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_5 = axis_adc[5].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_6 = axis_adc[6].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [ADC_DATA_W-1:0] adc_data_7 = axis_adc[7].tdata;
+
+taxi_axis_if #(
+    .DATA_W(DAC_DATA_W),
+    .KEEP_EN(1),
+    .KEEP_W(DAC_SAMPLE_CNT),
+    .LAST_EN(0),
+    .USER_EN(0),
+    .ID_EN(0),
+    .DEST_EN(0)
+) axis_dac[DAC_CNT]();
+
+// for probing with ILA
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_0 = axis_dac[0].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_1 = axis_dac[1].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_2 = axis_dac[2].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_3 = axis_dac[3].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_4 = axis_dac[4].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_5 = axis_dac[5].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_6 = axis_dac[6].tdata;
+(* MARK_DEBUG = "TRUE" *)
+wire [DAC_DATA_W-1:0] dac_data_7 = axis_dac[7].tdata;
+
+wire axil_rfdc_clk = clk_125mhz_int;
+wire axil_rfdc_rst;
+
+taxi_sync_reset #(
+    .N(4)
+)
+sync_reset_axil_rfdc_inst (
+    .clk(axil_rfdc_clk),
+    .rst(rst_125mhz_int && !pll_i2c_busy),
+    .out(axil_rfdc_rst)
+);
+
+wire [3:0] adc_clk_out;
+wire [3:0] adc_fabric_clk;
+wire [3:0] adc_fabric_rst;
+
+wire axis_adc_clk[8];
+wire axis_adc_rst[8];
+
+assign axis_adc_clk[0] = adc_fabric_clk[0];
+assign axis_adc_clk[1] = adc_fabric_clk[0];
+assign axis_adc_clk[2] = adc_fabric_clk[1];
+assign axis_adc_clk[3] = adc_fabric_clk[1];
+assign axis_adc_clk[4] = adc_fabric_clk[2];
+assign axis_adc_clk[5] = adc_fabric_clk[2];
+assign axis_adc_clk[6] = adc_fabric_clk[3];
+assign axis_adc_clk[7] = adc_fabric_clk[3];
+assign axis_adc_rst[0] = adc_fabric_rst[0];
+assign axis_adc_rst[1] = adc_fabric_rst[0];
+assign axis_adc_rst[2] = adc_fabric_rst[1];
+assign axis_adc_rst[3] = adc_fabric_rst[1];
+assign axis_adc_rst[4] = adc_fabric_rst[2];
+assign axis_adc_rst[5] = adc_fabric_rst[2];
+assign axis_adc_rst[6] = adc_fabric_rst[3];
+assign axis_adc_rst[7] = adc_fabric_rst[3];
+
+for (genvar n = 0; n < 1; n = n + 1) begin : adc_clk
+    
+    wire mmcm_in = adc_clk_out[n];
+    wire mmcm_rst = axil_rfdc_rst;
+    wire mmcm_clkfb;
+    wire mmcm_locked;
+    wire mmcm_out;
+
+    wire bufg_out;
+    wire sync_rst;
+
+    assign adc_fabric_clk[0] = bufg_out;
+    assign adc_fabric_rst[0] = sync_rst;
+    assign adc_fabric_clk[1] = bufg_out;
+    assign adc_fabric_rst[1] = sync_rst;
+    assign adc_fabric_clk[2] = bufg_out;
+    assign adc_fabric_rst[2] = sync_rst;
+    assign adc_fabric_clk[3] = bufg_out;
+    assign adc_fabric_rst[3] = sync_rst;
+
+    // MMCM instance
+    MMCME4_BASE #(
+        // 62.5 MHz input
+        .CLKIN1_PERIOD(16.0),
+        .REF_JITTER1(0.010),
+        // 62.5 MHz input / 1 = 62.5 MHz PFD (range 10 MHz to 500 MHz)
+        .DIVCLK_DIVIDE(1),
+        // 62.5 MHz PFD * 20 = 1250 MHz VCO (range 800 MHz to 1600 MHz)
+        .CLKFBOUT_MULT_F(20),
+        .CLKFBOUT_PHASE(0),
+        // 1250 MHz / 5 = 250 MHz, 0 degrees
+        .CLKOUT0_DIVIDE_F(5),
+        .CLKOUT0_DUTY_CYCLE(0.5),
+        .CLKOUT0_PHASE(0),
+        // Not used
+        .CLKOUT1_DIVIDE(1),
+        .CLKOUT1_DUTY_CYCLE(0.5),
+        .CLKOUT1_PHASE(0),
+        // Not used
+        .CLKOUT2_DIVIDE(1),
+        .CLKOUT2_DUTY_CYCLE(0.5),
+        .CLKOUT2_PHASE(0),
+        // Not used
+        .CLKOUT3_DIVIDE(1),
+        .CLKOUT3_DUTY_CYCLE(0.5),
+        .CLKOUT3_PHASE(0),
+        // Not used
+        .CLKOUT4_DIVIDE(1),
+        .CLKOUT4_DUTY_CYCLE(0.5),
+        .CLKOUT4_PHASE(0),
+        .CLKOUT4_CASCADE("FALSE"),
+        // Not used
+        .CLKOUT5_DIVIDE(1),
+        .CLKOUT5_DUTY_CYCLE(0.5),
+        .CLKOUT5_PHASE(0),
+        // Not used
+        .CLKOUT6_DIVIDE(1),
+        .CLKOUT6_DUTY_CYCLE(0.5),
+        .CLKOUT6_PHASE(0),
+
+        // optimized bandwidth
+        .BANDWIDTH("OPTIMIZED"),
+        // don't wait for lock during startup
+        .STARTUP_WAIT("FALSE")
+    )
+    mmcm_inst (
+        // 62.5 MHz input
+        .CLKIN1(mmcm_in),
+        // direct clkfb feeback
+        .CLKFBIN(mmcm_clkfb),
+        .CLKFBOUT(mmcm_clkfb),
+        .CLKFBOUTB(),
+        // 250 MHz, 0 degrees
+        .CLKOUT0(mmcm_out),
+        .CLKOUT0B(),
+        // Not used
+        .CLKOUT1(),
+        .CLKOUT1B(),
+        // Not used
+        .CLKOUT2(),
+        .CLKOUT2B(),
+        // Not used
+        .CLKOUT3(),
+        .CLKOUT3B(),
+        // Not used
+        .CLKOUT4(),
+        // Not used
+        .CLKOUT5(),
+        // Not used
+        .CLKOUT6(),
+        // reset input
+        .RST(mmcm_rst),
+        // don't power down
+        .PWRDWN(1'b0),
+        // locked output
+        .LOCKED(mmcm_locked)
+    );
+
+    BUFG
+    bufg_inst (
+        .I(mmcm_out),
+        .O(bufg_out)
+    );
+
+    taxi_sync_reset #(
+        .N(4)
+    )
+    sync_reset_inst (
+        .clk(bufg_out),
+        .rst(!mmcm_locked || mmcm_rst),
+        .out(sync_rst)
+    );
+
+end
+
+wire [1:0] dac_clk_out;
+wire [1:0] dac_fabric_clk;
+wire [1:0] dac_fabric_rst;
+
+wire axis_dac_clk[8];
+wire axis_dac_rst[8];
+
+assign axis_dac_clk[0] = dac_fabric_clk[0];
+assign axis_dac_clk[1] = dac_fabric_clk[0];
+assign axis_dac_clk[2] = dac_fabric_clk[0];
+assign axis_dac_clk[3] = dac_fabric_clk[0];
+assign axis_dac_clk[4] = dac_fabric_clk[1];
+assign axis_dac_clk[5] = dac_fabric_clk[1];
+assign axis_dac_clk[6] = dac_fabric_clk[1];
+assign axis_dac_clk[7] = dac_fabric_clk[1];
+assign axis_dac_rst[0] = dac_fabric_rst[0];
+assign axis_dac_rst[1] = dac_fabric_rst[0];
+assign axis_dac_rst[2] = dac_fabric_rst[0];
+assign axis_dac_rst[3] = dac_fabric_rst[0];
+assign axis_dac_rst[4] = dac_fabric_rst[1];
+assign axis_dac_rst[5] = dac_fabric_rst[1];
+assign axis_dac_rst[6] = dac_fabric_rst[1];
+assign axis_dac_rst[7] = dac_fabric_rst[1];
+
+for (genvar n = 0; n < 1; n = n + 1) begin : dac_clk
+    
+    wire mmcm_in = dac_clk_out[n];
+    wire mmcm_rst = axil_rfdc_rst;
+    wire mmcm_clkfb;
+    wire mmcm_locked;
+    wire mmcm_out;
+
+    wire bufg_out;
+    wire sync_rst;
+
+    assign dac_fabric_clk[0] = bufg_out;
+    assign dac_fabric_rst[0] = sync_rst;
+    assign dac_fabric_clk[1] = bufg_out;
+    assign dac_fabric_rst[1] = sync_rst;
+
+    // MMCM instance
+    MMCME4_BASE #(
+        // 62.5 MHz input
+        .CLKIN1_PERIOD(16.0),
+        .REF_JITTER1(0.010),
+        // 62.5 MHz input / 1 = 62.5 MHz PFD (range 10 MHz to 500 MHz)
+        .DIVCLK_DIVIDE(1),
+        // 62.5 MHz PFD * 20 = 1250 MHz VCO (range 800 MHz to 1600 MHz)
+        .CLKFBOUT_MULT_F(20),
+        .CLKFBOUT_PHASE(0),
+        // 1250 MHz / 5 = 250 MHz, 0 degrees
+        .CLKOUT0_DIVIDE_F(5),
+        .CLKOUT0_DUTY_CYCLE(0.5),
+        .CLKOUT0_PHASE(0),
+        // Not used
+        .CLKOUT1_DIVIDE(1),
+        .CLKOUT1_DUTY_CYCLE(0.5),
+        .CLKOUT1_PHASE(0),
+        // Not used
+        .CLKOUT2_DIVIDE(1),
+        .CLKOUT2_DUTY_CYCLE(0.5),
+        .CLKOUT2_PHASE(0),
+        // Not used
+        .CLKOUT3_DIVIDE(1),
+        .CLKOUT3_DUTY_CYCLE(0.5),
+        .CLKOUT3_PHASE(0),
+        // Not used
+        .CLKOUT4_DIVIDE(1),
+        .CLKOUT4_DUTY_CYCLE(0.5),
+        .CLKOUT4_PHASE(0),
+        .CLKOUT4_CASCADE("FALSE"),
+        // Not used
+        .CLKOUT5_DIVIDE(1),
+        .CLKOUT5_DUTY_CYCLE(0.5),
+        .CLKOUT5_PHASE(0),
+        // Not used
+        .CLKOUT6_DIVIDE(1),
+        .CLKOUT6_DUTY_CYCLE(0.5),
+        .CLKOUT6_PHASE(0),
+
+        // optimized bandwidth
+        .BANDWIDTH("OPTIMIZED"),
+        // don't wait for lock during startup
+        .STARTUP_WAIT("FALSE")
+    )
+    mmcm_inst (
+        // 62.5 MHz input
+        .CLKIN1(mmcm_in),
+        // direct clkfb feeback
+        .CLKFBIN(mmcm_clkfb),
+        .CLKFBOUT(mmcm_clkfb),
+        .CLKFBOUTB(),
+        // 250 MHz, 0 degrees
+        .CLKOUT0(mmcm_out),
+        .CLKOUT0B(),
+        // Not used
+        .CLKOUT1(),
+        .CLKOUT1B(),
+        // Not used
+        .CLKOUT2(),
+        .CLKOUT2B(),
+        // Not used
+        .CLKOUT3(),
+        .CLKOUT3B(),
+        // Not used
+        .CLKOUT4(),
+        // Not used
+        .CLKOUT5(),
+        // Not used
+        .CLKOUT6(),
+        // reset input
+        .RST(mmcm_rst),
+        // don't power down
+        .PWRDWN(1'b0),
+        // locked output
+        .LOCKED(mmcm_locked)
+    );
+
+    BUFG
+    bufg_inst (
+        .I(mmcm_out),
+        .O(bufg_out)
+    );
+
+    taxi_sync_reset #(
+        .N(4)
+    )
+    sync_reset_inst (
+        .clk(bufg_out),
+        .rst(!mmcm_locked || mmcm_rst),
+        .out(sync_rst)
+    );
+
+end
+
+usp_rfdc_0 rfdc_inst (
+    // Common
+    .sysref_in_p(rfdc_sysref_p),
+    .sysref_in_n(rfdc_sysref_n),
+
+    .s_axi_aclk(axil_rfdc_clk),
+    .s_axi_aresetn(!axil_rfdc_rst),
+    .s_axi_awaddr(axil_rfdc.awaddr),
+    .s_axi_awvalid(axil_rfdc.awvalid),
+    .s_axi_awready(axil_rfdc.awready),
+    .s_axi_wdata(axil_rfdc.wdata),
+    .s_axi_wstrb(axil_rfdc.wstrb),
+    .s_axi_wvalid(axil_rfdc.wvalid),
+    .s_axi_wready(axil_rfdc.wready),
+    .s_axi_bresp(axil_rfdc.bresp),
+    .s_axi_bvalid(axil_rfdc.bvalid),
+    .s_axi_bready(axil_rfdc.bready),
+    .s_axi_araddr(axil_rfdc.araddr),
+    .s_axi_arvalid(axil_rfdc.arvalid),
+    .s_axi_arready(axil_rfdc.arready),
+    .s_axi_rdata(axil_rfdc.rdata),
+    .s_axi_rresp(axil_rfdc.rresp),
+    .s_axi_rvalid(axil_rfdc.rvalid),
+    .s_axi_rready(axil_rfdc.rready),
+
+    .irq(),
+
+    // ADC
+    .adc0_clk_p(adc_refclk_0_p),
+    .adc0_clk_n(adc_refclk_0_n),
+    .clk_adc0(adc_clk_out[0]),
+
+    .adc1_clk_p(adc_refclk_1_p),
+    .adc1_clk_n(adc_refclk_1_n),
+    .clk_adc1(adc_clk_out[1]),
+
+    .adc2_clk_p(adc_refclk_2_p),
+    .adc2_clk_n(adc_refclk_2_n),
+    .clk_adc2(adc_clk_out[2]),
+
+    .adc3_clk_p(adc_refclk_3_p),
+    .adc3_clk_n(adc_refclk_3_n),
+    .clk_adc3(adc_clk_out[3]),
+
+    .vin0_01_p(adc_vin_p[0]),
+    .vin0_01_n(adc_vin_n[0]),
+    .vin0_23_p(adc_vin_p[1]),
+    .vin0_23_n(adc_vin_n[1]),
+
+    .vin1_01_p(adc_vin_p[2]),
+    .vin1_01_n(adc_vin_n[2]),
+    .vin1_23_p(adc_vin_p[3]),
+    .vin1_23_n(adc_vin_n[3]),
+
+    .vin2_01_p(adc_vin_p[4]),
+    .vin2_01_n(adc_vin_n[4]),
+    .vin2_23_p(adc_vin_p[5]),
+    .vin2_23_n(adc_vin_n[5]),
+
+    .vin3_01_p(adc_vin_p[6]),
+    .vin3_01_n(adc_vin_n[6]),
+    .vin3_23_p(adc_vin_p[7]),
+    .vin3_23_n(adc_vin_n[7]),
+
+    .m0_axis_aresetn(!adc_fabric_rst[0]),
+    .m0_axis_aclk(adc_fabric_clk[0]),
+    .m00_axis_tdata(axis_adc[0].tdata),
+    .m00_axis_tvalid(axis_adc[0].tvalid),
+    .m00_axis_tready(axis_adc[0].tready),
+    .m02_axis_tdata(axis_adc[1].tdata),
+    .m02_axis_tvalid(axis_adc[1].tvalid),
+    .m02_axis_tready(axis_adc[1].tready),
+
+    .m1_axis_aresetn(!adc_fabric_rst[1]),
+    .m1_axis_aclk(adc_fabric_clk[1]),
+    .m10_axis_tdata(axis_adc[2].tdata),
+    .m10_axis_tvalid(axis_adc[2].tvalid),
+    .m10_axis_tready(axis_adc[2].tready),
+    .m12_axis_tdata(axis_adc[3].tdata),
+    .m12_axis_tvalid(axis_adc[3].tvalid),
+    .m12_axis_tready(axis_adc[3].tready),
+
+    .m2_axis_aresetn(!adc_fabric_rst[2]),
+    .m2_axis_aclk(adc_fabric_clk[2]),
+    .m20_axis_tdata(axis_adc[4].tdata),
+    .m20_axis_tvalid(axis_adc[4].tvalid),
+    .m20_axis_tready(axis_adc[4].tready),
+    .m22_axis_tdata(axis_adc[5].tdata),
+    .m22_axis_tvalid(axis_adc[5].tvalid),
+    .m22_axis_tready(axis_adc[5].tready),
+
+    .m3_axis_aresetn(!adc_fabric_rst[3]),
+    .m3_axis_aclk(adc_fabric_clk[3]),
+    .m30_axis_tdata(axis_adc[6].tdata),
+    .m30_axis_tvalid(axis_adc[6].tvalid),
+    .m30_axis_tready(axis_adc[6].tready),
+    .m32_axis_tdata(axis_adc[7].tdata),
+    .m32_axis_tvalid(axis_adc[7].tvalid),
+    .m32_axis_tready(axis_adc[7].tready),
+
+    // DAC
+    .dac0_clk_p(dac_refclk_0_p),
+    .dac0_clk_n(dac_refclk_0_n),
+    .clk_dac0(dac_clk_out[0]),
+
+    .dac1_clk_p(dac_refclk_1_p),
+    .dac1_clk_n(dac_refclk_1_n),
+    .clk_dac1(dac_clk_out[1]),
+
+    .vout00_p(dac_vout_p[0]),
+    .vout00_n(dac_vout_n[0]),
+    .vout01_p(dac_vout_p[1]),
+    .vout01_n(dac_vout_n[1]),
+    .vout02_p(dac_vout_p[2]),
+    .vout02_n(dac_vout_n[2]),
+    .vout03_p(dac_vout_p[3]),
+    .vout03_n(dac_vout_n[3]),
+
+    .vout10_p(dac_vout_p[4]),
+    .vout10_n(dac_vout_n[4]),
+    .vout11_p(dac_vout_p[5]),
+    .vout11_n(dac_vout_n[5]),
+    .vout12_p(dac_vout_p[6]),
+    .vout12_n(dac_vout_n[6]),
+    .vout13_p(dac_vout_p[7]),
+    .vout13_n(dac_vout_n[7]),
+
+    .s0_axis_aresetn(!dac_fabric_rst[0]),
+    .s0_axis_aclk(dac_fabric_clk[0]),
+    .s00_axis_tdata(axis_dac[0].tdata),
+    .s00_axis_tvalid(axis_dac[0].tvalid),
+    .s00_axis_tready(axis_dac[0].tready),
+    .s01_axis_tdata(axis_dac[1].tdata),
+    .s01_axis_tvalid(axis_dac[1].tvalid),
+    .s01_axis_tready(axis_dac[1].tready),
+    .s02_axis_tdata(axis_dac[2].tdata),
+    .s02_axis_tvalid(axis_dac[2].tvalid),
+    .s02_axis_tready(axis_dac[2].tready),
+    .s03_axis_tdata(axis_dac[3].tdata),
+    .s03_axis_tvalid(axis_dac[3].tvalid),
+    .s03_axis_tready(axis_dac[3].tready),
+
+    .s1_axis_aresetn(!dac_fabric_rst[1]),
+    .s1_axis_aclk(dac_fabric_clk[1]),
+    .s10_axis_tdata(axis_dac[4].tdata),
+    .s10_axis_tvalid(axis_dac[4].tvalid),
+    .s10_axis_tready(axis_dac[4].tready),
+    .s11_axis_tdata(axis_dac[5].tdata),
+    .s11_axis_tvalid(axis_dac[5].tvalid),
+    .s11_axis_tready(axis_dac[5].tready),
+    .s12_axis_tdata(axis_dac[6].tdata),
+    .s12_axis_tvalid(axis_dac[6].tvalid),
+    .s12_axis_tready(axis_dac[6].tready),
+    .s13_axis_tdata(axis_dac[7].tdata),
+    .s13_axis_tvalid(axis_dac[7].tvalid),
+    .s13_axis_tready(axis_dac[7].tready)
+);
+
 fpga_core #(
     .SIM(SIM),
     .VENDOR(VENDOR),
-    .FAMILY(FAMILY)
+    .FAMILY(FAMILY),
+    .ADC_CNT(ADC_CNT),
+    .DAC_CNT(DAC_CNT)
 )
 core_inst (
     /*
@@ -240,6 +934,8 @@ core_inst (
      */
     .clk_125mhz(clk_125mhz_int),
     .rst_125mhz(rst_125mhz_int),
+    .fpga_refclk(fpga_refclk_int),
+    .fpga_sysref(fpga_sysref_int),
 
     /*
      * GPIO
@@ -251,6 +947,18 @@ core_inst (
     .btnc(btnc_int),
     .sw(sw_int),
     .led(led),
+
+    /*
+     * I2C for board management
+     */
+    .i2c0_scl_i(i2c0_scl_i),
+    .i2c0_scl_o(i2c0_scl_o),
+    .i2c0_sda_i(i2c0_sda_i),
+    .i2c0_sda_o(i2c0_sda_o),
+    .i2c1_scl_i(i2c1_int_scl_i),
+    .i2c1_scl_o(i2c1_int_scl_o),
+    .i2c1_sda_i(i2c1_int_sda_i),
+    .i2c1_sda_o(i2c1_int_sda_o),
 
     /*
      * UART: 115200 bps, 8N1
@@ -270,7 +978,23 @@ core_inst (
     .sfp_mgt_refclk_0_p(sfp_mgt_refclk_0_p),
     .sfp_mgt_refclk_0_n(sfp_mgt_refclk_0_n),
 
-    .sfp_tx_disable_b(sfp_tx_disable_b)
+    .sfp_tx_disable_b(sfp_tx_disable_b),
+
+    /*
+     * RFDC
+     */
+    .axil_rfdc_clk(axil_rfdc_clk),
+    .axil_rfdc_rst(axil_rfdc_rst),
+    .m_axil_rfdc_wr(axil_rfdc),
+    .m_axil_rfdc_rd(axil_rfdc),
+
+    .axis_adc_clk(axis_adc_clk),
+    .axis_adc_rst(axis_adc_rst),
+    .s_axis_adc(axis_adc),
+
+    .axis_dac_clk(axis_dac_clk),
+    .axis_dac_rst(axis_dac_rst),
+    .m_axis_dac(axis_dac)
 );
 
 endmodule
