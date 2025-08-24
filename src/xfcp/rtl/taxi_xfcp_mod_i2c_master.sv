@@ -220,7 +220,7 @@ always_comb begin
         STATE_IDLE: begin
             // idle, wait for start of packet
             xfcp_usp_ds_tready_next = xfcp_usp_us_tready_int_early;
-            id_ptr_next = 5'd0;
+            id_ptr_next = '0;
 
             if (xfcp_usp_ds.tready && xfcp_usp_ds.tvalid) begin
                 if (xfcp_usp_ds.tlast) begin
