@@ -380,7 +380,7 @@ always_comb begin
                             m_axil_bready_next = 1'b1;
                             s_axis_cq_tready_next = 1'b0;
                             state_next = STATE_WRITE_2;
-                        end else if (AXIS_PCIE_DATA_W < 256 && dword_count_next == 11'd1) begin
+                        end else if (AXIS_PCIE_DATA_W < 256 && !s_axis_cq.tlast && dword_count_next == 11'd1) begin
                             s_axis_cq_tready_next = 1'b1;
                             state_next = STATE_WRITE_1;
                         end else begin
@@ -485,7 +485,7 @@ always_comb begin
                     end else if (type_next == REQ_MEM_WRITE || type_next == REQ_IO_WRITE) begin
                         // write request
                         cpl_data_next = 1'b0;
-                        if (dword_count_next == 11'd1) begin
+                        if (!s_axis_cq.tlast && dword_count_next == 11'd1) begin
                             s_axis_cq_tready_next = 1'b1;
                             state_next = STATE_WRITE_1;
                         end else begin
@@ -583,6 +583,8 @@ always_comb begin
                     s_axis_cq_tready_next = 1'b0;
                     state_next = STATE_WRITE_2;
                 end else begin
+                    cpl_data_next = 1'b0;
+                    status_next = CPL_STATUS_CA; // completer abort
                     s_axis_cq_tready_next = 1'b1;
                     state_next = STATE_WAIT_END;
                 end
