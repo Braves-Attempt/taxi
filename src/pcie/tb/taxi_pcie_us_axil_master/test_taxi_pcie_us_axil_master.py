@@ -124,7 +124,7 @@ class TB(object):
         self.axil_ram = AxiLiteRam(AxiLiteBus.from_entity(dut.m_axil), dut.clk, dut.rst, size=2**16)
 
         dut.completer_id.setimmediatevalue(0)
-        dut.completer_id_enable.setimmediatevalue(0)
+        dut.completer_id_en.setimmediatevalue(0)
 
         # monitor error outputs
         self.stat_err_cor_asserted = False

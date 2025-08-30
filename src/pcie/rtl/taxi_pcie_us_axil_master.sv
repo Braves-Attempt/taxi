@@ -36,7 +36,7 @@ module taxi_pcie_us_axil_master
      * Configuration
      */
     input  wire logic [15:0]  completer_id,
-    input  wire logic         completer_id_enable,
+    input  wire logic         completer_id_en,
 
     /*
      * Status
@@ -262,7 +262,7 @@ always_comb begin
     cpl_tlp_hdr[63:48] = requester_id_reg;
     cpl_tlp_hdr[71:64] = tag_reg;
     cpl_tlp_hdr[87:72] = completer_id;
-    cpl_tlp_hdr[88] = completer_id_enable;
+    cpl_tlp_hdr[88] = completer_id_en;
     cpl_tlp_hdr[91:89] = tc_reg;
     cpl_tlp_hdr[94:92] = attr_reg;
     cpl_tlp_hdr[95] = 1'b0; // force ECRC

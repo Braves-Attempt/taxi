@@ -59,7 +59,7 @@ taxi_axil_if #(
 ) m_axil();
 
 logic [15:0] completer_id;
-logic completer_id_enable;
+logic completer_id_en;
 
 logic stat_err_cor;
 logic stat_err_uncor;
@@ -85,7 +85,7 @@ uut (
      * Configuration
      */
     .completer_id(completer_id),
-    .completer_id_enable(completer_id_enable),
+    .completer_id_en(completer_id_en),
 
     /*
      * Status
