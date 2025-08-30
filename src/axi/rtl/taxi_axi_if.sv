@@ -36,7 +36,11 @@ interface taxi_axi_if #(
     // Use ruser signal
     parameter logic RUSER_EN = 1'b0,
     // Width of ruser signal
-    parameter RUSER_W = 1
+    parameter RUSER_W = 1,
+    // Maximum AXI burst length supported
+    parameter MAX_BURST_LEN = 256,
+    // Narrow bursts are supported
+    parameter logic NARROW_BURST_EN = 1'b1
 )
 ();
     // AW
