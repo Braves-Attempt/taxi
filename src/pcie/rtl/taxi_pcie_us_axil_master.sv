@@ -50,9 +50,9 @@ localparam AXIS_PCIE_DATA_W = s_axis_cq.DATA_W;
 localparam AXIS_PCIE_KEEP_W = s_axis_cq.KEEP_W;
 localparam AXIS_PCIE_CQ_USER_W = s_axis_cq.USER_W;
 localparam AXIS_PCIE_CC_USER_W = m_axis_cc.USER_W;
-localparam AXI_DATA_W = m_axil_wr.DATA_W;
-localparam AXI_ADDR_W = m_axil_wr.ADDR_W;
-localparam AXI_STRB_W = m_axil_wr.STRB_W;
+localparam AXIL_DATA_W = m_axil_wr.DATA_W;
+localparam AXIL_ADDR_W = m_axil_wr.ADDR_W;
+localparam AXIL_STRB_W = m_axil_wr.STRB_W;
 
 // check configuration
 if (AXIS_PCIE_DATA_W != 64 && AXIS_PCIE_DATA_W != 128 && AXIS_PCIE_DATA_W != 256 && AXIS_PCIE_DATA_W != 512)
@@ -75,10 +75,10 @@ end else begin
         $fatal(0, "Error: PCIe CC tuser width must be 33 (instance %m)");
 end
 
-if (AXI_DATA_W != 32)
+if (AXIL_DATA_W != 32)
     $fatal(0, "Error: AXI interface width must be 32 (instance %m)");
 
-if (AXI_STRB_W * 8 != AXI_DATA_W)
+if (AXIL_STRB_W * 8 != AXIL_DATA_W)
     $fatal(0, "Error: AXI interface requires byte (8-bit) granularity (instance %m)");
 
 localparam [3:0]
@@ -176,10 +176,10 @@ logic cpl_data_reg = 1'b0, cpl_data_next;
 
 logic s_axis_cq_tready_reg = 1'b0, s_axis_cq_tready_next;
 
-logic [AXI_ADDR_W-1:0] m_axil_addr_reg = '0, m_axil_addr_next;
+logic [AXIL_ADDR_W-1:0] m_axil_addr_reg = '0, m_axil_addr_next;
 logic m_axil_awvalid_reg = 1'b0, m_axil_awvalid_next;
-logic [AXI_DATA_W-1:0] m_axil_wdata_reg = '0, m_axil_wdata_next;
-logic [AXI_STRB_W-1:0] m_axil_wstrb_reg = '0, m_axil_wstrb_next;
+logic [AXIL_DATA_W-1:0] m_axil_wdata_reg = '0, m_axil_wdata_next;
+logic [AXIL_STRB_W-1:0] m_axil_wstrb_reg = '0, m_axil_wstrb_next;
 logic m_axil_wvalid_reg = 1'b0, m_axil_wvalid_next;
 logic m_axil_bready_reg = 1'b0, m_axil_bready_next;
 logic m_axil_arvalid_reg = 1'b0, m_axil_arvalid_next;
@@ -316,7 +316,7 @@ always_comb begin
 
             if (s_axis_cq.tready && s_axis_cq.tvalid) begin
                 // header fields
-                m_axil_addr_next = req_tlp_hdr_addr;
+                m_axil_addr_next = AXIL_ADDR_W'(req_tlp_hdr_addr);
                 if (AXIS_PCIE_DATA_W > 64) begin
                     dword_count_next = req_tlp_hdr_length;
                     type_next = req_tlp_hdr_type;
