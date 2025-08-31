@@ -29,6 +29,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  AXI to AXI lite adapter
     *  Register slice
     *  Width converter
+    *  Synchronous FIFO
     *  Single-port RAM
 *  AXI lite
     *  SV interface for AXI lite
