@@ -55,6 +55,9 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  COBS decoder
     *  Pipeline register
     *  Pipeline FIFO
+*  Direct Memory Access
+    *  Segmented SDP RAM
+    *  Segmented dual-clock SDP RAM
 *  Ethernet
     *  10/100 MII MAC
     *  10/100 MII MAC + FIFO
