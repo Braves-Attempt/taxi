@@ -35,7 +35,6 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
 # module parameters
 export PARAM_TLP_SEG_DATA_W := 64
-export PARAM_TLP_HDR_W := 128
 export PARAM_TLP_SEGS := 1
 export PARAM_AXIL_DATA_W := 32
 export PARAM_AXIL_ADDR_W := 64

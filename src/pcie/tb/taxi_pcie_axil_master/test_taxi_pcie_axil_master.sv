@@ -19,7 +19,6 @@ module test_taxi_pcie_axil_master #
 (
     /* verilator lint_off WIDTHTRUNC */
     parameter TLP_SEG_DATA_W = 64,
-    parameter TLP_HDR_W = 128,
     parameter TLP_SEGS = 1,
     parameter AXIL_DATA_W = 32,
     parameter AXIL_ADDR_W = 64,
@@ -34,7 +33,6 @@ logic rst;
 taxi_pcie_tlp_if #(
     .SEGS(TLP_SEGS),
     .SEG_DATA_W(TLP_SEG_DATA_W),
-    .HDR_W(TLP_HDR_W),
     .FUNC_NUM_W(8)
 ) rx_req_tlp(), tx_cpl_tlp();
 

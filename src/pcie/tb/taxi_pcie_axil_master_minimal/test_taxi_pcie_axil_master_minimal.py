@@ -374,7 +374,6 @@ def test_taxi_pcie_axil_master_minimal(request, pcie_data_w, axil_data_w):
     parameters = {}
 
     parameters['TLP_SEG_DATA_W'] = pcie_data_w
-    parameters['TLP_HDR_W'] = 128
     parameters['TLP_SEGS'] = 1
     parameters['AXIL_DATA_W'] = axil_data_w
     parameters['AXIL_ADDR_W'] = 64
