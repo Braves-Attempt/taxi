@@ -89,12 +89,9 @@ module fpga_core #
     taxi_axil_if.wr_mst      m_axil_rfdc_wr,
     taxi_axil_if.rd_mst      m_axil_rfdc_rd,
 
-    input  wire logic        axis_adc_clk[ADC_CNT],
-    input  wire logic        axis_adc_rst[ADC_CNT],
+    input  wire logic        axis_rfdc_clk,
+    input  wire logic        axis_rfdc_rst,
     taxi_axis_if.snk         s_axis_adc[ADC_CNT],
-
-    input  wire logic        axis_dac_clk[DAC_CNT],
-    input  wire logic        axis_dac_rst[DAC_CNT],
     taxi_axis_if.src         m_axis_dac[DAC_CNT]
 );
 
@@ -612,48 +609,9 @@ end
 
 for (genvar n = 0; n < ADC_CNT; n = n + 1) begin : rfdc_lpbk
 
-    taxi_axis_async_fifo #(
-        .DEPTH(256),
-        .RAM_PIPELINE(2),
-        .FRAME_FIFO(0)
-    )
-    ch_fifo (
-        /*
-         * AXI4-Stream input (sink)
-         */
-        .s_clk(axis_adc_clk[n]),
-        .s_rst(axis_adc_rst[n]),
-        .s_axis(s_axis_adc[n]),
-
-        /*
-         * AXI4-Stream output (source)
-         */
-        .m_clk(axis_dac_clk[n]),
-        .m_rst(axis_dac_rst[n]),
-        .m_axis(m_axis_dac[n]),
-
-        /*
-         * Pause
-         */
-        .s_pause_req(1'b0),
-        .s_pause_ack(),
-        .m_pause_req(1'b0),
-        .m_pause_ack(),
-
-        /*
-         * Status
-         */
-        .s_status_depth(),
-        .s_status_depth_commit(),
-        .s_status_overflow(),
-        .s_status_bad_frame(),
-        .s_status_good_frame(),
-        .m_status_depth(),
-        .m_status_depth_commit(),
-        .m_status_overflow(),
-        .m_status_bad_frame(),
-        .m_status_good_frame()
-    );
+    assign m_axis_dac[n].tdata = s_axis_adc[n].tdata;
+    assign m_axis_dac[n].tvalid = s_axis_adc[n].tvalid;
+    assign s_axis_adc[n].tready = m_axis_dac[n].tready;
 
 end
 

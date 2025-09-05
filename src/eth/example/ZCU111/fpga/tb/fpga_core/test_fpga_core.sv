@@ -78,8 +78,8 @@ taxi_axil_if #(
     .ADDR_W(18)
 ) m_axil_rfdc();
 
-logic axis_adc_clk[ADC_CNT];
-logic axis_adc_rst[ADC_CNT];
+logic axis_rfdc_clk;
+logic axis_rfdc_rst;
 
 taxi_axis_if #(
     .DATA_W(ADC_DATA_W),
@@ -90,9 +90,6 @@ taxi_axis_if #(
     .ID_EN(0),
     .DEST_EN(0)
 ) s_axis_adc[ADC_CNT]();
-
-logic axis_dac_clk[DAC_CNT];
-logic axis_dac_rst[DAC_CNT];
 
 taxi_axis_if #(
     .DATA_W(DAC_DATA_W),
@@ -172,12 +169,9 @@ uut (
     .m_axil_rfdc_wr(m_axil_rfdc),
     .m_axil_rfdc_rd(m_axil_rfdc),
 
-    .axis_adc_clk(axis_adc_clk),
-    .axis_adc_rst(axis_adc_rst),
+    .axis_rfdc_clk(axis_rfdc_clk),
+    .axis_rfdc_rst(axis_rfdc_rst),
     .s_axis_adc(s_axis_adc),
-
-    .axis_dac_clk(axis_dac_clk),
-    .axis_dac_rst(axis_dac_rst),
     .m_axis_dac(m_axis_dac)
 );
 

@@ -85,6 +85,9 @@ class TB:
         self.uart_source = UartSource(dut.uart_rxd, baud=3000000, bits=8, stop_bits=1)
         self.uart_sink = UartSink(dut.uart_txd, baud=3000000, bits=8, stop_bits=1)
 
+        cocotb.start_soon(Clock(dut.axil_rfdc_clk, 8, units="ns").start())
+        cocotb.start_soon(Clock(dut.axis_rfdc_clk, 4, units="ns").start())
+
         dut.btnu.setimmediatevalue(0)
         dut.btnl.setimmediatevalue(0)
         dut.btnd.setimmediatevalue(0)
@@ -96,16 +99,22 @@ class TB:
     async def init(self):
 
         self.dut.rst_125mhz.setimmediatevalue(0)
+        self.dut.axil_rfdc_rst.setimmediatevalue(0)
+        self.dut.axis_rfdc_rst.setimmediatevalue(0)
 
         for k in range(10):
             await RisingEdge(self.dut.clk_125mhz)
 
         self.dut.rst_125mhz.value = 1
+        self.dut.axil_rfdc_rst.value = 1
+        self.dut.axis_rfdc_rst.value = 1
 
         for k in range(10):
             await RisingEdge(self.dut.clk_125mhz)
 
         self.dut.rst_125mhz.value = 0
+        self.dut.axil_rfdc_rst.value = 0
+        self.dut.axis_rfdc_rst.value = 0
 
         for k in range(10):
             await RisingEdge(self.dut.clk_125mhz)
