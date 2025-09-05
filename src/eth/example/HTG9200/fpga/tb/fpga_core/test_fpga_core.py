@@ -111,7 +111,7 @@ class TB:
             await RisingEdge(self.dut.clk_125mhz)
 
     async def _run_refclk(self):
-        t = Timer(3.2, 'ns')
+        t = Timer(3.102, 'ns')
         val = 2**len(self.dut.eth_gty_mgt_refclk_p)-1
         while True:
             self.dut.eth_gty_mgt_refclk_p.value = val
