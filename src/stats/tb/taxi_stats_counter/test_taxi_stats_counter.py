@@ -69,7 +69,7 @@ async def run_test_acc(dut, idle_inserter=None, backpressure_inserter=None):
     tb = TB(dut)
 
     byte_lanes = tb.axil_master.read_if.byte_lanes
-    counter_size = max(dut.STAT_COUNT_W.value // 8, byte_lanes)
+    counter_size = max(int(dut.STAT_COUNT_W.value) // 8, byte_lanes)
 
     await tb.cycle_reset()
 
@@ -100,7 +100,7 @@ async def run_stress_test(dut, idle_inserter=None, backpressure_inserter=None):
     tb = TB(dut)
 
     byte_lanes = tb.axil_master.read_if.byte_lanes
-    counter_size = max(dut.STAT_COUNT_W.value // 8, byte_lanes)
+    counter_size = max(int(dut.STAT_COUNT_W.value) // 8, byte_lanes)
     stat_inc_width = len(dut.s_axis_stat.tdata)
     stat_id_width = len(dut.s_axis_stat.tid)
 
