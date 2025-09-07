@@ -318,11 +318,11 @@ class PsdpRamMasterWrite(Region):
         while True:
             await clock_edge_event
 
-            cmd_ready_sample = self.bus.wr_cmd_ready.value
-            done_sample = self.bus.wr_done.value
+            cmd_ready_sample = int(self.bus.wr_cmd_ready.value)
+            done_sample = int(self.bus.wr_done.value)
 
-            if self.reset is not None and self.reset.value:
-                self.bus.wr_cmd_valid.setimmediatevalue(0)
+            if self.reset is not None and int(self.reset.value):
+                self.bus.wr_cmd_valid.value = 0
                 continue
 
             # process segments
@@ -541,15 +541,15 @@ class PsdpRamMasterRead(Region):
         while True:
             await clock_edge_event
 
-            cmd_ready_sample = self.bus.rd_cmd_ready.value
-            resp_valid_sample = self.bus.rd_resp_valid.value
+            cmd_ready_sample = int(self.bus.rd_cmd_ready.value)
+            resp_valid_sample = int(self.bus.rd_resp_valid.value)
 
             if resp_valid_sample:
-                resp_data_sample = self.bus.rd_resp_data.value
+                resp_data_sample = int(self.bus.rd_resp_data.value)
 
-            if self.reset is not None and self.reset.value:
-                self.bus.rd_cmd_valid.setimmediatevalue(0)
-                self.bus.rd_resp_ready.setimmediatevalue(0)
+            if self.reset is not None and int(self.reset.value):
+                self.bus.rd_cmd_valid.value = 0
+                self.bus.rd_resp_ready.value = 0
                 cmd_valid = 0
                 resp_ready = 0
                 continue
@@ -698,16 +698,16 @@ class PsdpRamWrite(Memory):
 
             wr_done = 0
 
-            cmd_valid_sample = self.bus.wr_cmd_valid.value
+            cmd_valid_sample = int(self.bus.wr_cmd_valid.value)
 
             if cmd_valid_sample:
-                cmd_be_sample = self.bus.wr_cmd_be.value
-                cmd_addr_sample = self.bus.wr_cmd_addr.value
-                cmd_data_sample = self.bus.wr_cmd_data.value
+                cmd_be_sample = int(self.bus.wr_cmd_be.value)
+                cmd_addr_sample = int(self.bus.wr_cmd_addr.value)
+                cmd_data_sample = int(self.bus.wr_cmd_data.value)
 
-            if self.reset is not None and self.reset.value:
-                self.bus.wr_cmd_ready.setimmediatevalue(0)
-                self.bus.wr_done.setimmediatevalue(0)
+            if self.reset is not None and int(self.reset.value):
+                self.bus.wr_cmd_ready.value = 0
+                self.bus.wr_done.value = 0
                 continue
 
             # process segments
@@ -831,16 +831,16 @@ class PsdpRamRead(Memory):
         while True:
             await clock_edge_event
 
-            cmd_valid_sample = self.bus.rd_cmd_valid.value
+            cmd_valid_sample = int(self.bus.rd_cmd_valid.value)
 
             if cmd_valid_sample:
-                cmd_addr_sample = self.bus.rd_cmd_addr.value
+                cmd_addr_sample = int(self.bus.rd_cmd_addr.value)
 
-            resp_ready_sample = self.bus.rd_resp_ready.value
+            resp_ready_sample = int(self.bus.rd_resp_ready.value)
 
-            if self.reset is not None and self.reset.value:
-                self.bus.rd_cmd_ready.setimmediatevalue(0)
-                self.bus.rd_resp_valid.setimmediatevalue(0)
+            if self.reset is not None and int(self.reset.value):
+                self.bus.rd_cmd_ready.value = 0
+                self.bus.rd_resp_valid.value = 0
                 cmd_ready = 0
                 resp_valid = 0
                 continue
