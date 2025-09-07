@@ -126,7 +126,7 @@ def prbs_payload(length):
     return bytearray([next(gen) for x in range(length)])
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     for test in [run_test_tx, run_test_rx]:
         factory = TestFactory(test)

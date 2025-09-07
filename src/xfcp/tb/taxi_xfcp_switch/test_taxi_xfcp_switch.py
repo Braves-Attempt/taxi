@@ -168,7 +168,7 @@ def cycle_pause():
     return itertools.cycle([1, 1, 1, 0])
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     ports = len(cocotb.top.xfcp_dsp_us)
 

@@ -112,7 +112,7 @@ async def run_test_crc(dut, ref_crc):
     await RisingEdge(dut.clk)
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     if int(cocotb.top.LFSR_POLY.value) == 0x4c11db7:
         factory = TestFactory(run_test_crc)

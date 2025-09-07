@@ -150,7 +150,7 @@ async def run_test_scramble(dut, ref_scramble):
         await RisingEdge(dut.clk)
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     if int(cocotb.top.LFSR_POLY.value) == 0x021:
         factory = TestFactory(run_test_prbs)

@@ -138,7 +138,7 @@ def incrementing_payload(length):
     return bytearray(itertools.islice(itertools.cycle(range(256)), length))
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     for test in [run_test_tx, run_test_rx]:
         factory = TestFactory(test)

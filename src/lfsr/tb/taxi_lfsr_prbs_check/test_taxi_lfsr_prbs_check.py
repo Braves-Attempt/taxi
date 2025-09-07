@@ -146,7 +146,7 @@ async def run_test_prbs(dut, ref_prbs):
     assert err_cnt == 3
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     if int(cocotb.top.LFSR_POLY.value) == 0x021:
         factory = TestFactory(run_test_prbs)

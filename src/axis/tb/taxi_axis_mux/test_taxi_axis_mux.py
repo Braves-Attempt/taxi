@@ -140,7 +140,7 @@ def incrementing_payload(length):
     return bytearray(itertools.islice(itertools.cycle(range(256)), length))
 
 
-if cocotb.SIM_NAME:
+if getattr(cocotb, 'top', None) is not None:
 
     ports = len(cocotb.top.s_axis)
 
