@@ -455,7 +455,7 @@ class PtpTdSink(Reset):
         while True:
             await clock_edge_event
 
-            sdi_sample = self.data.value.integer
+            sdi_sample = int(self.data.value)
 
             # increment fns portion
             self.ts_fns += ((self.period_ns << 32) + self.period_fns)

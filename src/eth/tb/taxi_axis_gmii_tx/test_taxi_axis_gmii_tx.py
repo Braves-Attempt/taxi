@@ -194,7 +194,7 @@ async def run_test_underrun(dut, ifg=12, enable_gen=None, mii_sel=False):
     for k in range(200 if mii_sel else 100):
         while True:
             await RisingEdge(dut.clk)
-            if dut.clk_enable.value.integer:
+            if int(dut.clk_enable.value):
                 break
 
     tb.source.pause = True
@@ -202,7 +202,7 @@ async def run_test_underrun(dut, ifg=12, enable_gen=None, mii_sel=False):
     for k in range(10):
         while True:
             await RisingEdge(dut.clk)
-            if dut.clk_enable.value.integer:
+            if int(dut.clk_enable.value):
                 break
 
     tb.source.pause = False

@@ -138,11 +138,11 @@ async def run_test_rx(dut, gbx_cfg=None, payload_lengths=None, payload_data=None
     await tb.reset()
 
     tb.log.info("Wait for block lock")
-    while not dut.rx_block_lock.value.integer:
+    while not int(dut.rx_block_lock.value):
         await RisingEdge(dut.rx_clk)
 
     tb.log.info("Wait for PTP CDC lock")
-    while not dut.uut.rx_ptp_locked.value.integer:
+    while not int(dut.uut.rx_ptp_locked.value):
         await RisingEdge(dut.rx_clk)
     for k in range(1000):
         await RisingEdge(dut.rx_clk)
@@ -205,7 +205,7 @@ async def run_test_tx(dut, gbx_cfg=None, payload_lengths=None, payload_data=None
     await tb.reset()
 
     tb.log.info("Wait for PTP CDC lock")
-    while not dut.uut.tx_ptp_locked.value.integer:
+    while not int(dut.uut.tx_ptp_locked.value):
         await RisingEdge(dut.tx_clk)
     for k in range(1000):
         await RisingEdge(dut.tx_clk)
@@ -269,7 +269,7 @@ async def run_test_tx_alignment(dut, gbx_cfg=None, payload_data=None, ifg=12):
     await tb.reset()
 
     tb.log.info("Wait for PTP CDC lock")
-    while not dut.uut.tx_ptp_locked.value.integer:
+    while not int(dut.uut.tx_ptp_locked.value):
         await RisingEdge(dut.tx_clk)
     for k in range(1000):
         await RisingEdge(dut.tx_clk)
@@ -362,10 +362,10 @@ async def run_test_rx_frame_sync(dut, gbx_cfg=None):
     await tb.reset()
 
     tb.log.info("Wait for block lock")
-    while not dut.rx_block_lock.value.integer:
+    while not int(dut.rx_block_lock.value):
         await RisingEdge(dut.rx_clk)
 
-    assert dut.rx_block_lock.value.integer
+    assert int(dut.rx_block_lock.value)
 
     tb.log.info("Change offset")
     tb.serdes_source.bit_offset = 33
@@ -374,20 +374,20 @@ async def run_test_rx_frame_sync(dut, gbx_cfg=None):
         await RisingEdge(dut.rx_clk)
 
     tb.log.info("Check for lock lost")
-    assert not dut.rx_block_lock.value.integer
-    assert dut.rx_high_ber.value.integer
+    assert not int(dut.rx_block_lock.value)
+    assert int(dut.rx_high_ber.value)
 
     for k in range(800):
         await RisingEdge(dut.rx_clk)
 
     tb.log.info("Check for block lock")
-    assert dut.rx_block_lock.value.integer
+    assert int(dut.rx_block_lock.value)
 
     for k in range(300):
         await RisingEdge(dut.rx_clk)
 
     tb.log.info("Check for high BER deassert")
-    assert not dut.rx_high_ber.value.integer
+    assert not int(dut.rx_high_ber.value)
 
     await RisingEdge(dut.rx_clk)
     await RisingEdge(dut.rx_clk)

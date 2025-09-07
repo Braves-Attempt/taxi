@@ -95,11 +95,11 @@ class TB:
         rx_frame = await self.mcf_sink.recv()
 
         data = bytearray()
-        data.extend(rx_frame.eth_dst.integer.to_bytes(6, 'big'))
-        data.extend(rx_frame.eth_src.integer.to_bytes(6, 'big'))
-        data.extend(rx_frame.eth_type.integer.to_bytes(2, 'big'))
-        data.extend(rx_frame.opcode.integer.to_bytes(2, 'big'))
-        data.extend(rx_frame.params.integer.to_bytes(44, 'little'))
+        data.extend(int(rx_frame.eth_dst).to_bytes(6, 'big'))
+        data.extend(int(rx_frame.eth_src).to_bytes(6, 'big'))
+        data.extend(int(rx_frame.eth_type).to_bytes(2, 'big'))
+        data.extend(int(rx_frame.opcode).to_bytes(2, 'big'))
+        data.extend(int(rx_frame.params).to_bytes(44, 'little'))
 
         return Ether(data)
 

@@ -362,7 +362,7 @@ async def run_seconds_increment(dut):
     for k in range(3000):
         await RisingEdge(dut.clk)
 
-        if dut.output_pps.value.integer:
+        if int(dut.output_pps.value):
             saw_pps = True
             tb.log.info("Got PPS with sink ToD TS %s", tb.ptp_td_sink.get_ts_tod_ns())
             assert (tb.ptp_td_sink.get_ts_tod_s() - 1) < 6.4e-9

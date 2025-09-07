@@ -70,7 +70,7 @@ async def run_test_crc(dut, ref_crc):
     dut.data_in.value = int.from_bytes(block, 'little')
     await Timer(10, 'ns')
 
-    val = ~dut.state_out.value.integer & state_mask
+    val = ~int(dut.state_out.value) & state_mask
     ref = ref_crc(block)
 
     tb.log.info("CRC: 0x%x (ref: 0x%x)", val, ref)

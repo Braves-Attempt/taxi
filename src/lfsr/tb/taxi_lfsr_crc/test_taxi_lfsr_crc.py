@@ -83,7 +83,7 @@ async def run_test_crc(dut, ref_crc):
     dut.data_in_valid.value = 0
 
     await RisingEdge(dut.clk)
-    val = dut.crc_out.value.integer
+    val = int(dut.crc_out.value)
     ref = ref_crc(block)
 
     tb.log.info("CRC: 0x%x (ref: 0x%x)", val, ref)
@@ -101,7 +101,7 @@ async def run_test_crc(dut, ref_crc):
     dut.data_in_valid.value = 0
 
     await RisingEdge(dut.clk)
-    val = dut.crc_out.value.integer
+    val = int(dut.crc_out.value)
     ref = ref_crc(block)
 
     tb.log.info("CRC: 0x%x (ref: 0x%x)", val, ref)

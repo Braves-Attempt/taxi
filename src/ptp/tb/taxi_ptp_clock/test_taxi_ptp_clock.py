@@ -61,14 +61,14 @@ class TB:
         await RisingEdge(self.dut.clk)
 
     def get_output_ts_tod_ns(self):
-        ts = self.dut.output_ts_tod.value.integer
+        ts = int(self.dut.output_ts_tod.value)
         return Decimal(ts >> 48).scaleb(9) + (Decimal(ts & 0xffffffffffff) / Decimal(2**16))
 
     def get_output_ts_tod_s(self):
         return self.get_output_ts_tod_ns().scaleb(-9)
 
     def get_output_ts_rel_ns(self):
-        ts = self.dut.output_ts_rel.value.integer
+        ts = int(self.dut.output_ts_rel.value)
         return Decimal(ts) / Decimal(2**16)
 
     def get_output_ts_rel_s(self):
@@ -137,10 +137,10 @@ async def run_load_timestamps(dut):
 
     await RisingEdge(dut.clk)
 
-    assert dut.output_ts_tod.value.integer == 12345678
-    assert dut.output_ts_tod_step.value.integer == 1
-    assert dut.output_ts_rel.value.integer == 12345678
-    assert dut.output_ts_rel_step.value.integer == 1
+    assert int(dut.output_ts_tod.value) == 12345678
+    assert int(dut.output_ts_tod_step.value) == 1
+    assert int(dut.output_ts_rel.value) == 12345678
+    assert int(dut.output_ts_rel_step.value) == 1
 
     await RisingEdge(dut.clk)
 
@@ -207,7 +207,7 @@ async def run_seconds_increment(dut):
     for k in range(3000):
         await RisingEdge(dut.clk)
 
-        if dut.output_pps.value.integer:
+        if int(dut.output_pps.value):
             saw_pps = True
             tb.log.info("Got PPS with sink ToD TS %s", tb.get_output_ts_tod_ns())
             assert (tb.get_output_ts_tod_s() - 1) < 6.4e-9

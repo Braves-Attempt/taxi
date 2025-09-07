@@ -684,7 +684,7 @@ async def run_test_lfc(dut, port=0, ifg=12):
 
     dut.tx_lfc_req.value = 0
 
-    while not dut.rx_lfc_req.value.integer:
+    while not int(dut.rx_lfc_req.value):
         await RisingEdge(dut.xcvr_ctrl_clk)
 
     for k in range(200):

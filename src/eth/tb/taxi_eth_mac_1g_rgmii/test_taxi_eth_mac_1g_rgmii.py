@@ -254,7 +254,7 @@ async def run_test_tx_underrun(dut, ifg=12, speed=1000e6):
     for k in range(200 if speed != 1000e6 else 100):
         while True:
             await RisingEdge(dut.tx_clk)
-            if dut.uut.mac_gmii_tx_clk_en.value.integer:
+            if int(dut.uut.mac_gmii_tx_clk_en.value):
                 break
 
     tb.axis_source.pause = True
@@ -262,7 +262,7 @@ async def run_test_tx_underrun(dut, ifg=12, speed=1000e6):
     for k in range(10):
         while True:
             await RisingEdge(dut.tx_clk)
-            if dut.uut.mac_gmii_tx_clk_en.value.integer:
+            if int(dut.uut.mac_gmii_tx_clk_en.value):
                 break
 
     tb.axis_source.pause = False
@@ -409,7 +409,7 @@ async def run_test_lfc(dut, ifg=12, speed=1000e6):
 
     dut.tx_lfc_req.value = 0
 
-    while not dut.rx_lfc_req.value.integer:
+    while not int(dut.rx_lfc_req.value):
         await RisingEdge(dut.tx_clk)
 
     for k in range(1000):

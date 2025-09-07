@@ -85,7 +85,7 @@ async def run_test_prbs(dut, ref_prbs):
 
     for i in range(512):
         ref = int.from_bytes(bytes(next(gen)), 'big')
-        val = dut.data_out.value.integer
+        val = int(dut.data_out.value)
 
         tb.log.info("PRBS: 0x%x (ref: 0x%x)", val, ref)
 
@@ -141,7 +141,7 @@ async def run_test_scramble(dut, ref_scramble):
 
     for i in range(512):
         ref = int.from_bytes(bytes(next(scr_iter)), 'little')
-        val = dut.data_out.value.integer
+        val = int(dut.data_out.value)
 
         tb.log.info("PRBS: 0x%x (ref: 0x%x)", val, ref)
 

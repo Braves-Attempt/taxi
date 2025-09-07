@@ -99,11 +99,11 @@ class TB:
         self.clock_period = period
 
     def get_output_ts_tod_ns(self):
-        ts = self.dut.output_ts_tod.value.integer
+        ts = int(self.dut.output_ts_tod.value)
         return Decimal(ts >> 48).scaleb(9) + (Decimal(ts & 0xffffffffffff) / Decimal(2**16))
 
     def get_output_ts_rel_ns(self):
-        ts = self.dut.output_ts_rel.value.integer
+        ts = int(self.dut.output_ts_rel.value)
         return Decimal(ts) / Decimal(2**16)
 
     async def _run_clock(self):
@@ -198,7 +198,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -217,7 +217,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -236,7 +236,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -255,7 +255,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -274,7 +274,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -308,7 +308,7 @@ async def run_test(dut):
         for i in range(200):
             await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -342,7 +342,7 @@ async def run_test(dut):
         for i in range(20):
             await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -361,7 +361,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -380,7 +380,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -399,7 +399,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -433,7 +433,7 @@ async def run_test(dut):
         for i in range(20):
             await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -452,7 +452,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")
@@ -471,7 +471,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     rel_diffs, tod_diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference (rel): {mean(rel_diffs)} ns (stdev: {stdev(rel_diffs)})")

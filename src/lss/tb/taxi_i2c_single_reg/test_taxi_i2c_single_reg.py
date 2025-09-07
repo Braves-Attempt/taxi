@@ -58,7 +58,7 @@ async def run_test_write(dut):
     await tb.i2c_master.write(0x70, b'\x11\xAA')
     await tb.i2c_master.send_stop()
 
-    assert dut.data_out.value.integer == 0xAA
+    assert int(dut.data_out.value) == 0xAA
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -79,7 +79,7 @@ async def run_test_null_write(dut):
     await tb.i2c_master.write(0x70, b'')
     await tb.i2c_master.send_stop()
 
-    assert dut.data_out.value.integer == 0xAA
+    assert int(dut.data_out.value) == 0xAA
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -123,7 +123,7 @@ async def run_test_nack(dut):
     await tb.i2c_master.write(0x55, b'\x00\x04'+b'\xde\xad\xbe\xef')
     await tb.i2c_master.send_stop()
 
-    assert dut.data_out.value.integer == 0xAA
+    assert int(dut.data_out.value) == 0xAA
 
     # assert missed ack
 

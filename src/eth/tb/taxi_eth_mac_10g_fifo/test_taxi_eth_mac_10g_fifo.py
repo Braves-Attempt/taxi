@@ -96,7 +96,7 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12):
     await tb.reset()
 
     tb.log.info("Wait for PTP CDC lock")
-    while not dut.uut.rx_ptp_locked.value.integer:
+    while not int(dut.uut.rx_ptp_locked.value):
         await RisingEdge(dut.rx_clk)
     for k in range(1000):
         await RisingEdge(dut.rx_clk)
@@ -148,7 +148,7 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12):
     await tb.reset()
 
     tb.log.info("Wait for PTP CDC lock")
-    while not dut.uut.tx_ptp_locked.value.integer:
+    while not int(dut.uut.tx_ptp_locked.value):
         await RisingEdge(dut.tx_clk)
     for k in range(1000):
         await RisingEdge(dut.tx_clk)
@@ -201,7 +201,7 @@ async def run_test_tx_alignment(dut, payload_data=None, ifg=12):
     await tb.reset()
 
     tb.log.info("Wait for PTP CDC lock")
-    while not dut.uut.tx_ptp_locked.value.integer:
+    while not int(dut.uut.tx_ptp_locked.value):
         await RisingEdge(dut.tx_clk)
     for k in range(1000):
         await RisingEdge(dut.tx_clk)

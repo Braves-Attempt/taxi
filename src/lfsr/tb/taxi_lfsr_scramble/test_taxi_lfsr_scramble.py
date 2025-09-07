@@ -112,7 +112,7 @@ async def run_test_scramble(dut, ref_scramble):
         dut.data_in_valid.value = 1
         await RisingEdge(dut.clk)
 
-        val = dut.data_out.value.integer
+        val = int(dut.data_out.value)
 
         if not first:
             ref = int.from_bytes(bytes(next(scr_iter)), 'little')

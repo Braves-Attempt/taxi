@@ -350,7 +350,7 @@ async def run_stress_test(dut, idle_inserter=None, backpressure_inserter=None):
         cycles = 0
         while cycles < 100:
             cycles += 1
-            if not tb.source.idle() or dut.s_axis.tvalid.value.integer or dut.m_axis.tvalid.value.integer or dut.status_depth.value.integer:
+            if not tb.source.idle() or int(dut.s_axis.tvalid.value) or int(dut.m_axis.tvalid.value) or int(dut.status_depth.value):
                 cycles = 0
             await RisingEdge(dut.clk)
 

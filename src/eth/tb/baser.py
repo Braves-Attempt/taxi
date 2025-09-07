@@ -681,7 +681,7 @@ class BaseRSerdesSink:
                 self.gbx_seq = (self.gbx_seq + 1) % self.gbx_seq_len
 
                 if self.gbx_sync is not None:
-                    if self.gbx_sync.value.integer:
+                    if int(self.gbx_sync.value):
                         self.gbx_seq = 0
 
                 self.gbx_bit_cnt = max(self.gbx_bit_cnt - self.gbx_out_bits, 0)
@@ -701,7 +701,7 @@ class BaseRSerdesSink:
                     self.gbx_sync.value = 1
 
             if self.data_valid is not None:
-                if not self.data_valid.value.integer:
+                if not int(self.data_valid.value):
                     # stall
                     if self.gbx_seq_len and not sync_bad:
                         sync_bad = True
@@ -710,8 +710,8 @@ class BaseRSerdesSink:
 
             sync_bad = False
 
-            data_in = self.data.value.integer
-            hdr_in = self.hdr.value.integer
+            data_in = int(self.data.value)
+            hdr_in = int(self.hdr.value)
 
             if self.reverse:
                 # bit reverse

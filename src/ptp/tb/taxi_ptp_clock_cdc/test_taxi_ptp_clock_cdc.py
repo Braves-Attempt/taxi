@@ -105,14 +105,14 @@ class TB:
             self.dut.output_clk.value = 0
 
     def get_input_ts_ns(self):
-        ts = self.dut.input_ts.value.integer
+        ts = int(self.dut.input_ts.value)
         if len(self.dut.input_ts) == 64:
             return ts/2**16*1e-9
         else:
             return (ts >> 48) + ((ts & 0xffffffffffff)/2**16*1e-9)
 
     def get_output_ts_ns(self):
-        ts = self.dut.output_ts.value.integer
+        ts = int(self.dut.output_ts.value)
         if len(self.dut.output_ts) == 64:
             return ts/2**16*1e-9
         else:
@@ -177,7 +177,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -194,7 +194,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -211,7 +211,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -228,7 +228,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -245,7 +245,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -277,7 +277,7 @@ async def run_test(dut):
         for i in range(200):
             await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -309,7 +309,7 @@ async def run_test(dut):
         for i in range(20):
             await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -326,7 +326,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -343,7 +343,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -360,7 +360,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     # diffs = await tb.measure_ts_diff()
     # tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -392,7 +392,7 @@ async def run_test(dut):
     #     for i in range(20):
     #         await RisingEdge(dut.input_clk)
 
-    # assert tb.dut.locked.value.integer
+    # assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -409,7 +409,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")
@@ -426,7 +426,7 @@ async def run_test(dut):
     for i in range(100000):
         await RisingEdge(dut.input_clk)
 
-    assert tb.dut.locked.value.integer
+    assert int(tb.dut.locked.value)
 
     diffs = await tb.measure_ts_diff()
     tb.log.info(f"Difference: {mean(diffs)*1e9} ns (stdev: {stdev(diffs)*1e9})")

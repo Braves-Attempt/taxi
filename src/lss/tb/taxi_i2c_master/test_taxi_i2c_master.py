@@ -87,11 +87,11 @@ class TB:
         return (await self.data_sink.recv()).tdata
 
     async def i2c_wait(self):
-        if self.dut.busy.value.integer:
+        if int(self.dut.busy.value):
             await FallingEdge(self.dut.busy)
 
     async def i2c_wait_bus_idle(self):
-        if self.dut.bus_active.value.integer:
+        if int(self.dut.bus_active.value):
             await FallingEdge(self.dut.bus_active)
 
 

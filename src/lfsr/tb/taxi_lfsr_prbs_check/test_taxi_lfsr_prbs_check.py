@@ -96,7 +96,7 @@ async def run_test_prbs(dut, ref_prbs):
         dut.data_in.value = int.from_bytes(bytes(next(gen)), 'big')
         dut.data_in_valid.value = 1
 
-        val = dut.data_out.value.integer
+        val = int(dut.data_out.value)
 
         tb.log.info("Error value: 0x%x", val)
 
@@ -130,7 +130,7 @@ async def run_test_prbs(dut, ref_prbs):
         dut.data_in.value = val
         dut.data_in_valid.value = 1
 
-        val = dut.data_out.value.integer
+        val = int(dut.data_out.value)
 
         tb.log.info("Error value: 0x%x", val)
 
