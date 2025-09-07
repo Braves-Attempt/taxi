@@ -37,7 +37,7 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.fork(Clock(dut.clk, 8, units="ns").start())
+        cocotb.start_soon(Clock(dut.clk, 8, units="ns").start())
 
         self.cmd_source = AxiStreamSource(AxiStreamBus.from_entity(dut.s_axis_cmd), dut.clk, dut.rst)
 

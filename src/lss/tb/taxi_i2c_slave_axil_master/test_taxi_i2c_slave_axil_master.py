@@ -33,7 +33,7 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.fork(Clock(dut.clk, 8, units="ns").start())
+        cocotb.start_soon(Clock(dut.clk, 8, units="ns").start())
 
         self.i2c_master = I2cMaster(sda=dut.i2c_sda_o, sda_o=dut.i2c_sda_i,
             scl=dut.i2c_scl_o, scl_o=dut.i2c_scl_i, speed=4000e3)
