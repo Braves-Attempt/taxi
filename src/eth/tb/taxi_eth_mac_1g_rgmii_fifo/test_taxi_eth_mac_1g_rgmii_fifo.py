@@ -99,11 +99,11 @@ async def run_test_rx(dut, payload_lengths=None, payload_data=None, ifg=12, spee
         await RisingEdge(dut.rgmii_rx_clk)
 
     if speed == 10e6:
-        assert dut.link_speed == 0
+        assert int(dut.link_speed.value) == 0
     elif speed == 100e6:
-        assert dut.link_speed == 1
+        assert int(dut.link_speed.value) == 1
     else:
-        assert dut.link_speed == 2
+        assert int(dut.link_speed.value) == 2
 
     test_frames = [payload_data(x) for x in payload_lengths()]
 
@@ -138,11 +138,11 @@ async def run_test_tx(dut, payload_lengths=None, payload_data=None, ifg=12, spee
         await RisingEdge(dut.rgmii_rx_clk)
 
     if speed == 10e6:
-        assert dut.link_speed == 0
+        assert int(dut.link_speed.value) == 0
     elif speed == 100e6:
-        assert dut.link_speed == 1
+        assert int(dut.link_speed.value) == 1
     else:
-        assert dut.link_speed == 2
+        assert int(dut.link_speed.value) == 2
 
     test_frames = [payload_data(x) for x in payload_lengths()]
 

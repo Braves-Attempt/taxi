@@ -213,7 +213,7 @@ async def run_test_pfc(dut):
 
     await tb.send_mcf(test_pkt)
 
-    while dut.rx_pfc_req.value == 0x00:
+    while int(dut.rx_pfc_req.value) == 0x00:
         await RisingEdge(dut.clk)
     dut.rx_pfc_ack.value = 0x01
 
@@ -299,14 +299,14 @@ async def run_test_pfc(dut):
 
     await tb.send_mcf(test_pkt)
 
-    while dut.rx_pfc_req.value != 0xff:
+    while int(dut.rx_pfc_req.value) != 0xff:
         await RisingEdge(dut.clk)
     dut.rx_pfc_ack.value = 0xff
 
     start_time = get_sim_time('sec')
 
     for k in range(8):
-        while dut.rx_pfc_req.value & (1 << k) != 0x00:
+        while int(dut.rx_pfc_req.value) & (1 << k) != 0x00:
             await RisingEdge(dut.clk)
         stop_time = get_sim_time('sec')
 
@@ -326,7 +326,7 @@ async def run_test_pfc(dut):
 
     await tb.send_mcf(test_pkt)
 
-    while dut.rx_pfc_req.value & 0x01 == 0x00:
+    while int(dut.rx_pfc_req.value) & 0x01 == 0x00:
         await RisingEdge(dut.clk)
     dut.rx_pfc_ack.value = 0x01
 
@@ -337,7 +337,7 @@ async def run_test_pfc(dut):
 
     await tb.send_mcf(test_pkt)
 
-    while dut.rx_pfc_req.value & 0x02 == 0x00:
+    while int(dut.rx_pfc_req.value) & 0x02 == 0x00:
         await RisingEdge(dut.clk)
     dut.rx_pfc_ack.value = 0x03
 
@@ -346,7 +346,7 @@ async def run_test_pfc(dut):
 
     await tb.send_mcf(test_pkt)
 
-    while dut.rx_pfc_req.value:
+    while int(dut.rx_pfc_req.value):
         await RisingEdge(dut.clk)
     stop_time = get_sim_time('sec')
 
