@@ -26,6 +26,7 @@ To facilitate the dual-license model, contributions to the project can only be a
 
 *  APB
     *  SV interface for APB
+    *  Single-port RAM
 *  AXI
     *  SV interface for AXI
     *  AXI to AXI lite adapter
