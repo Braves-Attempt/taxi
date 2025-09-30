@@ -75,11 +75,13 @@ wire [VALID_ADDR_W-1:0] s_axil_araddr_valid = VALID_ADDR_W'(s_axil_rd.araddr >> 
 assign s_axil_wr.awready = s_axil_awready_reg;
 assign s_axil_wr.wready = s_axil_wready_reg;
 assign s_axil_wr.bresp = 2'b00;
+assign s_axil_wr.buser = '0;
 assign s_axil_wr.bvalid = s_axil_bvalid_reg;
 
 assign s_axil_rd.arready = s_axil_arready_reg;
 assign s_axil_rd.rdata = PIPELINE_OUTPUT ? s_axil_rdata_pipe_reg : s_axil_rdata_reg;
 assign s_axil_rd.rresp = 2'b00;
+assign s_axil_rd.ruser = '0;
 assign s_axil_rd.rvalid = PIPELINE_OUTPUT ? s_axil_rvalid_pipe_reg : s_axil_rvalid_reg;
 
 initial begin

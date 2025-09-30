@@ -108,21 +108,25 @@ wire [VALID_ADDR_W-1:0] s_axil_b_araddr_valid = VALID_ADDR_W'(s_axil_rd_b.araddr
 assign s_axil_wr_a.awready = s_axil_a_awready_reg;
 assign s_axil_wr_a.wready = s_axil_a_wready_reg;
 assign s_axil_wr_a.bresp = 2'b00;
+assign s_axil_wr_a.buser = '0;
 assign s_axil_wr_a.bvalid = s_axil_a_bvalid_reg;
 
 assign s_axil_rd_a.arready = s_axil_a_arready_reg;
 assign s_axil_rd_a.rdata = PIPELINE_OUTPUT ? s_axil_a_rdata_pipe_reg : s_axil_a_rdata_reg;
 assign s_axil_rd_a.rresp = 2'b00;
+assign s_axil_rd_a.ruser = '0;
 assign s_axil_rd_a.rvalid = PIPELINE_OUTPUT ? s_axil_a_rvalid_pipe_reg : s_axil_a_rvalid_reg;
 
 assign s_axil_wr_b.awready = s_axil_b_awready_reg;
 assign s_axil_wr_b.wready = s_axil_b_wready_reg;
 assign s_axil_wr_b.bresp = 2'b00;
+assign s_axil_wr_b.buser = '0;
 assign s_axil_wr_b.bvalid = s_axil_b_bvalid_reg;
 
 assign s_axil_rd_b.arready = s_axil_b_arready_reg;
 assign s_axil_rd_b.rdata = PIPELINE_OUTPUT ? s_axil_b_rdata_pipe_reg : s_axil_b_rdata_reg;
 assign s_axil_rd_b.rresp = 2'b00;
+assign s_axil_rd_b.ruser = '0;
 assign s_axil_rd_b.rvalid = PIPELINE_OUTPUT ? s_axil_b_rvalid_pipe_reg : s_axil_b_rvalid_reg;
 
 initial begin
