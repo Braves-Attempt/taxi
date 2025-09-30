@@ -107,6 +107,7 @@ assign s_axi_wr.awready = s_axi_awready_reg;
 assign s_axi_wr.wready = s_axi_wready_reg;
 assign s_axi_wr.bid = s_axi_bid_reg;
 assign s_axi_wr.bresp = 2'b00;
+assign s_axi_wr.buser = '0;
 assign s_axi_wr.bvalid = s_axi_bvalid_reg;
 
 assign s_axi_rd.arready = s_axi_arready_reg;
@@ -114,6 +115,7 @@ assign s_axi_rd.rid = PIPELINE_OUTPUT ? s_axi_rid_pipe_reg : s_axi_rid_reg;
 assign s_axi_rd.rdata = PIPELINE_OUTPUT ? s_axi_rdata_pipe_reg : s_axi_rdata_reg;
 assign s_axi_rd.rresp = 2'b00;
 assign s_axi_rd.rlast = PIPELINE_OUTPUT ? s_axi_rlast_pipe_reg : s_axi_rlast_reg;
+assign s_axi_rd.ruser = '0;
 assign s_axi_rd.rvalid = PIPELINE_OUTPUT ? s_axi_rvalid_pipe_reg : s_axi_rvalid_reg;
 
 initial begin
