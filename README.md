@@ -129,6 +129,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  Signal synchronizer
 *  Extensible FPGA control protocol (XFCP)
     *  XFCP UART interface
+    *  XFCP APB module
     *  XFCP AXI module
     *  XFCP AXI lite module
     *  XFCP I2C master module
