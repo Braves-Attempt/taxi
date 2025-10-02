@@ -59,13 +59,13 @@ logic uart_cts;
 logic uart_rst_n;
 logic uart_suspend_n;
 
-logic [GTY_CNT-1:0] eth_gty_tx_p;
-logic [GTY_CNT-1:0] eth_gty_tx_n;
-logic [GTY_CNT-1:0] eth_gty_rx_p;
-logic [GTY_CNT-1:0] eth_gty_rx_n;
-logic [GTY_CLK_CNT-1:0] eth_gty_mgt_refclk_p;
-logic [GTY_CLK_CNT-1:0] eth_gty_mgt_refclk_n;
-logic [GTY_CLK_CNT-1:0] eth_gty_mgt_refclk_out;
+logic eth_gty_tx_p[GTY_CNT];
+logic eth_gty_tx_n[GTY_CNT];
+logic eth_gty_rx_p[GTY_CNT];
+logic eth_gty_rx_n[GTY_CNT];
+logic eth_gty_mgt_refclk_p[GTY_CLK_CNT];
+logic eth_gty_mgt_refclk_n[GTY_CLK_CNT];
+logic eth_gty_mgt_refclk_out[GTY_CLK_CNT];
 
 logic [PORT_CNT-1:0] eth_port_resetl;
 logic [PORT_CNT-1:0] eth_port_modprsl;

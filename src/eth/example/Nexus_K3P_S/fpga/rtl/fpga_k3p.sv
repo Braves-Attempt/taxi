@@ -25,22 +25,22 @@ module fpga #
     /*
      * GPIO
      */
-    output wire logic [1:0][1:0]  sfp_led,
-    output wire logic [1:0]       sma_led,
+    output wire logic [1:0]  sfp_led[2],
+    output wire logic [1:0]  sma_led,
 
     /*
      * Ethernet: SFP+
      */
-    input  wire logic [1:0]       sfp_rx_p,
-    input  wire logic [1:0]       sfp_rx_n,
-    output wire logic [1:0]       sfp_tx_p,
-    output wire logic [1:0]       sfp_tx_n,
-    input  wire logic             sfp_mgt_refclk_p,
-    input  wire logic             sfp_mgt_refclk_n,
-    output wire logic [1:0]       sfp_tx_disable,
-    input  wire logic [1:0]       sfp_npres,
-    input  wire logic [1:0]       sfp_los,
-    output wire logic [1:0]       sfp_rs
+    input  wire logic        sfp_rx_p[2],
+    input  wire logic        sfp_rx_n[2],
+    output wire logic        sfp_tx_p[2],
+    output wire logic        sfp_tx_n[2],
+    input  wire logic        sfp_mgt_refclk_p,
+    input  wire logic        sfp_mgt_refclk_n,
+    output wire logic [1:0]  sfp_tx_disable,
+    input  wire logic [1:0]  sfp_npres,
+    input  wire logic [1:0]  sfp_los,
+    output wire logic [1:0]  sfp_rs
 );
 
 // Clock and reset

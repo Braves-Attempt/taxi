@@ -61,10 +61,10 @@ logic uart_txd;
 logic uart_rts;
 logic uart_cts;
 
-logic [3:0] sfp_rx_p;
-logic [3:0] sfp_rx_n;
-logic [3:0] sfp_tx_p;
-logic [3:0] sfp_tx_n;
+logic sfp_rx_p[4];
+logic sfp_rx_n[4];
+logic sfp_tx_p[4];
+logic sfp_tx_n[4];
 logic sfp_mgt_refclk_0_p;
 logic sfp_mgt_refclk_0_n;
 

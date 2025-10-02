@@ -64,10 +64,10 @@ module fpga #
     /*
      * Ethernet: QSFP28
      */
-    input  wire logic [3:0]  qsfp_rx_p,
-    input  wire logic [3:0]  qsfp_rx_n,
-    output wire logic [3:0]  qsfp_tx_p,
-    output wire logic [3:0]  qsfp_tx_n,
+    input  wire logic        qsfp_rx_p[4],
+    input  wire logic        qsfp_rx_n[4],
+    output wire logic        qsfp_tx_p[4],
+    output wire logic        qsfp_tx_n[4],
     input  wire logic        qsfp_mgt_refclk_0_p,
     input  wire logic        qsfp_mgt_refclk_0_n,
     // input  wire logic        qsfp_mgt_refclk_1_p,

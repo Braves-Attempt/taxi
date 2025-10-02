@@ -49,6 +49,9 @@ class TB:
         self.qsfp_sources = []
         self.qsfp_sinks = []
 
+        for clk in dut.eth_gty_mgt_refclk_p:
+            cocotb.start_soon(Clock(clk, 6.4, units="ns").start())
+
         for inst in dut.gty_quad:
             for ch in inst.mac_inst.ch:
                 gt_inst = ch.ch_inst.gt.gt_inst
@@ -88,8 +91,6 @@ class TB:
         dut.eth_port_modprsl.setimmediatevalue(0)
         dut.eth_port_intl.setimmediatevalue(0)
 
-        cocotb.start_soon(self._run_refclk())
-
     async def init(self):
 
         self.dut.rst_125mhz.setimmediatevalue(0)
@@ -106,15 +107,6 @@ class TB:
 
         for k in range(10):
             await RisingEdge(self.dut.clk_125mhz)
-
-    async def _run_refclk(self):
-        t = Timer(3.2, 'ns')
-        val = 2**len(self.dut.eth_gty_mgt_refclk_p)-1
-        while True:
-            self.dut.eth_gty_mgt_refclk_p.value = val
-            await t
-            self.dut.eth_gty_mgt_refclk_p.value = 0
-            await t
 
 
 async def mac_test(tb, source, sink):

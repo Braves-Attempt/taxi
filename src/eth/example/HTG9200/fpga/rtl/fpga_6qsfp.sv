@@ -66,90 +66,90 @@ module fpga #
     /*
      * Ethernet: QSFP28
      */
-    output wire logic [3:0] qsfp_1_tx_p,
-    output wire logic [3:0] qsfp_1_tx_n,
-    input  wire logic [3:0] qsfp_1_rx_p,
-    input  wire logic [3:0] qsfp_1_rx_n,
+    output wire logic       qsfp_1_tx_p[4],
+    output wire logic       qsfp_1_tx_n[4],
+    input  wire logic       qsfp_1_rx_p[4],
+    input  wire logic       qsfp_1_rx_n[4],
     input  wire logic       qsfp_1_mgt_refclk_p,
     input  wire logic       qsfp_1_mgt_refclk_n,
     output wire logic       qsfp_1_resetl,
     input  wire logic       qsfp_1_modprsl,
     input  wire logic       qsfp_1_intl,
 
-    output wire logic [3:0] qsfp_2_tx_p,
-    output wire logic [3:0] qsfp_2_tx_n,
-    input  wire logic [3:0] qsfp_2_rx_p,
-    input  wire logic [3:0] qsfp_2_rx_n,
+    output wire logic       qsfp_2_tx_p[4],
+    output wire logic       qsfp_2_tx_n[4],
+    input  wire logic       qsfp_2_rx_p[4],
+    input  wire logic       qsfp_2_rx_n[4],
     input  wire logic       qsfp_2_mgt_refclk_p,
     input  wire logic       qsfp_2_mgt_refclk_n,
     output wire logic       qsfp_2_resetl,
     input  wire logic       qsfp_2_modprsl,
     input  wire logic       qsfp_2_intl,
 
-    output wire logic [3:0] qsfp_3_tx_p,
-    output wire logic [3:0] qsfp_3_tx_n,
-    input  wire logic [3:0] qsfp_3_rx_p,
-    input  wire logic [3:0] qsfp_3_rx_n,
+    output wire logic       qsfp_3_tx_p[4],
+    output wire logic       qsfp_3_tx_n[4],
+    input  wire logic       qsfp_3_rx_p[4],
+    input  wire logic       qsfp_3_rx_n[4],
     input  wire logic       qsfp_3_mgt_refclk_p,
     input  wire logic       qsfp_3_mgt_refclk_n,
     output wire logic       qsfp_3_resetl,
     input  wire logic       qsfp_3_modprsl,
     input  wire logic       qsfp_3_intl,
 
-    output wire logic [3:0] qsfp_4_tx_p,
-    output wire logic [3:0] qsfp_4_tx_n,
-    input  wire logic [3:0] qsfp_4_rx_p,
-    input  wire logic [3:0] qsfp_4_rx_n,
+    output wire logic       qsfp_4_tx_p[4],
+    output wire logic       qsfp_4_tx_n[4],
+    input  wire logic       qsfp_4_rx_p[4],
+    input  wire logic       qsfp_4_rx_n[4],
     input  wire logic       qsfp_4_mgt_refclk_p,
     input  wire logic       qsfp_4_mgt_refclk_n,
     output wire logic       qsfp_4_resetl,
     input  wire logic       qsfp_4_modprsl,
     input  wire logic       qsfp_4_intl,
 
-    output wire logic [3:0] qsfp_5_tx_p,
-    output wire logic [3:0] qsfp_5_tx_n,
-    input  wire logic [3:0] qsfp_5_rx_p,
-    input  wire logic [3:0] qsfp_5_rx_n,
+    output wire logic       qsfp_5_tx_p[4],
+    output wire logic       qsfp_5_tx_n[4],
+    input  wire logic       qsfp_5_rx_p[4],
+    input  wire logic       qsfp_5_rx_n[4],
     input  wire logic       qsfp_5_mgt_refclk_p,
     input  wire logic       qsfp_5_mgt_refclk_n,
     output wire logic       qsfp_5_resetl,
     input  wire logic       qsfp_5_modprsl,
     input  wire logic       qsfp_5_intl,
 
-    output wire logic [3:0] qsfp_6_tx_p,
-    output wire logic [3:0] qsfp_6_tx_n,
-    input  wire logic [3:0] qsfp_6_rx_p,
-    input  wire logic [3:0] qsfp_6_rx_n,
+    output wire logic       qsfp_6_tx_p[4],
+    output wire logic       qsfp_6_tx_n[4],
+    input  wire logic       qsfp_6_rx_p[4],
+    input  wire logic       qsfp_6_rx_n[4],
     input  wire logic       qsfp_6_mgt_refclk_p,
     input  wire logic       qsfp_6_mgt_refclk_n,
     output wire logic       qsfp_6_resetl,
     input  wire logic       qsfp_6_modprsl,
     input  wire logic       qsfp_6_intl,
 
-    output wire logic [3:0] qsfp_7_tx_p,
-    output wire logic [3:0] qsfp_7_tx_n,
-    input  wire logic [3:0] qsfp_7_rx_p,
-    input  wire logic [3:0] qsfp_7_rx_n,
+    output wire logic       qsfp_7_tx_p[4],
+    output wire logic       qsfp_7_tx_n[4],
+    input  wire logic       qsfp_7_rx_p[4],
+    input  wire logic       qsfp_7_rx_n[4],
     input  wire logic       qsfp_7_mgt_refclk_p,
     input  wire logic       qsfp_7_mgt_refclk_n,
     output wire logic       qsfp_7_resetl,
     input  wire logic       qsfp_7_modprsl,
     input  wire logic       qsfp_7_intl,
 
-    output wire logic [3:0] qsfp_8_tx_p,
-    output wire logic [3:0] qsfp_8_tx_n,
-    input  wire logic [3:0] qsfp_8_rx_p,
-    input  wire logic [3:0] qsfp_8_rx_n,
+    output wire logic       qsfp_8_tx_p[4],
+    output wire logic       qsfp_8_tx_n[4],
+    input  wire logic       qsfp_8_rx_p[4],
+    input  wire logic       qsfp_8_rx_n[4],
     input  wire logic       qsfp_8_mgt_refclk_p,
     input  wire logic       qsfp_8_mgt_refclk_n,
     output wire logic       qsfp_8_resetl,
     input  wire logic       qsfp_8_modprsl,
     input  wire logic       qsfp_8_intl,
 
-    output wire logic [3:0] qsfp_9_tx_p,
-    output wire logic [3:0] qsfp_9_tx_n,
-    input  wire logic [3:0] qsfp_9_rx_p,
-    input  wire logic [3:0] qsfp_9_rx_n,
+    output wire logic       qsfp_9_tx_p[4],
+    output wire logic       qsfp_9_tx_n[4],
+    input  wire logic       qsfp_9_rx_p[4],
+    input  wire logic       qsfp_9_rx_n[4],
     input  wire logic       qsfp_9_mgt_refclk_p,
     input  wire logic       qsfp_9_mgt_refclk_n,
     output wire logic       qsfp_9_resetl,
@@ -159,10 +159,10 @@ module fpga #
     /*
      * Ethernet: QSFP28 via HTG 6x QSFP28 FMC+ adapter
      */
-    output wire logic [3:0] fmc_qsfp_1_tx_p,
-    output wire logic [3:0] fmc_qsfp_1_tx_n,
-    input  wire logic [3:0] fmc_qsfp_1_rx_p,
-    input  wire logic [3:0] fmc_qsfp_1_rx_n,
+    output wire logic       fmc_qsfp_1_tx_p[4],
+    output wire logic       fmc_qsfp_1_tx_n[4],
+    input  wire logic       fmc_qsfp_1_rx_p[4],
+    input  wire logic       fmc_qsfp_1_rx_n[4],
     input  wire logic       fmc_qsfp_1_mgt_refclk_p,
     input  wire logic       fmc_qsfp_1_mgt_refclk_n,
     output wire logic       fmc_qsfp_1_modsell,
@@ -171,10 +171,10 @@ module fpga #
     input  wire logic       fmc_qsfp_1_intl,
     output wire logic       fmc_qsfp_1_lpmode,
 
-    output wire logic [3:0] fmc_qsfp_2_tx_p,
-    output wire logic [3:0] fmc_qsfp_2_tx_n,
-    input  wire logic [3:0] fmc_qsfp_2_rx_p,
-    input  wire logic [3:0] fmc_qsfp_2_rx_n,
+    output wire logic       fmc_qsfp_2_tx_p[4],
+    output wire logic       fmc_qsfp_2_tx_n[4],
+    input  wire logic       fmc_qsfp_2_rx_p[4],
+    input  wire logic       fmc_qsfp_2_rx_n[4],
     input  wire logic       fmc_qsfp_2_mgt_refclk_p,
     input  wire logic       fmc_qsfp_2_mgt_refclk_n,
     output wire logic       fmc_qsfp_2_modsell,
@@ -183,10 +183,10 @@ module fpga #
     input  wire logic       fmc_qsfp_2_intl,
     output wire logic       fmc_qsfp_2_lpmode,
 
-    output wire logic [3:0] fmc_qsfp_3_tx_p,
-    output wire logic [3:0] fmc_qsfp_3_tx_n,
-    input  wire logic [3:0] fmc_qsfp_3_rx_p,
-    input  wire logic [3:0] fmc_qsfp_3_rx_n,
+    output wire logic       fmc_qsfp_3_tx_p[4],
+    output wire logic       fmc_qsfp_3_tx_n[4],
+    input  wire logic       fmc_qsfp_3_rx_p[4],
+    input  wire logic       fmc_qsfp_3_rx_n[4],
     input  wire logic       fmc_qsfp_3_mgt_refclk_p,
     input  wire logic       fmc_qsfp_3_mgt_refclk_n,
     output wire logic       fmc_qsfp_3_modsell,
@@ -195,10 +195,10 @@ module fpga #
     input  wire logic       fmc_qsfp_3_intl,
     output wire logic       fmc_qsfp_3_lpmode,
 
-    output wire logic [3:0] fmc_qsfp_4_tx_p,
-    output wire logic [3:0] fmc_qsfp_4_tx_n,
-    input  wire logic [3:0] fmc_qsfp_4_rx_p,
-    input  wire logic [3:0] fmc_qsfp_4_rx_n,
+    output wire logic       fmc_qsfp_4_tx_p[4],
+    output wire logic       fmc_qsfp_4_tx_n[4],
+    input  wire logic       fmc_qsfp_4_rx_p[4],
+    input  wire logic       fmc_qsfp_4_rx_n[4],
     input  wire logic       fmc_qsfp_4_mgt_refclk_p,
     input  wire logic       fmc_qsfp_4_mgt_refclk_n,
     output wire logic       fmc_qsfp_4_modsell,
@@ -207,10 +207,10 @@ module fpga #
     input  wire logic       fmc_qsfp_4_intl,
     output wire logic       fmc_qsfp_4_lpmode,
 
-    output wire logic [3:0] fmc_qsfp_5_tx_p,
-    output wire logic [3:0] fmc_qsfp_5_tx_n,
-    input  wire logic [3:0] fmc_qsfp_5_rx_p,
-    input  wire logic [3:0] fmc_qsfp_5_rx_n,
+    output wire logic       fmc_qsfp_5_tx_p[4],
+    output wire logic       fmc_qsfp_5_tx_n[4],
+    input  wire logic       fmc_qsfp_5_rx_p[4],
+    input  wire logic       fmc_qsfp_5_rx_n[4],
     input  wire logic       fmc_qsfp_5_mgt_refclk_p,
     input  wire logic       fmc_qsfp_5_mgt_refclk_n,
     output wire logic       fmc_qsfp_5_modsell,
@@ -219,10 +219,10 @@ module fpga #
     input  wire logic       fmc_qsfp_5_intl,
     output wire logic       fmc_qsfp_5_lpmode,
 
-    output wire logic [3:0] fmc_qsfp_6_tx_p,
-    output wire logic [3:0] fmc_qsfp_6_tx_n,
-    input  wire logic [3:0] fmc_qsfp_6_rx_p,
-    input  wire logic [3:0] fmc_qsfp_6_rx_n,
+    output wire logic       fmc_qsfp_6_tx_p[4],
+    output wire logic       fmc_qsfp_6_tx_n[4],
+    input  wire logic       fmc_qsfp_6_rx_p[4],
+    input  wire logic       fmc_qsfp_6_rx_n[4],
     input  wire logic       fmc_qsfp_6_mgt_refclk_p,
     input  wire logic       fmc_qsfp_6_mgt_refclk_n,
     output wire logic       fmc_qsfp_6_modsell,
@@ -405,13 +405,19 @@ localparam GTY_QUAD_CNT = PORT_CNT;
 localparam GTY_CNT = GTY_QUAD_CNT*4;
 localparam GTY_CLK_CNT = GTY_QUAD_CNT;
 
+wire eth_gty_tx_p[GTY_CNT];
+wire eth_gty_tx_n[GTY_CNT];
+wire eth_gty_rx_p[GTY_CNT];
+wire eth_gty_rx_n[GTY_CNT];
+wire eth_gty_mgt_refclk_p[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_n[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_out[GTY_CLK_CNT];
+
 assign clk_gty2_fdec = 1'b0;
 assign clk_gty2_finc = 1'b0;
 assign clk_gty2_oe_n = 1'b0;
 assign clk_gty2_sync_n = 1'b1;
 assign clk_gty2_rst_n = !rst_125mhz_int;
-
-wire [PORT_CNT-1:0] eth_gty_mgt_refclk_out;
 
 // forward MGT ref clock to PLL on FMC+ board
 OBUFDS obufds_fmc_refclk_inst (
@@ -433,6 +439,112 @@ assign fmc_clk_sync_n = 1'b1;
 assign fmc_clk_rst_n = !rst_125mhz_int;
 
 wire eth_pll_locked = clk_gty2_lol_n && fmc_clk_lol_n;
+
+assign qsfp_1_tx_p = eth_gty_tx_p[4*0 +: 4];
+assign qsfp_1_tx_n = eth_gty_tx_n[4*0 +: 4];
+assign eth_gty_rx_p[4*0 +: 4] = qsfp_1_rx_p;
+assign eth_gty_rx_n[4*0 +: 4] = qsfp_1_rx_n;
+
+assign qsfp_2_tx_p = eth_gty_tx_p[4*1 +: 4];
+assign qsfp_2_tx_n = eth_gty_tx_n[4*1 +: 4];
+assign eth_gty_rx_p[4*1 +: 4] = qsfp_2_rx_p;
+assign eth_gty_rx_n[4*1 +: 4] = qsfp_2_rx_n;
+
+assign qsfp_3_tx_p = eth_gty_tx_p[4*2 +: 4];
+assign qsfp_3_tx_n = eth_gty_tx_n[4*2 +: 4];
+assign eth_gty_rx_p[4*2 +: 4] = qsfp_3_rx_p;
+assign eth_gty_rx_n[4*2 +: 4] = qsfp_3_rx_n;
+
+assign qsfp_4_tx_p = eth_gty_tx_p[4*3 +: 4];
+assign qsfp_4_tx_n = eth_gty_tx_n[4*3 +: 4];
+assign eth_gty_rx_p[4*3 +: 4] = qsfp_4_rx_p;
+assign eth_gty_rx_n[4*3 +: 4] = qsfp_4_rx_n;
+
+assign qsfp_5_tx_p = eth_gty_tx_p[4*4 +: 4];
+assign qsfp_5_tx_n = eth_gty_tx_n[4*4 +: 4];
+assign eth_gty_rx_p[4*4 +: 4] = qsfp_5_rx_p;
+assign eth_gty_rx_n[4*4 +: 4] = qsfp_5_rx_n;
+
+assign qsfp_6_tx_p = eth_gty_tx_p[4*5 +: 4];
+assign qsfp_6_tx_n = eth_gty_tx_n[4*5 +: 4];
+assign eth_gty_rx_p[4*5 +: 4] = qsfp_6_rx_p;
+assign eth_gty_rx_n[4*5 +: 4] = qsfp_6_rx_n;
+
+assign qsfp_7_tx_p = eth_gty_tx_p[4*6 +: 4];
+assign qsfp_7_tx_n = eth_gty_tx_n[4*6 +: 4];
+assign eth_gty_rx_p[4*6 +: 4] = qsfp_7_rx_p;
+assign eth_gty_rx_n[4*6 +: 4] = qsfp_7_rx_n;
+
+assign qsfp_8_tx_p = eth_gty_tx_p[4*7 +: 4];
+assign qsfp_8_tx_n = eth_gty_tx_n[4*7 +: 4];
+assign eth_gty_rx_p[4*7 +: 4] = qsfp_8_rx_p;
+assign eth_gty_rx_n[4*7 +: 4] = qsfp_8_rx_n;
+
+assign qsfp_9_tx_p = eth_gty_tx_p[4*8 +: 4];
+assign qsfp_9_tx_n = eth_gty_tx_n[4*8 +: 4];
+assign eth_gty_rx_p[4*8 +: 4] = qsfp_9_rx_p;
+assign eth_gty_rx_n[4*8 +: 4] = qsfp_9_rx_n;
+
+assign fmc_qsfp_1_tx_p = eth_gty_tx_p[4*9 +: 4];
+assign fmc_qsfp_1_tx_n = eth_gty_tx_n[4*9 +: 4];
+assign eth_gty_rx_p[4*9 +: 4] = fmc_qsfp_1_rx_p;
+assign eth_gty_rx_n[4*9 +: 4] = fmc_qsfp_1_rx_n;
+
+assign fmc_qsfp_2_tx_p = eth_gty_tx_p[4*10 +: 4];
+assign fmc_qsfp_2_tx_n = eth_gty_tx_n[4*10 +: 4];
+assign eth_gty_rx_p[4*10 +: 4] = fmc_qsfp_2_rx_p;
+assign eth_gty_rx_n[4*10 +: 4] = fmc_qsfp_2_rx_n;
+
+assign fmc_qsfp_3_tx_p = eth_gty_tx_p[4*11 +: 4];
+assign fmc_qsfp_3_tx_n = eth_gty_tx_n[4*11 +: 4];
+assign eth_gty_rx_p[4*11 +: 4] = fmc_qsfp_3_rx_p;
+assign eth_gty_rx_n[4*11 +: 4] = fmc_qsfp_3_rx_n;
+
+assign fmc_qsfp_4_tx_p = eth_gty_tx_p[4*12 +: 4];
+assign fmc_qsfp_4_tx_n = eth_gty_tx_n[4*12 +: 4];
+assign eth_gty_rx_p[4*12 +: 4] = fmc_qsfp_4_rx_p;
+assign eth_gty_rx_n[4*12 +: 4] = fmc_qsfp_4_rx_n;
+
+assign fmc_qsfp_5_tx_p = eth_gty_tx_p[4*13 +: 4];
+assign fmc_qsfp_5_tx_n = eth_gty_tx_n[4*13 +: 4];
+assign eth_gty_rx_p[4*13 +: 4] = fmc_qsfp_5_rx_p;
+assign eth_gty_rx_n[4*13 +: 4] = fmc_qsfp_5_rx_n;
+
+assign fmc_qsfp_6_tx_p = eth_gty_tx_p[4*14 +: 4];
+assign fmc_qsfp_6_tx_n = eth_gty_tx_n[4*14 +: 4];
+assign eth_gty_rx_p[4*14 +: 4] = fmc_qsfp_6_rx_p;
+assign eth_gty_rx_n[4*14 +: 4] = fmc_qsfp_6_rx_n;
+
+assign eth_gty_mgt_refclk_p[0] = qsfp_1_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[0] = qsfp_1_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[1] = qsfp_2_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[1] = qsfp_2_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[2] = qsfp_3_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[2] = qsfp_3_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[3] = qsfp_4_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[3] = qsfp_4_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[4] = qsfp_5_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[4] = qsfp_5_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[5] = qsfp_6_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[5] = qsfp_6_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[6] = qsfp_7_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[6] = qsfp_7_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[7] = qsfp_8_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[7] = qsfp_8_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[8] = qsfp_9_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[8] = qsfp_9_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[9] = fmc_qsfp_1_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[9] = fmc_qsfp_1_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[10] = fmc_qsfp_2_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[10] = fmc_qsfp_2_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[11] = fmc_qsfp_3_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[11] = fmc_qsfp_3_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[12] = fmc_qsfp_4_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[12] = fmc_qsfp_4_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[13] = fmc_qsfp_5_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[13] = fmc_qsfp_5_mgt_refclk_n;
+assign eth_gty_mgt_refclk_p[14] = fmc_qsfp_6_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[14] = fmc_qsfp_6_mgt_refclk_n;
 
 fpga_core #(
     .SIM(SIM),
@@ -481,12 +593,12 @@ core_inst (
      */
     .eth_pll_locked(eth_pll_locked),
 
-    .eth_gty_tx_p({fmc_qsfp_6_tx_p, fmc_qsfp_5_tx_p, fmc_qsfp_4_tx_p, fmc_qsfp_3_tx_p, fmc_qsfp_2_tx_p, fmc_qsfp_1_tx_p, qsfp_9_tx_p, qsfp_8_tx_p, qsfp_7_tx_p, qsfp_6_tx_p, qsfp_5_tx_p, qsfp_4_tx_p, qsfp_3_tx_p, qsfp_2_tx_p, qsfp_1_tx_p}),
-    .eth_gty_tx_n({fmc_qsfp_6_tx_n, fmc_qsfp_5_tx_n, fmc_qsfp_4_tx_n, fmc_qsfp_3_tx_n, fmc_qsfp_2_tx_n, fmc_qsfp_1_tx_n, qsfp_9_tx_n, qsfp_8_tx_n, qsfp_7_tx_n, qsfp_6_tx_n, qsfp_5_tx_n, qsfp_4_tx_n, qsfp_3_tx_n, qsfp_2_tx_n, qsfp_1_tx_n}),
-    .eth_gty_rx_p({fmc_qsfp_6_rx_p, fmc_qsfp_5_rx_p, fmc_qsfp_4_rx_p, fmc_qsfp_3_rx_p, fmc_qsfp_2_rx_p, fmc_qsfp_1_rx_p, qsfp_9_rx_p, qsfp_8_rx_p, qsfp_7_rx_p, qsfp_6_rx_p, qsfp_5_rx_p, qsfp_4_rx_p, qsfp_3_rx_p, qsfp_2_rx_p, qsfp_1_rx_p}),
-    .eth_gty_rx_n({fmc_qsfp_6_rx_n, fmc_qsfp_5_rx_n, fmc_qsfp_4_rx_n, fmc_qsfp_3_rx_n, fmc_qsfp_2_rx_n, fmc_qsfp_1_rx_n, qsfp_9_rx_n, qsfp_8_rx_n, qsfp_7_rx_n, qsfp_6_rx_n, qsfp_5_rx_n, qsfp_4_rx_n, qsfp_3_rx_n, qsfp_2_rx_n, qsfp_1_rx_n}),
-    .eth_gty_mgt_refclk_p({fmc_qsfp_6_mgt_refclk_p, fmc_qsfp_5_mgt_refclk_p, fmc_qsfp_4_mgt_refclk_p, fmc_qsfp_3_mgt_refclk_p, fmc_qsfp_2_mgt_refclk_p, fmc_qsfp_1_mgt_refclk_p, qsfp_9_mgt_refclk_p, qsfp_8_mgt_refclk_p, qsfp_7_mgt_refclk_p, qsfp_6_mgt_refclk_p, qsfp_5_mgt_refclk_p, qsfp_4_mgt_refclk_p, qsfp_3_mgt_refclk_p, qsfp_2_mgt_refclk_p, qsfp_1_mgt_refclk_p}),
-    .eth_gty_mgt_refclk_n({fmc_qsfp_6_mgt_refclk_n, fmc_qsfp_5_mgt_refclk_n, fmc_qsfp_4_mgt_refclk_n, fmc_qsfp_3_mgt_refclk_n, fmc_qsfp_2_mgt_refclk_n, fmc_qsfp_1_mgt_refclk_n, qsfp_9_mgt_refclk_n, qsfp_8_mgt_refclk_n, qsfp_7_mgt_refclk_n, qsfp_6_mgt_refclk_n, qsfp_5_mgt_refclk_n, qsfp_4_mgt_refclk_n, qsfp_3_mgt_refclk_n, qsfp_2_mgt_refclk_n, qsfp_1_mgt_refclk_n}),
+    .eth_gty_tx_p(eth_gty_tx_p),
+    .eth_gty_tx_n(eth_gty_tx_n),
+    .eth_gty_rx_p(eth_gty_rx_p),
+    .eth_gty_rx_n(eth_gty_rx_n),
+    .eth_gty_mgt_refclk_p(eth_gty_mgt_refclk_p),
+    .eth_gty_mgt_refclk_n(eth_gty_mgt_refclk_n),
     .eth_gty_mgt_refclk_out(eth_gty_mgt_refclk_out),
 
     .eth_port_resetl({fmc_qsfp_6_resetl, fmc_qsfp_5_resetl, fmc_qsfp_4_resetl, fmc_qsfp_3_resetl, fmc_qsfp_2_resetl, fmc_qsfp_1_resetl, qsfp_9_resetl, qsfp_8_resetl, qsfp_7_resetl, qsfp_6_resetl, qsfp_5_resetl, qsfp_4_resetl, qsfp_3_resetl, qsfp_2_resetl, qsfp_1_resetl}),

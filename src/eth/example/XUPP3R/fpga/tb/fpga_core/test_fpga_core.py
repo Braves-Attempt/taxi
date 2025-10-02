@@ -42,16 +42,15 @@ class TB:
         self.log.setLevel(logging.DEBUG)
 
         cocotb.start_soon(Clock(dut.clk_125mhz, 8, units="ns").start())
-        cocotb.start_soon(Clock(dut.qsfp0_mgt_refclk_b0_p, 3.102, units="ns").start())
-        cocotb.start_soon(Clock(dut.qsfp1_mgt_refclk_b0_p, 3.102, units="ns").start())
-        cocotb.start_soon(Clock(dut.qsfp2_mgt_refclk_b0_p, 3.102, units="ns").start())
-        cocotb.start_soon(Clock(dut.qsfp3_mgt_refclk_b0_p, 3.102, units="ns").start())
 
         self.uart_source = UartSource(dut.uart_rxd, baud=3000000, bits=8, stop_bits=1)
         self.uart_sink = UartSink(dut.uart_txd, baud=3000000, bits=8, stop_bits=1)
 
         self.qsfp_sources = []
         self.qsfp_sinks = []
+
+        for clk in dut.eth_gty_mgt_refclk_p:
+            cocotb.start_soon(Clock(clk, 3.102, units="ns").start())
 
         for inst in dut.gty_quad:
             for ch in inst.mac_inst.ch:
@@ -216,6 +215,10 @@ def test_fpga_core(request):
     parameters['SIM'] = "1'b1"
     parameters['VENDOR'] = "\"XILINX\""
     parameters['FAMILY'] = "\"virtexuplus\""
+    parameters['PORT_CNT'] = 4
+    parameters['GTY_QUAD_CNT'] = parameters['PORT_CNT']
+    parameters['GTY_CNT'] = parameters['GTY_QUAD_CNT']*4
+    parameters['GTY_CLK_CNT'] = parameters['GTY_QUAD_CNT']
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

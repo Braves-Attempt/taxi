@@ -41,6 +41,10 @@ VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 export PARAM_SIM := "1'b1"
 export PARAM_VENDOR := "\"XILINX\""
 export PARAM_FAMILY := "\"virtexuplus\""
+export PARAM_PORT_CNT := 4
+export PARAM_GTY_QUAD_CNT := $(PARAM_PORT_CNT)
+export PARAM_GTY_CNT := $(shell echo $$(( 4 * $(PARAM_GTY_QUAD_CNT) )))
+export PARAM_GTY_CLK_CNT := $(PARAM_GTY_QUAD_CNT)
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst

@@ -60,10 +60,10 @@ module fpga_core #
     /*
      * Ethernet: SFP+
      */
-    input  wire logic [1:0]  sfp_rx_p,
-    input  wire logic [1:0]  sfp_rx_n,
-    output wire logic [1:0]  sfp_tx_p,
-    output wire logic [1:0]  sfp_tx_n,
+    input  wire logic        sfp_rx_p[2],
+    input  wire logic        sfp_rx_n[2],
+    output wire logic        sfp_tx_p[2],
+    output wire logic        sfp_tx_n[2],
     input  wire logic        sfp_mgt_refclk_0_p,
     input  wire logic        sfp_mgt_refclk_0_n,
 
@@ -373,12 +373,12 @@ if (SFP_RATE == 0) begin : sfp_mac
 
 end else begin : sfp_mac
 
-    wire [1:0] sfp_tx_clk;
-    wire [1:0] sfp_tx_rst;
-    wire [1:0] sfp_rx_clk;
-    wire [1:0] sfp_rx_rst;
+    wire sfp_tx_clk[2];
+    wire sfp_tx_rst[2];
+    wire sfp_rx_clk[2];
+    wire sfp_rx_rst[2];
 
-    wire [1:0] sfp_rx_status;
+    wire sfp_rx_status[2];
 
     wire sfp_gtpowergood;
 
@@ -499,12 +499,12 @@ end else begin : sfp_mac
          * MAC clocks
          */
         .rx_clk(sfp_rx_clk),
-        .rx_rst_in('0),
+        .rx_rst_in('{2{1'b0}}),
         .rx_rst_out(sfp_rx_rst),
         .tx_clk(sfp_tx_clk),
-        .tx_rst_in('0),
+        .tx_rst_in('{2{1'b0}}),
         .tx_rst_out(sfp_tx_rst),
-        .ptp_sample_clk('0),
+        .ptp_sample_clk('{2{1'b0}}),
 
         /*
          * Transmit interface (AXI stream)
@@ -521,24 +521,24 @@ end else begin : sfp_mac
          * PTP clock
          */
         .tx_ptp_ts('{2{'0}}),
-        .tx_ptp_ts_step('0),
+        .tx_ptp_ts_step('{2{1'b0}}),
         .rx_ptp_ts('{2{'0}}),
-        .rx_ptp_ts_step('0),
+        .rx_ptp_ts_step('{2{1'b0}}),
 
         /*
          * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
          */
-        .tx_lfc_req('0),
-        .tx_lfc_resend('0),
-        .rx_lfc_en('0),
+        .tx_lfc_req('{2{1'b0}}),
+        .tx_lfc_resend('{2{1'b0}}),
+        .rx_lfc_en('{2{1'b0}}),
         .rx_lfc_req(),
-        .rx_lfc_ack('0),
+        .rx_lfc_ack('{2{1'b0}}),
 
         /*
          * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
          */
         .tx_pfc_req('{2{'0}}),
-        .tx_pfc_resend('0),
+        .tx_pfc_resend('{2{1'b0}}),
         .rx_pfc_en('{2{'0}}),
         .rx_pfc_req(),
         .rx_pfc_ack('{2{'0}}),
@@ -546,8 +546,8 @@ end else begin : sfp_mac
         /*
          * Pause interface
          */
-        .tx_lfc_pause_en('0),
-        .tx_pause_req('0),
+        .tx_lfc_pause_en('{2{1'b0}}),
+        .tx_pause_req('{2{1'b0}}),
         .tx_pause_ack(),
 
         /*
@@ -592,7 +592,7 @@ end else begin : sfp_mac
         .stat_rx_err_bad_block(),
         .stat_rx_err_framing(),
         .stat_rx_err_preamble(),
-        .stat_rx_fifo_drop('0),
+        .stat_rx_fifo_drop('{2{1'b0}}),
         .stat_tx_mcf(),
         .stat_rx_mcf(),
         .stat_tx_lfc_pkt(),
@@ -617,42 +617,42 @@ end else begin : sfp_mac
          */
         .cfg_tx_max_pkt_len('{2{16'd9218}}),
         .cfg_tx_ifg('{2{8'd12}}),
-        .cfg_tx_enable('1),
+        .cfg_tx_enable('{2{1'b1}}),
         .cfg_rx_max_pkt_len('{2{16'd9218}}),
-        .cfg_rx_enable('1),
-        .cfg_tx_prbs31_enable('0),
-        .cfg_rx_prbs31_enable('0),
+        .cfg_rx_enable('{2{1'b1}}),
+        .cfg_tx_prbs31_enable('{2{1'b0}}),
+        .cfg_rx_prbs31_enable('{2{1'b0}}),
         .cfg_mcf_rx_eth_dst_mcast('{2{48'h01_80_C2_00_00_01}}),
-        .cfg_mcf_rx_check_eth_dst_mcast('1),
+        .cfg_mcf_rx_check_eth_dst_mcast('{2{1'b1}}),
         .cfg_mcf_rx_eth_dst_ucast('{2{48'd0}}),
-        .cfg_mcf_rx_check_eth_dst_ucast('0),
+        .cfg_mcf_rx_check_eth_dst_ucast('{2{1'b0}}),
         .cfg_mcf_rx_eth_src('{2{48'd0}}),
-        .cfg_mcf_rx_check_eth_src('0),
+        .cfg_mcf_rx_check_eth_src('{2{1'b0}}),
         .cfg_mcf_rx_eth_type('{2{16'h8808}}),
         .cfg_mcf_rx_opcode_lfc('{2{16'h0001}}),
-        .cfg_mcf_rx_check_opcode_lfc('1),
+        .cfg_mcf_rx_check_opcode_lfc('{2{1'b1}}),
         .cfg_mcf_rx_opcode_pfc('{2{16'h0101}}),
-        .cfg_mcf_rx_check_opcode_pfc('1),
-        .cfg_mcf_rx_forward('0),
-        .cfg_mcf_rx_enable('0),
+        .cfg_mcf_rx_check_opcode_pfc('{2{1'b1}}),
+        .cfg_mcf_rx_forward('{2{1'b0}}),
+        .cfg_mcf_rx_enable('{2{1'b0}}),
         .cfg_tx_lfc_eth_dst('{2{48'h01_80_C2_00_00_01}}),
         .cfg_tx_lfc_eth_src('{2{48'h80_23_31_43_54_4C}}),
         .cfg_tx_lfc_eth_type('{2{16'h8808}}),
         .cfg_tx_lfc_opcode('{2{16'h0001}}),
-        .cfg_tx_lfc_en('0),
+        .cfg_tx_lfc_en('{2{1'b0}}),
         .cfg_tx_lfc_quanta('{2{16'hffff}}),
         .cfg_tx_lfc_refresh('{2{16'h7fff}}),
         .cfg_tx_pfc_eth_dst('{2{48'h01_80_C2_00_00_01}}),
         .cfg_tx_pfc_eth_src('{2{48'h80_23_31_43_54_4C}}),
         .cfg_tx_pfc_eth_type('{2{16'h8808}}),
         .cfg_tx_pfc_opcode('{2{16'h0101}}),
-        .cfg_tx_pfc_en('0),
+        .cfg_tx_pfc_en('{2{1'b0}}),
         .cfg_tx_pfc_quanta('{2{'{8{16'hffff}}}}),
         .cfg_tx_pfc_refresh('{2{'{8{16'h7fff}}}}),
         .cfg_rx_lfc_opcode('{2{16'h0001}}),
-        .cfg_rx_lfc_en('0),
+        .cfg_rx_lfc_en('{2{1'b0}}),
         .cfg_rx_pfc_opcode('{2{16'h0101}}),
-        .cfg_rx_pfc_en('0)
+        .cfg_rx_pfc_en('{2{1'b0}})
     );
 
     for (genvar n = 0; n < 2; n = n + 1) begin : sfp_ch

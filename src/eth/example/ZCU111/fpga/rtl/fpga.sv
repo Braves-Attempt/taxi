@@ -67,10 +67,10 @@ module fpga #
     /*
      * Ethernet: SFP+
      */
-    input  wire logic [3:0]  sfp_rx_p,
-    input  wire logic [3:0]  sfp_rx_n,
-    output wire logic [3:0]  sfp_tx_p,
-    output wire logic [3:0]  sfp_tx_n,
+    input  wire logic        sfp_rx_p[4],
+    input  wire logic        sfp_rx_n[4],
+    output wire logic        sfp_tx_p[4],
+    output wire logic        sfp_tx_n[4],
     input  wire logic        sfp_mgt_refclk_0_p,
     input  wire logic        sfp_mgt_refclk_0_n,
     output wire logic [3:0]  sfp_tx_disable_b,

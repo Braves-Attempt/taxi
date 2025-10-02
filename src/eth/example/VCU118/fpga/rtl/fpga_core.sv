@@ -70,10 +70,10 @@ module fpga_core #
     /*
      * Ethernet: QSFP28
      */
-    input  wire logic [3:0]  qsfp1_rx_p,
-    input  wire logic [3:0]  qsfp1_rx_n,
-    output wire logic [3:0]  qsfp1_tx_p,
-    output wire logic [3:0]  qsfp1_tx_n,
+    input  wire logic        qsfp1_rx_p[4],
+    input  wire logic        qsfp1_rx_n[4],
+    output wire logic        qsfp1_tx_p[4],
+    output wire logic        qsfp1_tx_n[4],
     input  wire logic        qsfp1_mgt_refclk_0_p,
     input  wire logic        qsfp1_mgt_refclk_0_n,
     // input  wire logic        qsfp1_mgt_refclk_1_p,
@@ -86,10 +86,10 @@ module fpga_core #
     input  wire logic        qsfp1_intl,
     output wire logic        qsfp1_lpmode,
 
-    input  wire logic [3:0]  qsfp2_rx_p,
-    input  wire logic [3:0]  qsfp2_rx_n,
-    output wire logic [3:0]  qsfp2_tx_p,
-    output wire logic [3:0]  qsfp2_tx_n,
+    input  wire logic        qsfp2_rx_p[4],
+    input  wire logic        qsfp2_rx_n[4],
+    output wire logic        qsfp2_tx_p[4],
+    output wire logic        qsfp2_tx_n[4],
     // input  wire logic        qsfp2_mgt_refclk_0_p,
     // input  wire logic        qsfp2_mgt_refclk_0_n,
     // input  wire logic        qsfp2_mgt_refclk_1_p,
@@ -462,14 +462,16 @@ assign qsfp2_modsell = 1'b0;
 assign qsfp2_resetl = 1'b1;
 assign qsfp2_lpmode = 1'b0;
 
-wire [7:0] qsfp_tx_clk;
-wire [7:0] qsfp_tx_rst;
-wire [7:0] qsfp_rx_clk;
-wire [7:0] qsfp_rx_rst;
+wire qsfp_tx_clk[8];
+wire qsfp_tx_rst[8];
+wire qsfp_rx_clk[8];
+wire qsfp_rx_rst[8];
 
-wire [7:0] qsfp_rx_status;
+wire qsfp_rx_status[8];
 
-assign led = qsfp_rx_status;
+for (genvar n = 0; n < 8; n = n + 1) begin
+    assign led[n] = qsfp_rx_status[n];
+end
 
 wire [1:0] qsfp_gtpowergood;
 
@@ -520,15 +522,21 @@ qsfp_sync_reset_inst (
     .out(qsfp_rst)
 );
 
-wire [7:0] qsfp_tx_p;
-wire [7:0] qsfp_tx_n;
-wire [7:0] qsfp_rx_p = {qsfp2_rx_p, qsfp1_rx_p};
-wire [7:0] qsfp_rx_n = {qsfp2_rx_n, qsfp1_rx_n};
+wire qsfp_tx_p[8];
+wire qsfp_tx_n[8];
+wire qsfp_rx_p[8];
+wire qsfp_rx_n[8];
 
-assign qsfp1_tx_p = qsfp_tx_p[3:0];
-assign qsfp1_tx_n = qsfp_tx_n[3:0];
-assign qsfp2_tx_p = qsfp_tx_p[7:4];
-assign qsfp2_tx_n = qsfp_tx_n[7:4];
+assign qsfp1_tx_p = qsfp_tx_p[4*0 +: 4];
+assign qsfp1_tx_n = qsfp_tx_n[4*0 +: 4];
+assign qsfp2_tx_p = qsfp_tx_p[4*1 +: 4];
+assign qsfp2_tx_n = qsfp_tx_n[4*1 +: 4];
+
+assign qsfp_rx_p[4*0 +: 4] = qsfp1_rx_p;
+assign qsfp_rx_n[4*0 +: 4] = qsfp1_rx_n;
+assign qsfp_rx_p[4*1 +: 4] = qsfp2_rx_p;
+assign qsfp_rx_n[4*1 +: 4] = qsfp2_rx_n;
+
 
 localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP1[4] = '{"QSFP1.1", "QSFP1.2", "QSFP1.3",  "QSFP1.4"};
 localparam logic [8*8-1:0] STAT_PREFIX_STR_QSFP2[4] = '{"QSFP2.1", "QSFP2.2", "QSFP2.3",  "QSFP2.4"};
@@ -604,12 +612,12 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
          * MAC clocks
          */
         .rx_clk(qsfp_rx_clk[n*CNT +: CNT]),
-        .rx_rst_in('0),
+        .rx_rst_in('{CNT{1'b0}}),
         .rx_rst_out(qsfp_rx_rst[n*CNT +: CNT]),
         .tx_clk(qsfp_tx_clk[n*CNT +: CNT]),
-        .tx_rst_in('0),
+        .tx_rst_in('{CNT{1'b0}}),
         .tx_rst_out(qsfp_tx_rst[n*CNT +: CNT]),
-        .ptp_sample_clk('0),
+        .ptp_sample_clk('{CNT{1'b0}}),
 
         /*
          * Transmit interface (AXI stream)
@@ -626,24 +634,24 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
          * PTP clock
          */
         .tx_ptp_ts('{CNT{'0}}),
-        .tx_ptp_ts_step('0),
+        .tx_ptp_ts_step('{CNT{1'b0}}),
         .rx_ptp_ts('{CNT{'0}}),
-        .rx_ptp_ts_step('0),
+        .rx_ptp_ts_step('{CNT{1'b0}}),
 
         /*
          * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
          */
-        .tx_lfc_req('0),
-        .tx_lfc_resend('0),
-        .rx_lfc_en('0),
+        .tx_lfc_req('{CNT{1'b0}}),
+        .tx_lfc_resend('{CNT{1'b0}}),
+        .rx_lfc_en('{CNT{1'b0}}),
         .rx_lfc_req(),
-        .rx_lfc_ack('0),
+        .rx_lfc_ack('{CNT{1'b0}}),
 
         /*
          * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
          */
         .tx_pfc_req('{CNT{'0}}),
-        .tx_pfc_resend('0),
+        .tx_pfc_resend('{CNT{1'b0}}),
         .rx_pfc_en('{CNT{'0}}),
         .rx_pfc_req(),
         .rx_pfc_ack('{CNT{'0}}),
@@ -651,8 +659,8 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
         /*
          * Pause interface
          */
-        .tx_lfc_pause_en('0),
-        .tx_pause_req('0),
+        .tx_lfc_pause_en('{CNT{1'b0}}),
+        .tx_pause_req('{CNT{1'b0}}),
         .tx_pause_ack(),
 
         /*
@@ -697,7 +705,7 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
         .stat_rx_err_bad_block(),
         .stat_rx_err_framing(),
         .stat_rx_err_preamble(),
-        .stat_rx_fifo_drop('0),
+        .stat_rx_fifo_drop('{CNT{1'b0}}),
         .stat_tx_mcf(),
         .stat_rx_mcf(),
         .stat_tx_lfc_pkt(),
@@ -722,42 +730,42 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
          */
         .cfg_tx_max_pkt_len('{CNT{16'd9218}}),
         .cfg_tx_ifg('{CNT{8'd12}}),
-        .cfg_tx_enable('1),
+        .cfg_tx_enable('{CNT{1'b1}}),
         .cfg_rx_max_pkt_len('{CNT{16'd9218}}),
-        .cfg_rx_enable('1),
-        .cfg_tx_prbs31_enable('0),
-        .cfg_rx_prbs31_enable('0),
+        .cfg_rx_enable('{CNT{1'b1}}),
+        .cfg_tx_prbs31_enable('{CNT{1'b0}}),
+        .cfg_rx_prbs31_enable('{CNT{1'b0}}),
         .cfg_mcf_rx_eth_dst_mcast('{CNT{48'h01_80_C2_00_00_01}}),
-        .cfg_mcf_rx_check_eth_dst_mcast('1),
+        .cfg_mcf_rx_check_eth_dst_mcast('{CNT{1'b1}}),
         .cfg_mcf_rx_eth_dst_ucast('{CNT{48'd0}}),
-        .cfg_mcf_rx_check_eth_dst_ucast('0),
+        .cfg_mcf_rx_check_eth_dst_ucast('{CNT{1'b0}}),
         .cfg_mcf_rx_eth_src('{CNT{48'd0}}),
-        .cfg_mcf_rx_check_eth_src('0),
+        .cfg_mcf_rx_check_eth_src('{CNT{1'b0}}),
         .cfg_mcf_rx_eth_type('{CNT{16'h8808}}),
         .cfg_mcf_rx_opcode_lfc('{CNT{16'h0001}}),
-        .cfg_mcf_rx_check_opcode_lfc('1),
+        .cfg_mcf_rx_check_opcode_lfc('{CNT{1'b1}}),
         .cfg_mcf_rx_opcode_pfc('{CNT{16'h0101}}),
-        .cfg_mcf_rx_check_opcode_pfc('1),
-        .cfg_mcf_rx_forward('0),
-        .cfg_mcf_rx_enable('0),
+        .cfg_mcf_rx_check_opcode_pfc('{CNT{1'b1}}),
+        .cfg_mcf_rx_forward('{CNT{1'b0}}),
+        .cfg_mcf_rx_enable('{CNT{1'b0}}),
         .cfg_tx_lfc_eth_dst('{CNT{48'h01_80_C2_00_00_01}}),
         .cfg_tx_lfc_eth_src('{CNT{48'h80_23_31_43_54_4C}}),
         .cfg_tx_lfc_eth_type('{CNT{16'h8808}}),
         .cfg_tx_lfc_opcode('{CNT{16'h0001}}),
-        .cfg_tx_lfc_en('0),
+        .cfg_tx_lfc_en('{CNT{1'b0}}),
         .cfg_tx_lfc_quanta('{CNT{16'hffff}}),
         .cfg_tx_lfc_refresh('{CNT{16'h7fff}}),
         .cfg_tx_pfc_eth_dst('{CNT{48'h01_80_C2_00_00_01}}),
         .cfg_tx_pfc_eth_src('{CNT{48'h80_23_31_43_54_4C}}),
         .cfg_tx_pfc_eth_type('{CNT{16'h8808}}),
         .cfg_tx_pfc_opcode('{CNT{16'h0101}}),
-        .cfg_tx_pfc_en('0),
+        .cfg_tx_pfc_en('{CNT{1'b0}}),
         .cfg_tx_pfc_quanta('{CNT{'{8{16'hffff}}}}),
         .cfg_tx_pfc_refresh('{CNT{'{8{16'h7fff}}}}),
         .cfg_rx_lfc_opcode('{CNT{16'h0001}}),
-        .cfg_rx_lfc_en('0),
+        .cfg_rx_lfc_en('{CNT{1'b0}}),
         .cfg_rx_pfc_opcode('{CNT{16'h0101}}),
-        .cfg_rx_pfc_en('0)
+        .cfg_rx_pfc_en('{CNT{1'b0}})
     );
 
 end

@@ -42,19 +42,19 @@ module fpga #
     /*
      * Ethernet: QSFP28
      */
-    // output wire logic [3:0]           qsfp0_tx_p,
-    // output wire logic [3:0]           qsfp0_tx_n,
-    // input  wire logic [3:0]           qsfp0_rx_p,
-    // input  wire logic [3:0]           qsfp0_rx_n,
+    // output wire logic                 qsfp0_tx_p[4],
+    // output wire logic                 qsfp0_tx_n[4],
+    // input  wire logic                 qsfp0_rx_p[4],
+    // input  wire logic                 qsfp0_rx_n[4],
     // input  wire logic                 qsfp0_mgt_refclk_0_p,
     // input  wire logic                 qsfp0_mgt_refclk_0_n,
     // input  wire logic                 qsfp0_mgt_refclk_1_p,
     // input  wire logic                 qsfp0_mgt_refclk_1_n,
 
-    output wire logic [3:0]           qsfp1_tx_p,
-    output wire logic [3:0]           qsfp1_tx_n,
-    input  wire logic [3:0]           qsfp1_rx_p,
-    input  wire logic [3:0]           qsfp1_rx_n,
+    output wire logic                 qsfp1_tx_p[4],
+    output wire logic                 qsfp1_tx_n[4],
+    input  wire logic                 qsfp1_rx_p[4],
+    input  wire logic                 qsfp1_rx_n[4],
     input  wire logic                 qsfp1_mgt_refclk_p,
     input  wire logic                 qsfp1_mgt_refclk_n
 );
@@ -165,9 +165,28 @@ sync_reset_125mhz_inst (
     .out(rst_125mhz_int)
 );
 
-wire qsfp1_mgt_refclk;
+localparam PORT_CNT = QSFP_CNT;
+localparam GTY_QUAD_CNT = 1;
+localparam GTY_CNT = GTY_QUAD_CNT*4;
+localparam GTY_CLK_CNT = GTY_QUAD_CNT;
 
-assign clk_161mhz_ref_int = qsfp1_mgt_refclk;
+wire eth_gty_tx_p[GTY_CNT];
+wire eth_gty_tx_n[GTY_CNT];
+wire eth_gty_rx_p[GTY_CNT];
+wire eth_gty_rx_n[GTY_CNT];
+wire eth_gty_mgt_refclk_p[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_n[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_out[GTY_CLK_CNT];
+
+assign qsfp1_tx_p = eth_gty_tx_p[4*0 +: 4];
+assign qsfp1_tx_n = eth_gty_tx_n[4*0 +: 4];
+assign eth_gty_rx_p[4*0 +: 4] = qsfp1_rx_p;
+assign eth_gty_rx_n[4*0 +: 4] = qsfp1_rx_n;
+
+assign eth_gty_mgt_refclk_p[0] = qsfp1_mgt_refclk_p;
+assign eth_gty_mgt_refclk_n[0] = qsfp1_mgt_refclk_n;
+
+assign clk_161mhz_ref_int = eth_gty_mgt_refclk_out[0];
 
 fpga_core #(
     .SIM(SIM),
@@ -176,10 +195,10 @@ fpga_core #(
     .SW_CNT(4),
     .LED_CNT(2),
     .UART_CNT(UART_CNT),
-    .PORT_CNT(QSFP_CNT),
-    .GTY_QUAD_CNT(1),
-    .GTY_CNT(1*4),
-    .GTY_CLK_CNT(1)
+    .PORT_CNT(PORT_CNT),
+    .GTY_QUAD_CNT(GTY_QUAD_CNT),
+    .GTY_CNT(GTY_CNT),
+    .GTY_CLK_CNT(GTY_CLK_CNT)
 )
 core_inst (
     /*
@@ -209,13 +228,13 @@ core_inst (
     /*
      * Ethernet
      */
-    .eth_gty_tx_p(qsfp1_tx_p),
-    .eth_gty_tx_n(qsfp1_tx_n),
-    .eth_gty_rx_p(qsfp1_rx_p),
-    .eth_gty_rx_n(qsfp1_rx_n),
-    .eth_gty_mgt_refclk_p(qsfp1_mgt_refclk_p),
-    .eth_gty_mgt_refclk_n(qsfp1_mgt_refclk_n),
-    .eth_gty_mgt_refclk_out(qsfp1_mgt_refclk),
+    .eth_gty_tx_p(eth_gty_tx_p),
+    .eth_gty_tx_n(eth_gty_tx_n),
+    .eth_gty_rx_p(eth_gty_rx_p),
+    .eth_gty_rx_n(eth_gty_rx_n),
+    .eth_gty_mgt_refclk_p(eth_gty_mgt_refclk_p),
+    .eth_gty_mgt_refclk_n(eth_gty_mgt_refclk_n),
+    .eth_gty_mgt_refclk_out(eth_gty_mgt_refclk_out),
 
     .eth_port_modsell(),
     .eth_port_resetl(),

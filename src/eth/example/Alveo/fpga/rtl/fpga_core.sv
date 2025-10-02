@@ -57,13 +57,13 @@ module fpga_core #
     /*
      * Ethernet
      */
-    output wire logic [GTY_CNT-1:0]      eth_gty_tx_p,
-    output wire logic [GTY_CNT-1:0]      eth_gty_tx_n,
-    input  wire logic [GTY_CNT-1:0]      eth_gty_rx_p,
-    input  wire logic [GTY_CNT-1:0]      eth_gty_rx_n,
-    input  wire logic [GTY_CLK_CNT-1:0]  eth_gty_mgt_refclk_p,
-    input  wire logic [GTY_CLK_CNT-1:0]  eth_gty_mgt_refclk_n,
-    output wire logic [GTY_CLK_CNT-1:0]  eth_gty_mgt_refclk_out,
+    output wire logic                    eth_gty_tx_p[GTY_CNT],
+    output wire logic                    eth_gty_tx_n[GTY_CNT],
+    input  wire logic                    eth_gty_rx_p[GTY_CNT],
+    input  wire logic                    eth_gty_rx_n[GTY_CNT],
+    input  wire logic                    eth_gty_mgt_refclk_p[GTY_CLK_CNT],
+    input  wire logic                    eth_gty_mgt_refclk_n[GTY_CLK_CNT],
+    output wire logic                    eth_gty_mgt_refclk_out[GTY_CLK_CNT],
 
     output wire logic [PORT_CNT-1:0]     eth_port_modsell,
     output wire logic [PORT_CNT-1:0]     eth_port_resetl,
@@ -221,23 +221,23 @@ assign eth_port_modsell = '1;
 assign eth_port_resetl = '1;
 assign eth_port_lpmode = '0;
 
-wire [GTY_CNT-1:0] eth_gty_tx_clk;
-wire [GTY_CNT-1:0] eth_gty_tx_rst;
+wire eth_gty_tx_clk[GTY_CNT];
+wire eth_gty_tx_rst[GTY_CNT];
 taxi_axis_if #(.DATA_W(64), .ID_W(8)) eth_gty_axis_tx[GTY_CNT]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) eth_gty_axis_tx_cpl[GTY_CNT]();
 
-wire [GTY_CNT-1:0] eth_gty_rx_clk;
-wire [GTY_CNT-1:0] eth_gty_rx_rst;
+wire eth_gty_rx_clk[GTY_CNT];
+wire eth_gty_rx_rst[GTY_CNT];
 taxi_axis_if #(.DATA_W(64), .ID_W(8)) eth_gty_axis_rx[GTY_CNT]();
 
-wire [GTY_CNT-1:0] eth_gty_rx_status;
+wire eth_gty_rx_status[GTY_CNT];
 
 wire [GTY_QUAD_CNT-1:0] eth_gty_gtpowergood;
 
-wire [GTY_CLK_CNT-1:0] eth_gty_mgt_refclk;
-wire [GTY_CLK_CNT-1:0] eth_gty_mgt_refclk_bufg;
+wire eth_gty_mgt_refclk[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_bufg[GTY_CLK_CNT];
 
-wire [GTY_CLK_CNT-1:0] eth_gty_rst;
+wire eth_gty_rst[GTY_CLK_CNT];
 
 for (genvar n = 0; n < GTY_CLK_CNT; n = n + 1) begin : gty_clk
 
@@ -359,12 +359,12 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
          * MAC clocks
          */
         .rx_clk(eth_gty_rx_clk[n*CNT +: CNT]),
-        .rx_rst_in('0),
+        .rx_rst_in('{CNT{1'b0}}),
         .rx_rst_out(eth_gty_rx_rst[n*CNT +: CNT]),
         .tx_clk(eth_gty_tx_clk[n*CNT +: CNT]),
-        .tx_rst_in('0),
+        .tx_rst_in('{CNT{1'b0}}),
         .tx_rst_out(eth_gty_tx_rst[n*CNT +: CNT]),
-        .ptp_sample_clk('0),
+        .ptp_sample_clk('{CNT{1'b0}}),
 
         /*
          * Transmit interface (AXI stream)
@@ -381,24 +381,24 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
          * PTP clock
          */
         .tx_ptp_ts('{CNT{'0}}),
-        .tx_ptp_ts_step('0),
+        .tx_ptp_ts_step('{CNT{1'b0}}),
         .rx_ptp_ts('{CNT{'0}}),
-        .rx_ptp_ts_step('0),
+        .rx_ptp_ts_step('{CNT{1'b0}}),
 
         /*
          * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
          */
-        .tx_lfc_req('0),
-        .tx_lfc_resend('0),
-        .rx_lfc_en('0),
+        .tx_lfc_req('{CNT{1'b0}}),
+        .tx_lfc_resend('{CNT{1'b0}}),
+        .rx_lfc_en('{CNT{1'b0}}),
         .rx_lfc_req(),
-        .rx_lfc_ack('0),
+        .rx_lfc_ack('{CNT{1'b0}}),
 
         /*
          * Priority Flow Control (PFC) (IEEE 802.3 annex 31D PFC)
          */
         .tx_pfc_req('{CNT{'0}}),
-        .tx_pfc_resend('0),
+        .tx_pfc_resend('{CNT{1'b0}}),
         .rx_pfc_en('{CNT{'0}}),
         .rx_pfc_req(),
         .rx_pfc_ack('{CNT{'0}}),
@@ -406,8 +406,8 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
         /*
          * Pause interface
          */
-        .tx_lfc_pause_en('0),
-        .tx_pause_req('0),
+        .tx_lfc_pause_en('{CNT{1'b0}}),
+        .tx_pause_req('{CNT{1'b0}}),
         .tx_pause_ack(),
 
         /*
@@ -452,7 +452,7 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
         .stat_rx_err_bad_block(),
         .stat_rx_err_framing(),
         .stat_rx_err_preamble(),
-        .stat_rx_fifo_drop('0),
+        .stat_rx_fifo_drop('{CNT{1'b0}}),
         .stat_tx_mcf(),
         .stat_rx_mcf(),
         .stat_tx_lfc_pkt(),
@@ -477,42 +477,42 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
          */
         .cfg_tx_max_pkt_len('{CNT{16'd9218}}),
         .cfg_tx_ifg('{CNT{8'd12}}),
-        .cfg_tx_enable('1),
+        .cfg_tx_enable('{CNT{1'b1}}),
         .cfg_rx_max_pkt_len('{CNT{16'd9218}}),
-        .cfg_rx_enable('1),
-        .cfg_tx_prbs31_enable('0),
-        .cfg_rx_prbs31_enable('0),
+        .cfg_rx_enable('{CNT{1'b1}}),
+        .cfg_tx_prbs31_enable('{CNT{1'b0}}),
+        .cfg_rx_prbs31_enable('{CNT{1'b0}}),
         .cfg_mcf_rx_eth_dst_mcast('{CNT{48'h01_80_C2_00_00_01}}),
-        .cfg_mcf_rx_check_eth_dst_mcast('1),
+        .cfg_mcf_rx_check_eth_dst_mcast('{CNT{1'b1}}),
         .cfg_mcf_rx_eth_dst_ucast('{CNT{48'd0}}),
-        .cfg_mcf_rx_check_eth_dst_ucast('0),
+        .cfg_mcf_rx_check_eth_dst_ucast('{CNT{1'b0}}),
         .cfg_mcf_rx_eth_src('{CNT{48'd0}}),
-        .cfg_mcf_rx_check_eth_src('0),
+        .cfg_mcf_rx_check_eth_src('{CNT{1'b0}}),
         .cfg_mcf_rx_eth_type('{CNT{16'h8808}}),
         .cfg_mcf_rx_opcode_lfc('{CNT{16'h0001}}),
-        .cfg_mcf_rx_check_opcode_lfc('1),
+        .cfg_mcf_rx_check_opcode_lfc('{CNT{1'b1}}),
         .cfg_mcf_rx_opcode_pfc('{CNT{16'h0101}}),
-        .cfg_mcf_rx_check_opcode_pfc('1),
-        .cfg_mcf_rx_forward('0),
-        .cfg_mcf_rx_enable('0),
+        .cfg_mcf_rx_check_opcode_pfc('{CNT{1'b1}}),
+        .cfg_mcf_rx_forward('{CNT{1'b0}}),
+        .cfg_mcf_rx_enable('{CNT{1'b0}}),
         .cfg_tx_lfc_eth_dst('{CNT{48'h01_80_C2_00_00_01}}),
         .cfg_tx_lfc_eth_src('{CNT{48'h80_23_31_43_54_4C}}),
         .cfg_tx_lfc_eth_type('{CNT{16'h8808}}),
         .cfg_tx_lfc_opcode('{CNT{16'h0001}}),
-        .cfg_tx_lfc_en('0),
+        .cfg_tx_lfc_en('{CNT{1'b0}}),
         .cfg_tx_lfc_quanta('{CNT{16'hffff}}),
         .cfg_tx_lfc_refresh('{CNT{16'h7fff}}),
         .cfg_tx_pfc_eth_dst('{CNT{48'h01_80_C2_00_00_01}}),
         .cfg_tx_pfc_eth_src('{CNT{48'h80_23_31_43_54_4C}}),
         .cfg_tx_pfc_eth_type('{CNT{16'h8808}}),
         .cfg_tx_pfc_opcode('{CNT{16'h0101}}),
-        .cfg_tx_pfc_en('0),
+        .cfg_tx_pfc_en('{CNT{1'b0}}),
         .cfg_tx_pfc_quanta('{CNT{'{8{16'hffff}}}}),
         .cfg_tx_pfc_refresh('{CNT{'{8{16'h7fff}}}}),
         .cfg_rx_lfc_opcode('{CNT{16'h0001}}),
-        .cfg_rx_lfc_en('0),
+        .cfg_rx_lfc_en('{CNT{1'b0}}),
         .cfg_rx_pfc_opcode('{CNT{16'h0101}}),
-        .cfg_rx_pfc_en('0)
+        .cfg_rx_pfc_en('{CNT{1'b0}})
     );
 
 end

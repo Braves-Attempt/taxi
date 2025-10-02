@@ -50,10 +50,10 @@ module fpga #
     /*
      * Ethernet: QSFP28
      */
-    output wire logic [3:0]   qsfp0_tx_p,
-    output wire logic [3:0]   qsfp0_tx_n,
-    input  wire logic [3:0]   qsfp0_rx_p,
-    input  wire logic [3:0]   qsfp0_rx_n,
+    output wire logic         qsfp0_tx_p[4],
+    output wire logic         qsfp0_tx_n[4],
+    input  wire logic         qsfp0_rx_p[4],
+    input  wire logic         qsfp0_rx_n[4],
     input  wire logic         qsfp0_mgt_refclk_b0_p,
     input  wire logic         qsfp0_mgt_refclk_b0_n,
     // input  wire logic         qsfp0_mgt_refclk_b1_p,
@@ -69,10 +69,10 @@ module fpga #
     inout  wire logic         qsfp0_i2c_scl,
     inout  wire logic         qsfp0_i2c_sda,
 
-    output wire logic [3:0]   qsfp1_tx_p,
-    output wire logic [3:0]   qsfp1_tx_n,
-    input  wire logic [3:0]   qsfp1_rx_p,
-    input  wire logic [3:0]   qsfp1_rx_n,
+    output wire logic         qsfp1_tx_p[4],
+    output wire logic         qsfp1_tx_n[4],
+    input  wire logic         qsfp1_rx_p[4],
+    input  wire logic         qsfp1_rx_n[4],
     input  wire logic         qsfp1_mgt_refclk_b0_p,
     input  wire logic         qsfp1_mgt_refclk_b0_n,
     // input  wire logic         qsfp1_mgt_refclk_b1_p,
@@ -88,10 +88,10 @@ module fpga #
     inout  wire logic         qsfp1_i2c_scl,
     inout  wire logic         qsfp1_i2c_sda,
 
-    output wire logic [3:0]   qsfp2_tx_p,
-    output wire logic [3:0]   qsfp2_tx_n,
-    input  wire logic [3:0]   qsfp2_rx_p,
-    input  wire logic [3:0]   qsfp2_rx_n,
+    output wire logic         qsfp2_tx_p[4],
+    output wire logic         qsfp2_tx_n[4],
+    input  wire logic         qsfp2_rx_p[4],
+    input  wire logic         qsfp2_rx_n[4],
     input  wire logic         qsfp2_mgt_refclk_b0_p,
     input  wire logic         qsfp2_mgt_refclk_b0_n,
     // input  wire logic         qsfp2_mgt_refclk_b2_p,
@@ -107,10 +107,10 @@ module fpga #
     inout  wire logic         qsfp2_i2c_scl,
     inout  wire logic         qsfp2_i2c_sda,
 
-    output wire logic [3:0]   qsfp3_tx_p,
-    output wire logic [3:0]   qsfp3_tx_n,
-    input  wire logic [3:0]   qsfp3_rx_p,
-    input  wire logic [3:0]   qsfp3_rx_n,
+    output wire logic         qsfp3_tx_p[4],
+    output wire logic         qsfp3_tx_n[4],
+    input  wire logic         qsfp3_rx_p[4],
+    input  wire logic         qsfp3_rx_n[4],
     input  wire logic         qsfp3_mgt_refclk_b0_p,
     input  wire logic         qsfp3_mgt_refclk_b0_n,
     // input  wire logic         qsfp3_mgt_refclk_b3_p,
@@ -336,10 +336,56 @@ assign qsfp2_i2c_sda = qsfp2_i2c_sda_o_reg ? 1'bz : 1'b0;
 assign qsfp3_i2c_scl = qsfp3_i2c_scl_o_reg ? 1'bz : 1'b0;
 assign qsfp3_i2c_sda = qsfp3_i2c_sda_o_reg ? 1'bz : 1'b0;
 
+localparam PORT_CNT = 4;
+localparam GTY_QUAD_CNT = PORT_CNT;
+localparam GTY_CNT = GTY_QUAD_CNT*4;
+localparam GTY_CLK_CNT = GTY_QUAD_CNT;
+
+wire eth_gty_tx_p[GTY_CNT];
+wire eth_gty_tx_n[GTY_CNT];
+wire eth_gty_rx_p[GTY_CNT];
+wire eth_gty_rx_n[GTY_CNT];
+wire eth_gty_mgt_refclk_p[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_n[GTY_CLK_CNT];
+wire eth_gty_mgt_refclk_out[GTY_CLK_CNT];
+
+assign qsfp0_tx_p = eth_gty_tx_p[4*0 +: 4];
+assign qsfp0_tx_n = eth_gty_tx_n[4*0 +: 4];
+assign eth_gty_rx_p[4*0 +: 4] = qsfp0_rx_p;
+assign eth_gty_rx_n[4*0 +: 4] = qsfp0_rx_n;
+
+assign qsfp1_tx_p = eth_gty_tx_p[4*1 +: 4];
+assign qsfp1_tx_n = eth_gty_tx_n[4*1 +: 4];
+assign eth_gty_rx_p[4*1 +: 4] = qsfp1_rx_p;
+assign eth_gty_rx_n[4*1 +: 4] = qsfp1_rx_n;
+
+assign qsfp2_tx_p = eth_gty_tx_p[4*2 +: 4];
+assign qsfp2_tx_n = eth_gty_tx_n[4*2 +: 4];
+assign eth_gty_rx_p[4*2 +: 4] = qsfp2_rx_p;
+assign eth_gty_rx_n[4*2 +: 4] = qsfp2_rx_n;
+
+assign qsfp3_tx_p = eth_gty_tx_p[4*3 +: 4];
+assign qsfp3_tx_n = eth_gty_tx_n[4*3 +: 4];
+assign eth_gty_rx_p[4*3 +: 4] = qsfp3_rx_p;
+assign eth_gty_rx_n[4*3 +: 4] = qsfp3_rx_n;
+
+assign eth_gty_mgt_refclk_p[0] = qsfp0_mgt_refclk_b0_p;
+assign eth_gty_mgt_refclk_n[0] = qsfp0_mgt_refclk_b0_n;
+assign eth_gty_mgt_refclk_p[1] = qsfp1_mgt_refclk_b0_p;
+assign eth_gty_mgt_refclk_n[1] = qsfp1_mgt_refclk_b0_n;
+assign eth_gty_mgt_refclk_p[2] = qsfp2_mgt_refclk_b0_p;
+assign eth_gty_mgt_refclk_n[2] = qsfp2_mgt_refclk_b0_n;
+assign eth_gty_mgt_refclk_p[3] = qsfp3_mgt_refclk_b0_p;
+assign eth_gty_mgt_refclk_n[3] = qsfp3_mgt_refclk_b0_n;
+
 fpga_core #(
     .SIM(SIM),
     .VENDOR(VENDOR),
-    .FAMILY(FAMILY)
+    .FAMILY(FAMILY),
+    .PORT_CNT(PORT_CNT),
+    .GTY_QUAD_CNT(GTY_QUAD_CNT),
+    .GTY_CNT(GTY_CNT),
+    .GTY_CLK_CNT(GTY_CLK_CNT)
 )
 core_inst (
     /*
@@ -371,73 +417,23 @@ core_inst (
     /*
      * Ethernet: QSFP28
      */
-    .qsfp0_tx_p(qsfp0_tx_p),
-    .qsfp0_tx_n(qsfp0_tx_n),
-    .qsfp0_rx_p(qsfp0_rx_p),
-    .qsfp0_rx_n(qsfp0_rx_n),
-    .qsfp0_mgt_refclk_b0_p(qsfp0_mgt_refclk_b0_p),
-    .qsfp0_mgt_refclk_b0_n(qsfp0_mgt_refclk_b0_n),
+    .eth_gty_tx_p(eth_gty_tx_p),
+    .eth_gty_tx_n(eth_gty_tx_n),
+    .eth_gty_rx_p(eth_gty_rx_p),
+    .eth_gty_rx_n(eth_gty_rx_n),
+    .eth_gty_mgt_refclk_p(eth_gty_mgt_refclk_p),
+    .eth_gty_mgt_refclk_n(eth_gty_mgt_refclk_n),
+    .eth_gty_mgt_refclk_out(eth_gty_mgt_refclk_out),
 
-    .qsfp0_modprsl(qsfp0_modprsl_int),
-    .qsfp0_resetl(qsfp0_resetl),
-    .qsfp0_intl(qsfp0_intl_int),
-    .qsfp0_lpmode(qsfp0_lpmode),
+    .eth_port_resetl({qsfp3_resetl, qsfp2_resetl, qsfp1_resetl, qsfp0_resetl}),
+    .eth_port_modprsl({qsfp3_modprsl, qsfp2_modprsl, qsfp1_modprsl, qsfp0_modprsl}),
+    .eth_port_intl({qsfp3_intl, qsfp2_intl, qsfp1_intl, qsfp0_intl}),
+    .eth_port_lpmode({qsfp3_lpmode, qsfp2_lpmode, qsfp1_lpmode, qsfp0_lpmode}),
 
-    .qsfp0_i2c_scl_i(qsfp0_i2c_scl_i),
-    .qsfp0_i2c_scl_o(qsfp0_i2c_scl_o),
-    .qsfp0_i2c_sda_i(qsfp0_i2c_sda_i),
-    .qsfp0_i2c_sda_o(qsfp0_i2c_sda_o),
-
-    .qsfp1_tx_p(qsfp1_tx_p),
-    .qsfp1_tx_n(qsfp1_tx_n),
-    .qsfp1_rx_p(qsfp1_rx_p),
-    .qsfp1_rx_n(qsfp1_rx_n),
-    .qsfp1_mgt_refclk_b0_p(qsfp1_mgt_refclk_b0_p),
-    .qsfp1_mgt_refclk_b0_n(qsfp1_mgt_refclk_b0_n),
-
-    .qsfp1_modprsl(qsfp1_modprsl_int),
-    .qsfp1_resetl(qsfp1_resetl),
-    .qsfp1_intl(qsfp1_intl_int),
-    .qsfp1_lpmode(qsfp1_lpmode),
-
-    .qsfp1_i2c_scl_i(qsfp1_i2c_scl_i),
-    .qsfp1_i2c_scl_o(qsfp1_i2c_scl_o),
-    .qsfp1_i2c_sda_i(qsfp1_i2c_sda_i),
-    .qsfp1_i2c_sda_o(qsfp1_i2c_sda_o),
-
-    .qsfp2_tx_p(qsfp2_tx_p),
-    .qsfp2_tx_n(qsfp2_tx_n),
-    .qsfp2_rx_p(qsfp2_rx_p),
-    .qsfp2_rx_n(qsfp2_rx_n),
-    .qsfp2_mgt_refclk_b0_p(qsfp2_mgt_refclk_b0_p),
-    .qsfp2_mgt_refclk_b0_n(qsfp2_mgt_refclk_b0_n),
-
-    .qsfp2_modprsl(qsfp2_modprsl_int),
-    .qsfp2_resetl(qsfp2_resetl),
-    .qsfp2_intl(qsfp2_intl_int),
-    .qsfp2_lpmode(qsfp2_lpmode),
-
-    .qsfp2_i2c_scl_i(qsfp2_i2c_scl_i),
-    .qsfp2_i2c_scl_o(qsfp2_i2c_scl_o),
-    .qsfp2_i2c_sda_i(qsfp2_i2c_sda_i),
-    .qsfp2_i2c_sda_o(qsfp2_i2c_sda_o),
-
-    .qsfp3_tx_p(qsfp3_tx_p),
-    .qsfp3_tx_n(qsfp3_tx_n),
-    .qsfp3_rx_p(qsfp3_rx_p),
-    .qsfp3_rx_n(qsfp3_rx_n),
-    .qsfp3_mgt_refclk_b0_p(qsfp3_mgt_refclk_b0_p),
-    .qsfp3_mgt_refclk_b0_n(qsfp3_mgt_refclk_b0_n),
-
-    .qsfp3_modprsl(qsfp3_modprsl_int),
-    .qsfp3_resetl(qsfp3_resetl),
-    .qsfp3_intl(qsfp3_intl_int),
-    .qsfp3_lpmode(qsfp3_lpmode),
-
-    .qsfp3_i2c_scl_i(qsfp3_i2c_scl_i),
-    .qsfp3_i2c_scl_o(qsfp3_i2c_scl_o),
-    .qsfp3_i2c_sda_i(qsfp3_i2c_sda_i),
-    .qsfp3_i2c_sda_o(qsfp3_i2c_sda_o)
+    .eth_port_i2c_scl_i({qsfp3_i2c_scl_i, qsfp2_i2c_scl_i, qsfp1_i2c_scl_i, qsfp0_i2c_scl_i}),
+    .eth_port_i2c_scl_o({qsfp3_i2c_scl_o, qsfp2_i2c_scl_o, qsfp1_i2c_scl_o, qsfp0_i2c_scl_o}),
+    .eth_port_i2c_sda_i({qsfp3_i2c_sda_i, qsfp2_i2c_sda_i, qsfp1_i2c_sda_i, qsfp0_i2c_sda_i}),
+    .eth_port_i2c_sda_o({qsfp3_i2c_sda_o, qsfp2_i2c_sda_o, qsfp1_i2c_sda_o, qsfp0_i2c_sda_o})
 );
 
 endmodule

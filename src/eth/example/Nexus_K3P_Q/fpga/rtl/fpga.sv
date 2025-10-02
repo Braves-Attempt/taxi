@@ -33,10 +33,10 @@ module fpga #
     /*
      * Ethernet: SFP+
      */
-    output wire logic [3:0]   qsfp_0_tx_p,
-    output wire logic [3:0]   qsfp_0_tx_n,
-    input  wire logic [3:0]   qsfp_0_rx_p,
-    input  wire logic [3:0]   qsfp_0_rx_n,
+    output wire logic         qsfp_0_tx_p[4],
+    output wire logic         qsfp_0_tx_n[4],
+    input  wire logic         qsfp_0_rx_p[4],
+    input  wire logic         qsfp_0_rx_n[4],
     input  wire logic         qsfp_mgt_refclk_p,
     input  wire logic         qsfp_mgt_refclk_n,
     output wire logic         qsfp_0_modsell,
@@ -45,10 +45,10 @@ module fpga #
     input  wire logic         qsfp_0_intl,
     output wire logic         qsfp_0_lpmode,
 
-    output wire logic [3:0]   qsfp_1_tx_p,
-    output wire logic [3:0]   qsfp_1_tx_n,
-    input  wire logic [3:0]   qsfp_1_rx_p,
-    input  wire logic [3:0]   qsfp_1_rx_n,
+    output wire logic         qsfp_1_tx_p[4],
+    output wire logic         qsfp_1_tx_n[4],
+    input  wire logic         qsfp_1_rx_p[4],
+    input  wire logic         qsfp_1_rx_n[4],
     output wire logic         qsfp_1_modsell,
     output wire logic         qsfp_1_resetl,
     input  wire logic         qsfp_1_modprsl,
