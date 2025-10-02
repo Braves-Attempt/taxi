@@ -91,41 +91,43 @@ logic xcvr_qpll1lock_out;
 logic xcvr_qpll1clk_out;
 logic xcvr_qpll1refclk_out;
 
-logic [CNT-1:0] xcvr_txp;
-logic [CNT-1:0] xcvr_txn;
-logic [CNT-1:0] xcvr_rxp;
-logic [CNT-1:0] xcvr_rxn;
+logic xcvr_txp[CNT];
+logic xcvr_txn[CNT];
+logic xcvr_rxp[CNT];
+logic xcvr_rxn[CNT];
 
-logic [CNT-1:0] rx_clk;
-logic [CNT-1:0] rx_rst_in;
-logic [CNT-1:0] rx_rst_out;
-logic [CNT-1:0] tx_clk;
-logic [CNT-1:0] tx_rst_in;
-logic [CNT-1:0] tx_rst_out;
-logic [CNT-1:0] ptp_sample_clk;
+logic rx_clk[CNT];
+logic rx_rst_in[CNT];
+logic rx_rst_out[CNT];
+logic tx_clk[CNT];
+logic tx_rst_in[CNT];
+logic tx_rst_out[CNT];
+logic ptp_sample_clk[CNT];
 
 taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(TX_USER_W), .ID_EN(1), .ID_W(TX_TAG_W)) s_axis_tx[CNT]();
 taxi_axis_if #(.DATA_W(PTP_TS_W), .KEEP_W(1), .ID_EN(1), .ID_W(TX_TAG_W)) m_axis_tx_cpl[CNT]();
 taxi_axis_if #(.DATA_W(DATA_W), .USER_EN(1), .USER_W(RX_USER_W)) m_axis_rx[CNT]();
 
 logic [PTP_TS_W-1:0] tx_ptp_ts[CNT];
+logic tx_ptp_ts_step[CNT];
 logic [PTP_TS_W-1:0] rx_ptp_ts[CNT];
+logic rx_ptp_ts_step[CNT];
 
-logic [CNT-1:0] tx_lfc_req;
-logic [CNT-1:0] tx_lfc_resend;
-logic [CNT-1:0] rx_lfc_en;
-logic [CNT-1:0] rx_lfc_req;
-logic [CNT-1:0] rx_lfc_ack;
+logic tx_lfc_req[CNT];
+logic tx_lfc_resend[CNT];
+logic rx_lfc_en[CNT];
+logic rx_lfc_req[CNT];
+logic rx_lfc_ack[CNT];
 
 logic [7:0] tx_pfc_req[CNT];
-logic [CNT-1:0] tx_pfc_resend;
+logic tx_pfc_resend[CNT];
 logic [7:0] rx_pfc_en[CNT];
 logic [7:0] rx_pfc_req[CNT];
 logic [7:0] rx_pfc_ack[CNT];
 
-logic [CNT-1:0] tx_lfc_pause_en;
-logic [CNT-1:0] tx_pause_req;
-logic [CNT-1:0] tx_pause_ack;
+logic tx_lfc_pause_en[CNT];
+logic tx_pause_req[CNT];
+logic tx_pause_ack[CNT];
 
 logic stat_clk;
 logic stat_rst;
@@ -134,93 +136,93 @@ taxi_axis_if #(.DATA_W(24), .KEEP_W(1), .LAST_EN(0), .USER_EN(1), .USER_W(1), .I
 logic [1:0] tx_start_packet[CNT];
 logic [3:0] stat_tx_byte[CNT];
 logic [15:0] stat_tx_pkt_len[CNT];
-logic [CNT-1:0] stat_tx_pkt_ucast;
-logic [CNT-1:0] stat_tx_pkt_mcast;
-logic [CNT-1:0] stat_tx_pkt_bcast;
-logic [CNT-1:0] stat_tx_pkt_vlan;
-logic [CNT-1:0] stat_tx_pkt_good;
-logic [CNT-1:0] stat_tx_pkt_bad;
-logic [CNT-1:0] stat_tx_err_oversize;
-logic [CNT-1:0] stat_tx_err_user;
-logic [CNT-1:0] stat_tx_err_underflow;
+logic stat_tx_pkt_ucast[CNT];
+logic stat_tx_pkt_mcast[CNT];
+logic stat_tx_pkt_bcast[CNT];
+logic stat_tx_pkt_vlan[CNT];
+logic stat_tx_pkt_good[CNT];
+logic stat_tx_pkt_bad[CNT];
+logic stat_tx_err_oversize[CNT];
+logic stat_tx_err_user[CNT];
+logic stat_tx_err_underflow[CNT];
 logic [1:0] rx_start_packet[CNT];
 logic [6:0] rx_error_count[CNT];
-logic [CNT-1:0] rx_block_lock;
-logic [CNT-1:0] rx_high_ber;
-logic [CNT-1:0] rx_status;
+logic rx_block_lock[CNT];
+logic rx_high_ber[CNT];
+logic rx_status[CNT];
 logic [3:0] stat_rx_byte[CNT];
 logic [15:0] stat_rx_pkt_len[CNT];
-logic [CNT-1:0] stat_rx_pkt_fragment;
-logic [CNT-1:0] stat_rx_pkt_jabber;
-logic [CNT-1:0] stat_rx_pkt_ucast;
-logic [CNT-1:0] stat_rx_pkt_mcast;
-logic [CNT-1:0] stat_rx_pkt_bcast;
-logic [CNT-1:0] stat_rx_pkt_vlan;
-logic [CNT-1:0] stat_rx_pkt_good;
-logic [CNT-1:0] stat_rx_pkt_bad;
-logic [CNT-1:0] stat_rx_err_oversize;
-logic [CNT-1:0] stat_rx_err_bad_fcs;
-logic [CNT-1:0] stat_rx_err_bad_block;
-logic [CNT-1:0] stat_rx_err_framing;
-logic [CNT-1:0] stat_rx_err_preamble;
-logic [CNT-1:0] stat_rx_fifo_drop;
-logic [CNT-1:0] stat_tx_mcf;
-logic [CNT-1:0] stat_rx_mcf;
-logic [CNT-1:0] stat_tx_lfc_pkt;
-logic [CNT-1:0] stat_tx_lfc_xon;
-logic [CNT-1:0] stat_tx_lfc_xoff;
-logic [CNT-1:0] stat_tx_lfc_paused;
-logic [CNT-1:0] stat_tx_pfc_pkt;
+logic stat_rx_pkt_fragment[CNT];
+logic stat_rx_pkt_jabber[CNT];
+logic stat_rx_pkt_ucast[CNT];
+logic stat_rx_pkt_mcast[CNT];
+logic stat_rx_pkt_bcast[CNT];
+logic stat_rx_pkt_vlan[CNT];
+logic stat_rx_pkt_good[CNT];
+logic stat_rx_pkt_bad[CNT];
+logic stat_rx_err_oversize[CNT];
+logic stat_rx_err_bad_fcs[CNT];
+logic stat_rx_err_bad_block[CNT];
+logic stat_rx_err_framing[CNT];
+logic stat_rx_err_preamble[CNT];
+logic stat_rx_fifo_drop[CNT];
+logic stat_tx_mcf[CNT];
+logic stat_rx_mcf[CNT];
+logic stat_tx_lfc_pkt[CNT];
+logic stat_tx_lfc_xon[CNT];
+logic stat_tx_lfc_xoff[CNT];
+logic stat_tx_lfc_paused[CNT];
+logic stat_tx_pfc_pkt[CNT];
 logic [7:0] stat_tx_pfc_xon[CNT];
 logic [7:0] stat_tx_pfc_xoff[CNT];
 logic [7:0] stat_tx_pfc_paused[CNT];
-logic [CNT-1:0] stat_rx_lfc_pkt;
-logic [CNT-1:0] stat_rx_lfc_xon;
-logic [CNT-1:0] stat_rx_lfc_xoff;
-logic [CNT-1:0] stat_rx_lfc_paused;
-logic [CNT-1:0] stat_rx_pfc_pkt;
+logic stat_rx_lfc_pkt[CNT];
+logic stat_rx_lfc_xon[CNT];
+logic stat_rx_lfc_xoff[CNT];
+logic stat_rx_lfc_paused[CNT];
+logic stat_rx_pfc_pkt[CNT];
 logic [7:0] stat_rx_pfc_xon[CNT];
 logic [7:0] stat_rx_pfc_xoff[CNT];
 logic [7:0] stat_rx_pfc_paused[CNT];
 
 logic [15:0] cfg_tx_max_pkt_len[CNT];
 logic [7:0] cfg_tx_ifg[CNT];
-logic [CNT-1:0] cfg_tx_enable;
+logic cfg_tx_enable[CNT];
 logic [15:0] cfg_rx_max_pkt_len[CNT];
-logic [CNT-1:0] cfg_rx_enable;
-logic [CNT-1:0] cfg_tx_prbs31_enable;
-logic [CNT-1:0] cfg_rx_prbs31_enable;
+logic cfg_rx_enable[CNT];
+logic cfg_tx_prbs31_enable[CNT];
+logic cfg_rx_prbs31_enable[CNT];
 logic [47:0] cfg_mcf_rx_eth_dst_mcast[CNT];
-logic [CNT-1:0] cfg_mcf_rx_check_eth_dst_mcast;
+logic cfg_mcf_rx_check_eth_dst_mcast[CNT];
 logic [47:0] cfg_mcf_rx_eth_dst_ucast[CNT];
-logic [CNT-1:0] cfg_mcf_rx_check_eth_dst_ucast;
+logic cfg_mcf_rx_check_eth_dst_ucast[CNT];
 logic [47:0] cfg_mcf_rx_eth_src[CNT];
-logic [CNT-1:0] cfg_mcf_rx_check_eth_src;
+logic cfg_mcf_rx_check_eth_src[CNT];
 logic [15:0] cfg_mcf_rx_eth_type[CNT];
 logic [15:0] cfg_mcf_rx_opcode_lfc[CNT];
-logic [CNT-1:0] cfg_mcf_rx_check_opcode_lfc;
+logic cfg_mcf_rx_check_opcode_lfc[CNT];
 logic [15:0] cfg_mcf_rx_opcode_pfc[CNT];
-logic [CNT-1:0] cfg_mcf_rx_check_opcode_pfc;
-logic [CNT-1:0] cfg_mcf_rx_forward;
-logic [CNT-1:0] cfg_mcf_rx_enable;
+logic cfg_mcf_rx_check_opcode_pfc[CNT];
+logic cfg_mcf_rx_forward[CNT];
+logic cfg_mcf_rx_enable[CNT];
 logic [47:0] cfg_tx_lfc_eth_dst[CNT];
 logic [47:0] cfg_tx_lfc_eth_src[CNT];
 logic [15:0] cfg_tx_lfc_eth_type[CNT];
 logic [15:0] cfg_tx_lfc_opcode[CNT];
-logic [CNT-1:0] cfg_tx_lfc_en;
+logic cfg_tx_lfc_en[CNT];
 logic [15:0] cfg_tx_lfc_quanta[CNT];
 logic [15:0] cfg_tx_lfc_refresh[CNT];
 logic [47:0] cfg_tx_pfc_eth_dst[CNT];
 logic [47:0] cfg_tx_pfc_eth_src[CNT];
 logic [15:0] cfg_tx_pfc_eth_type[CNT];
 logic [15:0] cfg_tx_pfc_opcode[CNT];
-logic [CNT-1:0] cfg_tx_pfc_en;
+logic cfg_tx_pfc_en[CNT];
 logic [15:0] cfg_tx_pfc_quanta[CNT][8];
 logic [15:0] cfg_tx_pfc_refresh[CNT][8];
 logic [15:0] cfg_rx_lfc_opcode[CNT];
-logic [CNT-1:0] cfg_rx_lfc_en;
+logic cfg_rx_lfc_en[CNT];
 logic [15:0] cfg_rx_pfc_opcode[CNT];
-logic [CNT-1:0] cfg_rx_pfc_en;
+logic cfg_rx_pfc_en[CNT];
 
 taxi_eth_mac_25g_us #(
     .SIM(SIM),
@@ -327,9 +329,9 @@ uut (
      * PTP
      */
     .tx_ptp_ts(tx_ptp_ts),
-    .tx_ptp_ts_step('0),
+    .tx_ptp_ts_step(tx_ptp_ts_step),
     .rx_ptp_ts(rx_ptp_ts),
-    .rx_ptp_ts_step('0),
+    .rx_ptp_ts_step(rx_ptp_ts_step),
 
     /*
      * Link-level Flow Control (LFC) (IEEE 802.3 annex 31B PAUSE)
