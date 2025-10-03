@@ -255,15 +255,13 @@ assign s_axis.tready = (FRAME_FIFO ? (!full || (full_wr && DROP_OVERSIZE_FRAME) 
 
 wire [WIDTH-1:0] mem_wr_data;
 
-generate
-    assign mem_wr_data[DATA_W-1:0] = s_axis.tdata;
-    if (KEEP_EN) assign mem_wr_data[KEEP_OFFSET +: KEEP_W] = s_axis.tkeep;
-    if (STRB_EN) assign mem_wr_data[STRB_OFFSET +: KEEP_W] = s_axis.tstrb;
-    if (LAST_EN) assign mem_wr_data[LAST_OFFSET]           = s_axis.tlast | mark_frame_reg;
-    if (ID_EN)   assign mem_wr_data[ID_OFFSET   +: ID_W]   = s_axis.tid;
-    if (DEST_EN) assign mem_wr_data[DEST_OFFSET +: DEST_W] = s_axis.tdest;
-    if (USER_EN) assign mem_wr_data[USER_OFFSET +: USER_W] = mark_frame_reg ? USER_W'(USER_BAD_FRAME_VALUE) : s_axis.tuser;
-endgenerate
+assign mem_wr_data[DATA_W-1:0] = s_axis.tdata;
+if (KEEP_EN) assign mem_wr_data[KEEP_OFFSET +: KEEP_W] = s_axis.tkeep;
+if (STRB_EN) assign mem_wr_data[STRB_OFFSET +: KEEP_W] = s_axis.tstrb;
+if (LAST_EN) assign mem_wr_data[LAST_OFFSET]           = s_axis.tlast | mark_frame_reg;
+if (ID_EN)   assign mem_wr_data[ID_OFFSET   +: ID_W]   = s_axis.tid;
+if (DEST_EN) assign mem_wr_data[DEST_OFFSET +: DEST_W] = s_axis.tdest;
+if (USER_EN) assign mem_wr_data[USER_OFFSET +: USER_W] = mark_frame_reg ? USER_W'(USER_BAD_FRAME_VALUE) : s_axis.tuser;
 
 wire [WIDTH-1:0] mem_rd_data = mem_rd_data_pipe_reg[RAM_PIPELINE+1-1];
 
