@@ -190,7 +190,9 @@ logic is_mcast_reg = 1'b0, is_mcast_next;
 logic is_bcast_reg = 1'b0, is_bcast_next;
 logic is_8021q_reg = 1'b0, is_8021q_next;
 logic [15:0] frame_len_reg = '0, frame_len_next;
-logic [15:0] frame_len_lim_reg = '0, frame_len_lim_next;
+logic [13:0] frame_len_lim_cyc_reg = '0, frame_len_lim_cyc_next;
+logic [1:0] frame_len_lim_last_reg = '0, frame_len_lim_last_next;
+logic frame_len_lim_check_reg = '0, frame_len_lim_check_next;
 logic [7:0] ifg_cnt_reg = '0, ifg_cnt_next;
 
 logic [7:0] ifg_count_reg = 8'd0, ifg_count_next;
@@ -352,7 +354,9 @@ always_comb begin
     is_bcast_next = is_bcast_reg;
     is_8021q_next = is_8021q_reg;
     frame_len_next = frame_len_reg;
-    frame_len_lim_next = frame_len_lim_reg;
+    frame_len_lim_cyc_next = frame_len_lim_cyc_reg;
+    frame_len_lim_last_next = frame_len_lim_last_reg;
+    frame_len_lim_check_next = frame_len_lim_check_reg;
     ifg_cnt_next = ifg_cnt_reg;
 
     ifg_count_next = ifg_count_reg;
@@ -420,10 +424,14 @@ always_comb begin
         end
 
         // counter for max frame length enforcement
-        if (frame_len_lim_reg[15:2] != 0) begin
-            frame_len_lim_next = frame_len_lim_reg - 16'(KEEP_W);
+        if (frame_len_lim_cyc_reg != 0) begin
+            frame_len_lim_cyc_next = frame_len_lim_cyc_reg - 1;
         end else begin
-            frame_len_lim_next = '0;
+            frame_len_lim_cyc_next = '0;
+        end
+
+        if (frame_len_lim_cyc_reg == 2) begin
+            frame_len_lim_check_next = 1'b1;
         end
 
         // address and ethertype checks
@@ -453,10 +461,12 @@ always_comb begin
             STATE_IDLE: begin
                 // idle state - wait for data
                 frame_error_next = 1'b0;
+                frame_oversize_next = 1'b0;
                 frame_min_count_next = MIN_LEN_W'(MIN_FRAME_LEN-4-KEEP_W);
                 hdr_ptr_next = 0;
                 frame_len_next = 0;
-                frame_len_lim_next = cfg_tx_max_pkt_len;
+                {frame_len_lim_cyc_next, frame_len_lim_last_next} = cfg_tx_max_pkt_len-1;
+                frame_len_lim_check_next = 1'b0;
                 reset_crc = 1'b1;
 
                 output_data_next = s_tdata_reg;
@@ -483,7 +493,6 @@ always_comb begin
 
                 hdr_ptr_next = 0;
                 frame_len_next = 0;
-                frame_len_lim_next = cfg_tx_max_pkt_len;
 
                 s_tdata_next = s_axis_tx_tdata_masked;
                 s_empty_next = keep2empty(s_axis_tx.tkeep);
@@ -509,9 +518,16 @@ always_comb begin
                 stat_tx_byte_next = 3'(KEEP_W);
 
                 if (s_axis_tx.tvalid && s_axis_tx.tlast) begin
-                    frame_oversize_next = frame_len_lim_reg < 16'(4+4+4-keep2empty(s_axis_tx.tkeep));
+                    if (frame_len_lim_check_reg) begin
+                        if (frame_len_lim_last_reg < 2'(3-keep2empty(s_axis_tx.tkeep))) begin
+                            frame_oversize_next = 1'b1;
+                        end
+                    end
                 end else begin
-                    frame_oversize_next = frame_len_lim_reg < 4+4;
+                    if (frame_len_lim_check_reg) begin
+                        // at the limit but the frame doesn't end in this cycle
+                        frame_oversize_next = 1'b1;
+                    end
                 end
 
                 if (PADDING_EN && frame_min_count_reg != 0) begin
@@ -702,7 +718,9 @@ always_ff @(posedge clk) begin
     is_bcast_reg <= is_bcast_next;
     is_8021q_reg <= is_8021q_next;
     frame_len_reg <= frame_len_next;
-    frame_len_lim_reg <= frame_len_lim_next;
+    frame_len_lim_cyc_reg <= frame_len_lim_cyc_next;
+    frame_len_lim_last_reg <= frame_len_lim_last_next;
+    frame_len_lim_check_reg <= frame_len_lim_check_next;
     ifg_cnt_reg <= ifg_cnt_next;
 
     ifg_count_reg <= ifg_count_next;
