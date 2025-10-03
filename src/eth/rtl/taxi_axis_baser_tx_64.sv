@@ -486,7 +486,7 @@ always_comb begin
                 frame_len_next = 0;
                 frame_len_lim_next = cfg_tx_max_pkt_len;
                 reset_crc = 1'b1;
-                s_axis_tx_tready_next = 1'b1;
+                s_axis_tx_tready_next = cfg_tx_enable;
 
                 output_data_next = s_tdata_reg;
                 output_type_next = OUTPUT_TYPE_IDLE;
@@ -494,7 +494,7 @@ always_comb begin
                 s_tdata_next = s_axis_tx_tdata_masked;
                 s_empty_next = keep2empty(s_axis_tx.tkeep);
 
-                if (s_axis_tx.tvalid && cfg_tx_enable) begin
+                if (s_axis_tx.tvalid && s_axis_tx.tready) begin
                     // Preamble and SFD
                     output_data_next = {ETH_SFD, {7{ETH_PRE}}};
                     output_type_next = OUTPUT_TYPE_START_0;
@@ -644,14 +644,14 @@ always_comb begin
                             ifg_count_next = 8'd0;
                             swap_lanes_next = 1'b0;
                         end
-                        s_axis_tx_tready_next = 1'b1;
+                        s_axis_tx_tready_next = cfg_tx_enable;
                         state_next = STATE_IDLE;
                     end
                 end else begin
                     if (ifg_count_next > 8'd4) begin
                         state_next = STATE_IFG;
                     end else begin
-                        s_axis_tx_tready_next = 1'b1;
+                        s_axis_tx_tready_next = cfg_tx_enable;
                         swap_lanes_next = ifg_count_next != 0;
                         state_next = STATE_IDLE;
                     end
@@ -704,14 +704,14 @@ always_comb begin
                             ifg_count_next = 8'd0;
                             swap_lanes_next = 1'b0;
                         end
-                        s_axis_tx_tready_next = 1'b1;
+                        s_axis_tx_tready_next = cfg_tx_enable;
                         state_next = STATE_IDLE;
                     end
                 end else begin
                     if (ifg_count_next > 8'd4 || frame_reg) begin
                         state_next = STATE_IFG;
                     end else begin
-                        s_axis_tx_tready_next = 1'b1;
+                        s_axis_tx_tready_next = cfg_tx_enable;
                         swap_lanes_next = ifg_count_next != 0;
                         state_next = STATE_IDLE;
                     end
