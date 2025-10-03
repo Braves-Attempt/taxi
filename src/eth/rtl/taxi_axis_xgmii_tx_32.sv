@@ -466,22 +466,22 @@ always_comb begin
                     frame_oversize_next = frame_len_lim_reg < 4+4;
                 end
 
+                if (PADDING_EN && frame_min_count_reg != 0) begin
+                    if (frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
+                        s_empty_next = 0;
+                    end else if (keep2empty(s_axis_tx.tkeep) > 2'(CTRL_W-frame_min_count_reg)) begin
+                        s_empty_next = 2'(CTRL_W-frame_min_count_reg);
+                    end
+                end
+
                 if (!s_axis_tx.tvalid || s_axis_tx.tlast || frame_oversize_next) begin
                     s_axis_tx_tready_next = frame_next; // drop frame
                     frame_error_next = !s_axis_tx.tvalid || s_axis_tx.tuser[0] || frame_oversize_next;
                     stat_tx_err_user_next = s_axis_tx.tuser[0];
                     stat_tx_err_underflow_next = !s_axis_tx.tvalid;
 
-                    if (PADDING_EN && frame_min_count_reg != 0) begin
-                        if (frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
-                            s_empty_next = 0;
-                            state_next = STATE_PAD;
-                        end else begin
-                            if (keep2empty(s_axis_tx.tkeep) > 2'(CTRL_W-frame_min_count_reg)) begin
-                                s_empty_next = 2'(CTRL_W-frame_min_count_reg);
-                            end
-                            state_next = STATE_FCS_1;
-                        end
+                    if (PADDING_EN && frame_min_count_reg != 0 && frame_min_count_reg > MIN_LEN_W'(CTRL_W)) begin
+                        state_next = STATE_PAD;
                     end else begin
                         state_next = STATE_FCS_1;
                     end

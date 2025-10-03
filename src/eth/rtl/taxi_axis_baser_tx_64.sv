@@ -527,26 +527,22 @@ always_comb begin
                     frame_oversize_next = frame_len_lim_reg < 8+8;
                 end
 
+                if (PADDING_EN && frame_min_count_reg != 0) begin
+                    if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
+                        s_empty_next = 0;
+                    end else if (keep2empty(s_axis_tx.tkeep) > 3'(KEEP_W-frame_min_count_reg)) begin
+                        s_empty_next = 3'(KEEP_W-frame_min_count_reg);
+                    end
+                end
+
                 if (!s_axis_tx.tvalid || s_axis_tx.tlast || frame_oversize_next) begin
                     s_axis_tx_tready_next = frame_next; // drop frame
                     frame_error_next = !s_axis_tx.tvalid || s_axis_tx.tuser[0] || frame_oversize_next;
                     stat_tx_err_user_next = s_axis_tx.tuser[0];
                     stat_tx_err_underflow_next = !s_axis_tx.tvalid;
 
-                    if (PADDING_EN && frame_min_count_reg != 0) begin
-                        if (frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
-                            s_empty_next = 0;
-                            state_next = STATE_PAD;
-                        end else begin
-                            if (keep2empty(s_axis_tx.tkeep) > 3'(KEEP_W-frame_min_count_reg)) begin
-                                s_empty_next = 3'(KEEP_W-frame_min_count_reg);
-                            end
-                            if (frame_error_next) begin
-                                state_next = STATE_ERR;
-                            end else begin
-                                state_next = STATE_FCS_1;
-                            end
-                        end
+                    if (PADDING_EN && frame_min_count_reg != 0 && frame_min_count_reg > MIN_LEN_W'(KEEP_W)) begin
+                        state_next = STATE_PAD;
                     end else begin
                         if (frame_error_next) begin
                             state_next = STATE_ERR;
