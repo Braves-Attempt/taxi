@@ -204,9 +204,6 @@ function [OUT_W-1:0][IN_W-1:0] lfsr_mask();
     end
     for (integer i = 0; i < DATA_W; i = i + 1) begin
         output_mask_state[i] = '0;
-        if (i < LFSR_W) begin
-            output_mask_state[i][i] = 1'b1;
-        end
         output_mask_data[i] = '0;
     end
 
