@@ -165,8 +165,8 @@ logic m_axis_tx_cpl_valid_reg = 1'b0;
 logic m_axis_tx_cpl_valid_int_reg = 1'b0;
 logic m_axis_tx_cpl_ts_borrow_reg = 1'b0;
 
-logic [31:0] crc_state_reg[7:0];
-wire [31:0] crc_state_next[7:0];
+logic [31:0] crc_state_reg[8];
+wire [31:0] crc_state_next[8];
 
 logic [4+16-1:0] last_ts_reg = '0;
 logic [4+16-1:0] ts_inc_reg = '0;

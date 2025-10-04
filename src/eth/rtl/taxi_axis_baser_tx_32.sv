@@ -204,8 +204,8 @@ logic [PTP_TS_W-1:0] m_axis_tx_cpl_ts_reg = '0, m_axis_tx_cpl_ts_next;
 logic [TX_TAG_W-1:0] m_axis_tx_cpl_tag_reg = '0, m_axis_tx_cpl_tag_next;
 logic m_axis_tx_cpl_valid_reg = 1'b0, m_axis_tx_cpl_valid_next;
 
-logic [31:0] crc_state_reg[3:0];
-wire [31:0] crc_state_next[3:0];
+logic [31:0] crc_state_reg[4];
+wire [31:0] crc_state_next[4];
 
 logic [DATA_W-1:0] encoded_tx_data_reg = {24'd0, BLOCK_TYPE_CTRL};
 logic encoded_tx_data_valid_reg = 1'b0;
