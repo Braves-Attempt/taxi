@@ -160,17 +160,17 @@ logic stat_rx_err_preamble_reg = 1'b0, stat_rx_err_preamble_next;
 
 logic [PTP_TS_W-1:0] ptp_ts_out_reg = '0, ptp_ts_out_next;
 
-logic [31:0] crc_state = '1;
+logic [31:0] crc_state_reg = '1;
 
-wire [31:0] crc_next;
+wire [31:0] crc_state_next;
 
 wire [3:0] crc_valid;
 logic [3:0] crc_valid_save;
 
-assign crc_valid[3] = crc_next == ~32'h2144df1c;
-assign crc_valid[2] = crc_next == ~32'hc622f71d;
-assign crc_valid[1] = crc_next == ~32'hb1c2a1a3;
-assign crc_valid[0] = crc_next == ~32'h9d6cdf7e;
+assign crc_valid[3] = crc_state_next == ~32'h2144df1c;
+assign crc_valid[2] = crc_state_next == ~32'hc622f71d;
+assign crc_valid[1] = crc_state_next == ~32'hb1c2a1a3;
+assign crc_valid[0] = crc_state_next == ~32'h9d6cdf7e;
 
 assign m_axis_rx.tdata = m_axis_rx_tdata_reg;
 assign m_axis_rx.tkeep = m_axis_rx_tkeep_reg;
@@ -216,9 +216,9 @@ taxi_lfsr #(
 )
 eth_crc (
     .data_in(xgmii_rxd_d0),
-    .state_in(crc_state),
+    .state_in(crc_state_reg),
     .data_out(),
-    .state_out(crc_next)
+    .state_out(crc_state_next)
 );
 
 always_comb begin
@@ -539,9 +539,9 @@ always_ff @(posedge clk) begin
         term_lane_d0_reg <= term_lane_reg;
 
         if (reset_crc) begin
-            crc_state <= '1;
+            crc_state_reg <= '1;
         end else begin
-            crc_state <= crc_next;
+            crc_state_reg <= crc_state_next;
         end
 
         crc_valid_save <= crc_valid;

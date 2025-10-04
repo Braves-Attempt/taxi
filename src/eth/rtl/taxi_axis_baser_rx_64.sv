@@ -215,21 +215,21 @@ logic [PTP_TS_W-1:0] ptp_ts_out_reg = '0, ptp_ts_out_next;
 logic [PTP_TS_W-1:0] ptp_ts_adj_reg = '0;
 logic ptp_ts_borrow_reg = '0;
 
-logic [31:0] crc_state = '1;
+logic [31:0] crc_state_reg = '1;
 
-wire [31:0] crc_next;
+wire [31:0] crc_state_next;
 
 wire [7:0] crc_valid;
 logic [7:0] crc_valid_save;
 
-assign crc_valid[7] = crc_next == ~32'h2144df1c;
-assign crc_valid[6] = crc_next == ~32'hc622f71d;
-assign crc_valid[5] = crc_next == ~32'hb1c2a1a3;
-assign crc_valid[4] = crc_next == ~32'h9d6cdf7e;
-assign crc_valid[3] = crc_next == ~32'h6522df69;
-assign crc_valid[2] = crc_next == ~32'he60914ae;
-assign crc_valid[1] = crc_next == ~32'he38a6876;
-assign crc_valid[0] = crc_next == ~32'h6b87b1ec;
+assign crc_valid[7] = crc_state_next == ~32'h2144df1c;
+assign crc_valid[6] = crc_state_next == ~32'hc622f71d;
+assign crc_valid[5] = crc_state_next == ~32'hb1c2a1a3;
+assign crc_valid[4] = crc_state_next == ~32'h9d6cdf7e;
+assign crc_valid[3] = crc_state_next == ~32'h6522df69;
+assign crc_valid[2] = crc_state_next == ~32'he60914ae;
+assign crc_valid[1] = crc_state_next == ~32'he38a6876;
+assign crc_valid[0] = crc_state_next == ~32'h6b87b1ec;
 
 logic [4+16-1:0] last_ts_reg = '0;
 logic [4+16-1:0] ts_inc_reg = '0;
@@ -276,9 +276,9 @@ taxi_lfsr #(
 )
 eth_crc (
     .data_in(input_data_d0),
-    .state_in(crc_state),
+    .state_in(crc_state_reg),
     .data_out(),
-    .state_out(crc_next)
+    .state_out(crc_state_next)
 );
 
 // Mask input data
@@ -837,9 +837,9 @@ always_ff @(posedge clk) begin
         input_data_d1 <= input_data_d0;
 
         if (reset_crc) begin
-            crc_state <= '1;
+            crc_state_reg <= '1;
         end else begin
-            crc_state <= crc_next;
+            crc_state_reg <= crc_state_next;
         end
 
         crc_valid_save <= crc_valid;
