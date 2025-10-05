@@ -281,7 +281,7 @@ always_comb begin
     end else if (encoded_rx_data[7]) begin
         // terminate
         case (encoded_rx_data[6:4])
-            3'd0: encoded_rx_data_masked = 64'd0;
+            3'd0: encoded_rx_data_masked = {56'd0, encoded_rx_data[15:8]}; // don't care
             3'd1: encoded_rx_data_masked = {56'd0, encoded_rx_data[15:8]};
             3'd2: encoded_rx_data_masked = {48'd0, encoded_rx_data[23:8]};
             3'd3: encoded_rx_data_masked = {40'd0, encoded_rx_data[31:8]};

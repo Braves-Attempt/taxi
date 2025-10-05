@@ -635,7 +635,7 @@ always_ff @(posedge clk) begin
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_0[7:4]: begin
-                        input_data_d0 <= 32'd0;
+                        input_data_d0 <= encoded_rx_data_reg; // don't care
                         term_present_reg <= 1'b1;
                         term_first_cycle_reg <= 1'b1;
                         term_lane_reg <= 0;
