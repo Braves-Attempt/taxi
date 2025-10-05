@@ -132,16 +132,6 @@ localparam [7:0]
     BLOCK_TYPE_TERM_6   = 8'he1, // C7    D5 D4 D3 D2 D1 D0 BT
     BLOCK_TYPE_TERM_7   = 8'hff; //    D6 D5 D4 D3 D2 D1 D0 BT
 
-localparam [2:0]
-    INPUT_TYPE_IDLE = 3'd0,
-    INPUT_TYPE_ERROR = 3'd1,
-    INPUT_TYPE_START = 3'd2,
-    INPUT_TYPE_DATA = 3'd3,
-    INPUT_TYPE_TERM_0 = 3'd4,
-    INPUT_TYPE_TERM_1 = 3'd5,
-    INPUT_TYPE_TERM_2 = 3'd6,
-    INPUT_TYPE_TERM_3 = 3'd7;
-
 localparam [1:0]
     STATE_IDLE = 2'd0,
     STATE_PREAMBLE = 2'd1,
@@ -153,16 +143,23 @@ logic [1:0] state_reg = STATE_IDLE, state_next;
 // datapath control signals
 logic reset_crc;
 
+logic term_present_alt_reg = 1'b0;
+logic term_present_reg = 1'b0;
+logic term_first_cycle_alt_reg = 1'b0;
+logic term_first_cycle_reg = 1'b0;
+logic [1:0] term_lane_alt_reg = 0;
+logic [1:0] term_lane_reg = 0;
+logic [1:0] term_lane_d0_reg = 0;
 logic framing_error_reg = 1'b0;
 
 logic [DATA_W-1:0] input_data_d0 = '0;
 logic [DATA_W-1:0] input_data_d1 = '0;
 logic [DATA_W-1:0] input_data_d2 = '0;
 
-logic [2:0] input_type_alt = INPUT_TYPE_IDLE;
-logic [2:0] input_type_d0 = INPUT_TYPE_IDLE;
-logic [2:0] input_type_d1 = INPUT_TYPE_IDLE;
-logic [2:0] input_type_d2 = INPUT_TYPE_IDLE;
+logic input_start_alt = 1'b0;
+logic input_start_d0 = 1'b0;
+logic input_start_d1 = 1'b0;
+logic input_start_d2 = 1'b0;
 
 logic [DATA_W-1:0] encoded_rx_data_reg = '0;
 logic encoded_rx_data_valid_reg = 1'b0;
@@ -315,8 +312,8 @@ always_comb begin
     end else begin
         // counter to measure frame length
         if (&frame_len_reg[15:2] == 0) begin
-            if (input_type_d0[2]) begin
-                frame_len_next = frame_len_reg + 16'(input_type_d0[1:0]);
+            if (term_present_reg) begin
+                frame_len_next = frame_len_reg + 16'(term_lane_reg);
             end else begin
                 frame_len_next = frame_len_reg + 16'(KEEP_W);
             end
@@ -365,7 +362,7 @@ always_comb begin
 
                 pre_ok_next = input_data_d2[31:8] == 24'h555555;
 
-                if (input_type_d2 == INPUT_TYPE_START && cfg_rx_enable) begin
+                if (input_start_d2 && cfg_rx_enable) begin
                     // start condition
                     if (framing_error_reg) begin
                         // control or error characters in first data word
@@ -408,10 +405,10 @@ always_comb begin
                 m_axis_rx_tlast_next = 1'b0;
                 m_axis_rx_tuser_next = 1'b0;
 
-                if (input_type_d0[2]) begin
-                    stat_rx_byte_next = 3'(input_type_d0[1:0]);
+                if (term_present_reg) begin
+                    stat_rx_byte_next = 3'(term_lane_reg);
                     if (frame_len_lim_check_reg) begin
-                        if (frame_len_lim_last_reg < input_type_d0[1:0]) begin
+                        if (frame_len_lim_last_reg < term_lane_reg) begin
                             frame_oversize_next = 1'b1;
                         end
                     end
@@ -440,13 +437,13 @@ always_comb begin
                     stat_rx_pkt_jabber_next = frame_oversize_next;
                     reset_crc = 1'b1;
                     state_next = STATE_IDLE;
-                end else if (input_type_d0[2]) begin
+                end else if (term_present_reg) begin
                     reset_crc = 1'b1;
-                    if (input_type_d0[1:0] == 0) begin
+                    if (term_first_cycle_reg) begin
                         // end this cycle
                         m_axis_rx_tkeep_next = 4'b1111;
                         m_axis_rx_tlast_next = 1'b1;
-                        if (input_type_d0[1:0] == 0 && crc_valid_save[3]) begin
+                        if (crc_valid_save[3]) begin
                             // CRC valid
                             if (frame_oversize_next) begin
                                 // too long
@@ -483,16 +480,16 @@ always_comb begin
             STATE_LAST: begin
                 // last cycle of packet
                 m_axis_rx_tdata_next = input_data_d2;
-                m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 2'(KEEP_W-input_type_d1[1:0]);
+                m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 2'(KEEP_W-term_lane_d0_reg);
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b1;
                 m_axis_rx_tuser_next = 1'b0;
 
                 reset_crc = 1'b1;
 
-                if ((input_type_d1[1:0] == 1 && crc_valid_save[0]) ||
-                    (input_type_d1[1:0] == 2 && crc_valid_save[1]) ||
-                    (input_type_d1[1:0] == 3 && crc_valid_save[2])) begin
+                if ((term_lane_d0_reg == 1 && crc_valid_save[0]) ||
+                    (term_lane_d0_reg == 2 && crc_valid_save[1]) ||
+                    (term_lane_d0_reg == 3 && crc_valid_save[2])) begin
                     // CRC valid
                     if (frame_oversize_reg) begin
                         // too long
@@ -575,136 +572,131 @@ always_ff @(posedge clk) begin
         encoded_rx_hdr_reg <= encoded_rx_hdr;
         encoded_rx_hdr_valid_reg <= encoded_rx_hdr_valid;
 
+        term_present_alt_reg <= 1'b0;
+        term_present_reg <= term_present_alt_reg;
+        term_first_cycle_alt_reg <= 1'b0;
+        term_first_cycle_reg <= term_first_cycle_alt_reg;
+        term_lane_alt_reg <= 0;
+        term_lane_reg <= term_lane_alt_reg;
+        term_lane_d0_reg <= term_lane_reg;
+
         input_data_d0 <= encoded_rx_data_reg;
         input_data_d1 <= input_data_d0;
         input_data_d2 <= input_data_d1;
 
-        input_type_alt <= INPUT_TYPE_IDLE;
-        input_type_d0 <= input_type_alt;
-        input_type_d1 <= input_type_d0;
-        input_type_d2 <= input_type_d1;
+        input_start_alt <= 1'b0;
+        input_start_d0 <= input_start_alt;
+        input_start_d1 <= input_start_d0;
+        input_start_d2 <= input_start_d1;
 
         if (encoded_rx_hdr_valid_reg) begin
             // portion with header
             if (encoded_rx_hdr_reg[0] == 0) begin
                 // data
                 input_data_d0 <= encoded_rx_data_reg;
-                input_type_d0 <= INPUT_TYPE_DATA;
-                input_type_alt <= INPUT_TYPE_DATA;
                 framing_error_reg <= !frame_reg;
             end else begin
                 // control
                 case (encoded_rx_data_reg[7:4])
                     BLOCK_TYPE_CTRL[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_IDLE;
-                        input_type_alt <= INPUT_TYPE_IDLE;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_OS_4[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_IDLE;
-                        input_type_alt <= INPUT_TYPE_IDLE;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_START_4[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_IDLE;
-                        input_type_alt <= INPUT_TYPE_START;
+                        input_start_alt <= 1'b1;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b1;
                     end
                     BLOCK_TYPE_OS_START[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_IDLE;
-                        input_type_alt <= INPUT_TYPE_START;
+                        input_start_alt <= 1'b1;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b1;
                     end
                     BLOCK_TYPE_OS_04[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_IDLE;
-                        input_type_alt <= INPUT_TYPE_IDLE;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_START_0[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_START;
-                        input_type_alt <= INPUT_TYPE_DATA;
+                        input_start_d0 <= 1'b1;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b1;
                     end
                     BLOCK_TYPE_OS_0[7:4]: begin
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_IDLE;
-                        input_type_alt <= INPUT_TYPE_IDLE;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_0[7:4]: begin
                         input_data_d0 <= 32'd0;
-                        input_type_d0 <= INPUT_TYPE_TERM_0;
-                        input_type_alt <= INPUT_TYPE_IDLE;
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 0;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_1[7:4]: begin
                         input_data_d0 <= {24'd0, encoded_rx_data_reg[15:8]};
-                        input_type_d0 <= INPUT_TYPE_TERM_1;
-                        input_type_alt <= INPUT_TYPE_IDLE;
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 1;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_2[7:4]: begin
                         input_data_d0 <= {16'd0, encoded_rx_data_reg[23:8]};
-                        input_type_d0 <= INPUT_TYPE_TERM_2;
-                        input_type_alt <= INPUT_TYPE_IDLE;
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 2;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_3[7:4]: begin
                         input_data_d0 <= {8'd0, encoded_rx_data_reg[31:8]};
-                        input_type_d0 <= INPUT_TYPE_TERM_3;
-                        input_type_alt <= INPUT_TYPE_IDLE;
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 3;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_4[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
-                        input_type_d0 <= INPUT_TYPE_DATA;
-                        input_type_alt <= INPUT_TYPE_TERM_0;
+                        term_present_alt_reg <= 1'b1;
+                        term_first_cycle_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 0;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_5[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
-                        input_type_d0 <= INPUT_TYPE_DATA;
-                        input_type_alt <= INPUT_TYPE_TERM_1;
+                        term_present_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 1;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_6[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
-                        input_type_d0 <= INPUT_TYPE_DATA;
-                        input_type_alt <= INPUT_TYPE_TERM_2;
+                        term_present_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 2;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     BLOCK_TYPE_TERM_7[7:4]: begin
                         input_data_d0 <= {encoded_rx_data[7:0], encoded_rx_data_reg[31:8]};
-                        input_type_d0 <= INPUT_TYPE_DATA;
-                        input_type_alt <= INPUT_TYPE_TERM_3;
+                        term_present_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 3;
                         framing_error_reg <= !frame_reg;
                         frame_reg <= 1'b0;
                     end
                     default: begin
                         // invalid block type
                         input_data_d0 <= encoded_rx_data_reg;
-                        input_type_d0 <= INPUT_TYPE_ERROR;
-                        input_type_alt <= INPUT_TYPE_ERROR;
                         framing_error_reg <= frame_reg;
                         frame_reg <= 1'b0;
                     end
@@ -742,35 +734,15 @@ always_ff @(posedge clk) begin
                 stat_rx_err_bad_block_reg <= 1'b1;
             end
         end else begin
-            case (input_type_alt)
-                INPUT_TYPE_IDLE: begin
-                    input_data_d0 <= encoded_rx_data_reg;
-                end
-                INPUT_TYPE_ERROR: begin
-                    input_data_d0 <= encoded_rx_data_reg;
-                end
-                INPUT_TYPE_START: begin
-                    input_data_d0 <= encoded_rx_data_reg;
-                end
-                INPUT_TYPE_DATA: begin
-                    input_data_d0 <= encoded_rx_data_reg;
-                end
-                INPUT_TYPE_TERM_0: begin
-                    input_data_d0 <= 32'd0;
-                end
-                INPUT_TYPE_TERM_1: begin
-                    input_data_d0 <= {24'd0, encoded_rx_data_reg[15:8]};
-                end
-                INPUT_TYPE_TERM_2: begin
-                    input_data_d0 <= {16'd0, encoded_rx_data_reg[23:8]};
-                end
-                INPUT_TYPE_TERM_3: begin
-                    input_data_d0 <= {8'd0, encoded_rx_data_reg[31:8]};
-                end
-                default: begin
-                    input_data_d0 <= encoded_rx_data_reg;
-                end
-            endcase
+            input_data_d0 <= encoded_rx_data_reg;
+            if (term_present_alt_reg) begin
+                case (term_lane_alt_reg)
+                    1: input_data_d0 <= {24'd0, encoded_rx_data_reg[15:8]};
+                    2: input_data_d0 <= {16'd0, encoded_rx_data_reg[23:8]};
+                    3: input_data_d0 <= {8'd0, encoded_rx_data_reg[31:8]};
+                    default: input_data_d0 <= encoded_rx_data_reg;
+                endcase
+            end
         end
 
         if (reset_crc) begin
@@ -806,10 +778,10 @@ always_ff @(posedge clk) begin
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
 
-        input_type_alt <= INPUT_TYPE_IDLE;
-        input_type_d0 <= INPUT_TYPE_IDLE;
-        input_type_d1 <= INPUT_TYPE_IDLE;
-        input_type_d2 <= INPUT_TYPE_IDLE;
+        input_start_alt <= 1'b0;
+        input_start_d0 <= 1'b0;
+        input_start_d1 <= 1'b0;
+        input_start_d2 <= 1'b0;
     end
 end
 

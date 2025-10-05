@@ -133,21 +133,6 @@ localparam [7:0]
     BLOCK_TYPE_TERM_6   = 8'he1, // C7    D5 D4 D3 D2 D1 D0 BT
     BLOCK_TYPE_TERM_7   = 8'hff; //    D6 D5 D4 D3 D2 D1 D0 BT
 
-localparam [3:0]
-    INPUT_TYPE_IDLE = 4'd0,
-    INPUT_TYPE_ERROR = 4'd1,
-    INPUT_TYPE_START_0 = 4'd2,
-    INPUT_TYPE_START_4 = 4'd3,
-    INPUT_TYPE_DATA = 4'd4,
-    INPUT_TYPE_TERM_0 = 4'd8,
-    INPUT_TYPE_TERM_1 = 4'd9,
-    INPUT_TYPE_TERM_2 = 4'd10,
-    INPUT_TYPE_TERM_3 = 4'd11,
-    INPUT_TYPE_TERM_4 = 4'd12,
-    INPUT_TYPE_TERM_5 = 4'd13,
-    INPUT_TYPE_TERM_6 = 4'd14,
-    INPUT_TYPE_TERM_7 = 4'd15;
-
 localparam [1:0]
     STATE_IDLE = 2'd0,
     STATE_PAYLOAD = 2'd1,
@@ -161,14 +146,17 @@ logic reset_crc;
 logic lanes_swapped = 1'b0;
 logic [31:0] swap_data = 32'd0;
 
-logic delay_type_valid = 1'b0;
-logic [3:0] delay_type = INPUT_TYPE_IDLE;
+logic [2:0] term_lane_alt_reg = 0;
+logic [2:0] term_lane_reg = 0;
+logic [2:0] term_lane_d0_reg = 0;
+logic term_present_alt_reg = 1'b0;
+logic term_present_reg = 1'b0;
+logic term_first_cycle_alt_reg = 1'b0;
+logic term_first_cycle_reg = 1'b0;
+logic framing_error_reg = 1'b0, framing_error_d0_reg = 1'b0;
 
 logic [DATA_W-1:0] input_data_d0 = '0;
 logic [DATA_W-1:0] input_data_d1 = '0;
-
-logic [3:0] input_type_d0 = INPUT_TYPE_IDLE;
-logic [3:0] input_type_d1 = INPUT_TYPE_IDLE;
 
 logic input_start_swap = 1'b0;
 logic input_start_d0 = 1'b0;
@@ -207,7 +195,7 @@ logic stat_rx_pkt_bad_reg = 1'b0, stat_rx_pkt_bad_next;
 logic stat_rx_err_oversize_reg = 1'b0, stat_rx_err_oversize_next;
 logic stat_rx_err_bad_fcs_reg = 1'b0, stat_rx_err_bad_fcs_next;
 logic stat_rx_err_bad_block_reg = 1'b0;
-logic stat_rx_err_framing_reg = 1'b0;
+logic stat_rx_err_framing_reg = 1'b0, stat_rx_err_framing_next;
 logic stat_rx_err_preamble_reg = 1'b0, stat_rx_err_preamble_next;
 
 logic [PTP_TS_W-1:0] ptp_ts_reg = '0;
@@ -345,6 +333,7 @@ always_comb begin
     stat_rx_pkt_bad_next = 1'b0;
     stat_rx_err_oversize_next = 1'b0;
     stat_rx_err_bad_fcs_next = 1'b0;
+    stat_rx_err_framing_next = 1'b0;
     stat_rx_err_preamble_next = 1'b0;
 
     if (GBX_IF_EN && !encoded_rx_data_valid) begin
@@ -353,8 +342,8 @@ always_comb begin
     end else begin
         // counter to measure frame length
         if (&frame_len_reg[15:3] == 0) begin
-            if (input_type_d0[3]) begin
-                frame_len_next = frame_len_reg + 16'(input_type_d0[2:0]);
+            if (term_present_reg) begin
+                frame_len_next = frame_len_reg + 16'(term_lane_reg);
             end else begin
                 frame_len_next = frame_len_reg + 16'(KEEP_W);
             end
@@ -419,10 +408,10 @@ always_comb begin
                 m_axis_rx_tlast_next = 1'b0;
                 m_axis_rx_tuser_next = 1'b0;
 
-                if (input_type_d0[3]) begin
-                    stat_rx_byte_next = 4'(input_type_d0[2:0]);
+                if (term_present_reg) begin
+                    stat_rx_byte_next = 4'(term_lane_reg);
                     if (frame_len_lim_check_reg) begin
-                        if (frame_len_lim_last_reg < input_type_d0[2:0]) begin
+                        if (frame_len_lim_last_reg < term_lane_reg) begin
                             frame_oversize_next = 1'b1;
                         end
                     end
@@ -434,35 +423,39 @@ always_comb begin
                     end
                 end
 
-                if (input_type_d0[3]) begin
-                    // INPUT_TYPE_TERM_*
-                    reset_crc = 1'b1;
-                end
-
                 if (PTP_TS_EN) begin
                     ptp_ts_out_next = (!PTP_TS_FMT_TOD || ptp_ts_borrow_reg) ? ptp_ts_reg : ptp_ts_adj_reg;
                 end
 
-                if (input_type_d0 == INPUT_TYPE_DATA) begin
-                    state_next = STATE_PAYLOAD;
-                end else if (input_type_d0[3]) begin
-                    // INPUT_TYPE_TERM_*
-                    if (input_type_d0 <= INPUT_TYPE_TERM_4) begin
+                if (framing_error_reg || framing_error_d0_reg) begin
+                    // control or error characters in packet
+                    m_axis_rx_tlast_next = 1'b1;
+                    m_axis_rx_tuser_next = 1'b1;
+                    stat_rx_pkt_bad_next = 1'b1;
+
+                    stat_rx_pkt_len_next = frame_len_next;
+                    stat_rx_pkt_ucast_next = !is_mcast_reg;
+                    stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                    stat_rx_pkt_bcast_next = is_bcast_reg;
+                    stat_rx_pkt_vlan_next = is_8021q_reg;
+                    stat_rx_err_oversize_next = frame_oversize_next;
+                    stat_rx_err_framing_next = 1'b1;
+                    stat_rx_err_preamble_next = !pre_ok_reg;
+                    stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
+                    stat_rx_pkt_jabber_next = frame_oversize_next;
+
+                    reset_crc = 1'b1;
+                    state_next = STATE_IDLE;
+                end if (term_present_reg) begin
+                    if (term_first_cycle_reg) begin
                         // end this cycle
-                        case (input_type_d0)
-                            INPUT_TYPE_TERM_0: m_axis_rx_tkeep_next = 8'b00001111;
-                            INPUT_TYPE_TERM_1: m_axis_rx_tkeep_next = 8'b00011111;
-                            INPUT_TYPE_TERM_2: m_axis_rx_tkeep_next = 8'b00111111;
-                            INPUT_TYPE_TERM_3: m_axis_rx_tkeep_next = 8'b01111111;
-                            INPUT_TYPE_TERM_4: m_axis_rx_tkeep_next = 8'b11111111;
-                            default:           m_axis_rx_tkeep_next = 8'b11111111;
-                        endcase
+                        m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 3'(KEEP_W-4-term_lane_reg);
                         m_axis_rx_tlast_next = 1'b1;
-                        if ((input_type_d0 == INPUT_TYPE_TERM_0 && crc_valid_save[7]) ||
-                            (input_type_d0 == INPUT_TYPE_TERM_1 && crc_valid[0]) ||
-                            (input_type_d0 == INPUT_TYPE_TERM_2 && crc_valid[1]) ||
-                            (input_type_d0 == INPUT_TYPE_TERM_3 && crc_valid[2]) ||
-                            (input_type_d0 == INPUT_TYPE_TERM_4 && crc_valid[3])) begin
+                        if ((term_lane_reg == 0 && crc_valid_save[7]) ||
+                            (term_lane_reg == 1 && crc_valid[0]) ||
+                            (term_lane_reg == 2 && crc_valid[1]) ||
+                            (term_lane_reg == 3 && crc_valid[2]) ||
+                            (term_lane_reg == 4 && crc_valid[3])) begin
                             // CRC valid
                             if (frame_oversize_next) begin
                                 // too long
@@ -489,51 +482,29 @@ always_comb begin
                         stat_rx_err_oversize_next = frame_oversize_next;
                         stat_rx_err_preamble_next = !pre_ok_reg;
 
+                        reset_crc = 1'b1;
                         state_next = STATE_IDLE;
                     end else begin
                         // need extra cycle
                         state_next = STATE_LAST;
                     end
                 end else begin
-                    // control or error characters in packet
-                    m_axis_rx_tlast_next = 1'b1;
-                    m_axis_rx_tuser_next = 1'b1;
-                    stat_rx_pkt_bad_next = 1'b1;
-
-                    stat_rx_pkt_len_next = frame_len_next;
-                    stat_rx_pkt_ucast_next = !is_mcast_reg;
-                    stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
-                    stat_rx_pkt_bcast_next = is_bcast_reg;
-                    stat_rx_pkt_vlan_next = is_8021q_reg;
-                    stat_rx_err_oversize_next = frame_oversize_next;
-                    stat_rx_err_preamble_next = !pre_ok_reg;
-                    stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
-                    stat_rx_pkt_jabber_next = frame_oversize_next;
-
-                    reset_crc = 1'b1;
-                    state_next = STATE_IDLE;
+                    state_next = STATE_PAYLOAD;
                 end
             end
             STATE_LAST: begin
                 // last cycle of packet
                 m_axis_rx_tdata_next = input_data_d1;
-                m_axis_rx_tkeep_next = 8'hff;
+                m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 3'(KEEP_W-4-term_lane_d0_reg);
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b1;
                 m_axis_rx_tuser_next = 1'b0;
 
                 reset_crc = 1'b1;
 
-                case (input_type_d1)
-                    INPUT_TYPE_TERM_5: m_axis_rx_tkeep_next = 8'b00000001;
-                    INPUT_TYPE_TERM_6: m_axis_rx_tkeep_next = 8'b00000011;
-                    INPUT_TYPE_TERM_7: m_axis_rx_tkeep_next = 8'b00000111;
-                    default:           m_axis_rx_tkeep_next = 8'b00000111;
-                endcase
-
-                if ((input_type_d1 == INPUT_TYPE_TERM_5 && crc_valid_save[4]) ||
-                    (input_type_d1 == INPUT_TYPE_TERM_6 && crc_valid_save[5]) ||
-                    (input_type_d1 == INPUT_TYPE_TERM_7 && crc_valid_save[6])) begin
+                if ((term_lane_d0_reg == 5 && crc_valid_save[4]) ||
+                    (term_lane_d0_reg == 6 && crc_valid_save[5]) ||
+                    (term_lane_d0_reg == 7 && crc_valid_save[6])) begin
                     // CRC valid
                     if (frame_oversize_reg) begin
                         // too long
@@ -607,16 +578,22 @@ always_ff @(posedge clk) begin
     stat_rx_err_oversize_reg <= stat_rx_err_oversize_next;
     stat_rx_err_bad_fcs_reg <= stat_rx_err_bad_fcs_next;
     stat_rx_err_bad_block_reg <= 1'b0;
-    stat_rx_err_framing_reg <= 1'b0;
+    stat_rx_err_framing_reg <= stat_rx_err_framing_next;
     stat_rx_err_preamble_reg <= stat_rx_err_preamble_next;
 
     if (!GBX_IF_EN || encoded_rx_data_valid) begin
-        delay_type_valid <= 1'b0;
-
         swap_data <= encoded_rx_data_masked[63:32];
 
         input_start_swap <= 1'b0;
         input_start_d0 <= input_start_swap;
+
+        term_present_alt_reg <= 1'b0;
+        term_present_reg <= term_present_alt_reg;
+        term_first_cycle_alt_reg <= 1'b0;
+        term_first_cycle_reg <= term_first_cycle_alt_reg;
+        term_lane_alt_reg <= 0;
+        term_lane_reg <= term_lane_alt_reg;
+        term_lane_d0_reg <= term_lane_reg;
 
         if (PTP_TS_EN && PTP_TS_FMT_TOD) begin
             // ns field rollover
@@ -628,66 +605,98 @@ always_ff @(posedge clk) begin
 
         // lane swapping and termination character detection
         if (lanes_swapped) begin
-            if (delay_type_valid) begin
-                input_type_d0 <= delay_type;
-            end else if (encoded_rx_hdr[0] == SYNC_DATA[0]) begin
-                input_type_d0 <= INPUT_TYPE_DATA;
-            end else begin
+            if (!term_present_alt_reg && encoded_rx_hdr[0] == SYNC_CTRL[0]) begin
                 case (encoded_rx_data[7:4])
-                    BLOCK_TYPE_TERM_0[7:4]: input_type_d0 <= INPUT_TYPE_TERM_4;
-                    BLOCK_TYPE_TERM_1[7:4]: input_type_d0 <= INPUT_TYPE_TERM_5;
-                    BLOCK_TYPE_TERM_2[7:4]: input_type_d0 <= INPUT_TYPE_TERM_6;
-                    BLOCK_TYPE_TERM_3[7:4]: input_type_d0 <= INPUT_TYPE_TERM_7;
+                    BLOCK_TYPE_TERM_0[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 4;
+                    end
+                    BLOCK_TYPE_TERM_1[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 5;
+                    end
+                    BLOCK_TYPE_TERM_2[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 6;
+                    end
+                    BLOCK_TYPE_TERM_3[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 7;
+                    end
                     BLOCK_TYPE_TERM_4[7:4]: begin
-                        delay_type_valid <= 1'b1;
-                        input_type_d0 <= INPUT_TYPE_DATA;
+                        term_present_alt_reg <= 1'b1;
+                        term_first_cycle_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 0;
                     end
                     BLOCK_TYPE_TERM_5[7:4]: begin
-                        delay_type_valid <= 1'b1;
-                        input_type_d0 <= INPUT_TYPE_DATA;
+                        term_present_alt_reg <= 1'b1;
+                        term_first_cycle_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 1;
                     end
                     BLOCK_TYPE_TERM_6[7:4]: begin
-                        delay_type_valid <= 1'b1;
-                        input_type_d0 <= INPUT_TYPE_DATA;
+                        term_present_alt_reg <= 1'b1;
+                        term_first_cycle_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 2;
                     end
                     BLOCK_TYPE_TERM_7[7:4]: begin
-                        delay_type_valid <= 1'b1;
-                        input_type_d0 <= INPUT_TYPE_DATA;
+                        term_present_alt_reg <= 1'b1;
+                        term_first_cycle_alt_reg <= 1'b1;
+                        term_lane_alt_reg <= 3;
                     end
-                    BLOCK_TYPE_CTRL[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_OS_4[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_OS_04[7:4]: input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_OS_0[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
                     default: begin
-                        input_type_d0 <= INPUT_TYPE_ERROR;
+                        // do nothing
                     end
                 endcase
             end
-            if (delay_type_valid) begin
+            if (term_present_alt_reg) begin
                 // mask off trailing data
                 input_data_d0 <= {32'd0, swap_data};
             end else begin
                 input_data_d0 <= {encoded_rx_data_masked[31:0], swap_data};
             end
         end else begin
-            if (encoded_rx_hdr[0] == SYNC_DATA[0]) begin
-                input_type_d0 <= INPUT_TYPE_DATA;
-            end else begin
+            if (encoded_rx_hdr[0] == SYNC_CTRL[0]) begin
                 case (encoded_rx_data[7:4])
-                    BLOCK_TYPE_CTRL[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_OS_4[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_OS_04[7:4]:  input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_OS_0[7:4]:   input_type_d0 <= INPUT_TYPE_IDLE;
-                    BLOCK_TYPE_TERM_0[7:4]: input_type_d0 <= INPUT_TYPE_TERM_0;
-                    BLOCK_TYPE_TERM_1[7:4]: input_type_d0 <= INPUT_TYPE_TERM_1;
-                    BLOCK_TYPE_TERM_2[7:4]: input_type_d0 <= INPUT_TYPE_TERM_2;
-                    BLOCK_TYPE_TERM_3[7:4]: input_type_d0 <= INPUT_TYPE_TERM_3;
-                    BLOCK_TYPE_TERM_4[7:4]: input_type_d0 <= INPUT_TYPE_TERM_4;
-                    BLOCK_TYPE_TERM_5[7:4]: input_type_d0 <= INPUT_TYPE_TERM_5;
-                    BLOCK_TYPE_TERM_6[7:4]: input_type_d0 <= INPUT_TYPE_TERM_6;
-                    BLOCK_TYPE_TERM_7[7:4]: input_type_d0 <= INPUT_TYPE_TERM_7;
+                    BLOCK_TYPE_TERM_0[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 0;
+                    end
+                    BLOCK_TYPE_TERM_1[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 1;
+                    end
+                    BLOCK_TYPE_TERM_2[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 2;
+                    end
+                    BLOCK_TYPE_TERM_3[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 3;
+                    end
+                    BLOCK_TYPE_TERM_4[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_first_cycle_reg <= 1'b1;
+                        term_lane_reg <= 4;
+                    end
+                    BLOCK_TYPE_TERM_5[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 5;
+                    end
+                    BLOCK_TYPE_TERM_6[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 6;
+                    end
+                    BLOCK_TYPE_TERM_7[7:4]: begin
+                        term_present_reg <= 1'b1;
+                        term_lane_reg <= 7;
+                    end
                     default: begin
-                        input_type_d0 <= INPUT_TYPE_ERROR;
+                        // do nothing
                     end
                 endcase
             end
@@ -704,80 +713,68 @@ always_ff @(posedge clk) begin
             input_start_swap <= 1'b1;
         end
 
-        if (encoded_rx_hdr == SYNC_DATA) begin
-            delay_type <= INPUT_TYPE_DATA;
-        end else if (encoded_rx_hdr == SYNC_CTRL) begin
-            case (encoded_rx_data[7:4])
-                BLOCK_TYPE_TERM_4[7:4]: delay_type <= INPUT_TYPE_TERM_0;
-                BLOCK_TYPE_TERM_5[7:4]: delay_type <= INPUT_TYPE_TERM_1;
-                BLOCK_TYPE_TERM_6[7:4]: delay_type <= INPUT_TYPE_TERM_2;
-                BLOCK_TYPE_TERM_7[7:4]: delay_type <= INPUT_TYPE_TERM_3;
-                default: delay_type <= INPUT_TYPE_ERROR;
-            endcase
-        end else begin
-            delay_type <= INPUT_TYPE_ERROR;
-        end
-
         // check for framing errors
-        stat_rx_err_framing_reg <= 1'b0;
+        framing_error_reg <= 1'b0;
+        framing_error_d0_reg <= framing_error_reg;
         if (encoded_rx_hdr == SYNC_DATA) begin
             // data - must be in a frame
-            stat_rx_err_framing_reg <= !frame_reg;
+            framing_error_reg <= !frame_reg;
         end else if (encoded_rx_hdr == SYNC_CTRL) begin
             // control - control only allowed between frames
             frame_reg <= 1'b0;
             case (encoded_rx_data[7:4])
                 BLOCK_TYPE_CTRL[7:4]: begin
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_OS_4[7:4]: begin
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_START_4[7:4]: begin
                     frame_reg <= 1'b1;
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_OS_START[7:4]: begin
                     frame_reg <= 1'b1;
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_OS_04[7:4]: begin
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_START_0[7:4]: begin
                     frame_reg <= 1'b1;
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_OS_0[7:4]: begin
-                    stat_rx_err_framing_reg <= frame_reg;
+                    framing_error_reg <= frame_reg;
                 end
                 BLOCK_TYPE_TERM_0[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_1[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_2[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_3[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_4[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_5[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_6[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 BLOCK_TYPE_TERM_7[7:4]: begin
-                    stat_rx_err_framing_reg <= !frame_reg;
+                    framing_error_reg <= !frame_reg;
                 end
                 default: begin
                     // invalid block type
                     frame_reg <= 1'b0;
+                    framing_error_reg <= frame_reg;
                 end
             endcase
         end else begin
@@ -832,7 +829,6 @@ always_ff @(posedge clk) begin
             ptp_ts_reg <= ptp_ts;
         end
 
-        input_type_d1 <= input_type_d0;
         input_start_d1 <= input_start_d0;
         input_data_d1 <= input_data_d0;
 
@@ -872,17 +868,11 @@ always_ff @(posedge clk) begin
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
 
-        input_type_d0 <= INPUT_TYPE_IDLE;
-        input_type_d1 <= INPUT_TYPE_IDLE;
-
         input_start_swap <= 1'b0;
         input_start_d0 <= 1'b0;
         input_start_d1 <= 1'b0;
 
         lanes_swapped <= 1'b0;
-
-        delay_type_valid <= 1'b0;
-        delay_type <= INPUT_TYPE_IDLE;
     end
 end
 
