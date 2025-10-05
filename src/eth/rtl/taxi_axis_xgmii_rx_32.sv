@@ -222,6 +222,15 @@ eth_crc (
     .state_out(crc_state_next)
 );
 
+// Mask input data
+wire [DATA_W-1:0] xgmii_rxd_masked;
+wire [CTRL_W-1:0] xgmii_term;
+
+for (genvar n = 0; n < CTRL_W; n = n + 1) begin
+    assign xgmii_rxd_masked[n*8 +: 8] = (n > 0 && xgmii_rxc[n]) ? 8'd0 : xgmii_rxd[n*8 +: 8];
+    assign xgmii_term[n] = xgmii_rxc[n] && (xgmii_rxd[n*8 +: 8] == XGMII_TERM);
+end
+
 always_comb begin
     state_next = STATE_IDLE;
 
@@ -529,7 +538,7 @@ always_ff @(posedge clk) begin
         framing_error_reg <= xgmii_rxc != 0;
 
         for (integer i = CTRL_W-1; i >= 0; i = i - 1) begin
-            if (xgmii_rxc[i] && (xgmii_rxd[i*8 +: 8] == XGMII_TERM)) begin
+            if (xgmii_term[i]) begin
                 term_present_reg <= 1'b1;
                 term_first_cycle_reg <= i == 0;
                 term_lane_reg <= 2'(i);
@@ -547,10 +556,8 @@ always_ff @(posedge clk) begin
 
         crc_valid_save <= crc_valid;
 
-        for (integer i = 0; i < CTRL_W; i = i + 1) begin
-            xgmii_rxd_d0[i*8 +: 8] <= xgmii_rxc[i] ? 8'd0 : xgmii_rxd[i*8 +: 8];
-        end
         xgmii_rxc_d0 <= xgmii_rxc;
+        xgmii_rxd_d0 <= xgmii_rxd_masked;
         xgmii_rxd_d1 <= xgmii_rxd_d0;
         xgmii_rxd_d2 <= xgmii_rxd_d1;
 

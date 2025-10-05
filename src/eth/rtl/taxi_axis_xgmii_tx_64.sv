@@ -258,8 +258,8 @@ endfunction
 // Mask input data
 wire [DATA_W-1:0] s_axis_tx_tdata_masked;
 
-for (genvar n = 0; n < CTRL_W; n = n + 1) begin
-    assign s_axis_tx_tdata_masked[n*8 +: 8] = s_axis_tx.tkeep[n] ? s_axis_tx.tdata[n*8 +: 8] : 8'd0;
+for (genvar n = 0; n < KEEP_W; n = n + 1) begin
+    assign s_axis_tx_tdata_masked[n*8 +: 8] = (n == 0 || s_axis_tx.tkeep[n]) ? s_axis_tx.tdata[n*8 +: 8] : 8'd0;
 end
 
 // FCS cycle calculation

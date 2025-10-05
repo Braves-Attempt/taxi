@@ -179,8 +179,6 @@ logic [31:0] swap_data = 32'd0;
 
 logic output_data_finish_reg = 1'b0;
 
-logic [DATA_W-1:0] s_axis_tx_tdata_masked;
-
 logic [DATA_W-1:0] s_tdata_reg = '0, s_tdata_next;
 logic [EMPTY_W-1:0] s_empty_reg = '0, s_empty_next;
 
@@ -314,10 +312,10 @@ function [2:0] keep2empty(input [7:0] k);
 endfunction
 
 // Mask input data
-always_comb begin
-    for (integer j = 0; j < 8; j = j + 1) begin
-        s_axis_tx_tdata_masked[j*8 +: 8] = s_axis_tx.tkeep[j] ? s_axis_tx.tdata[j*8 +: 8] : 8'd0;
-    end
+wire [DATA_W-1:0] s_axis_tx_tdata_masked;
+
+for (genvar n = 0; n < KEEP_W; n = n + 1) begin
+    assign s_axis_tx_tdata_masked[n*8 +: 8] = (n == 0 || s_axis_tx.tkeep[n]) ? s_axis_tx.tdata[n*8 +: 8] : 8'd0;
 end
 
 // FCS cycle calculation
