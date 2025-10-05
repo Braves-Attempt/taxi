@@ -395,42 +395,40 @@ always_comb begin
                     stat_rx_pkt_jabber_next = frame_oversize_next;
                     reset_crc = 1'b1;
                     state_next = STATE_IDLE;
-                end else if (term_present_reg) begin
-                    reset_crc = 1'b1;
-                    if (term_first_cycle_reg) begin
-                        // end this cycle
-                        m_axis_rx_tkeep_next = 4'b1111;
-                        m_axis_rx_tlast_next = 1'b1;
-                        if (crc_valid_save[3]) begin
-                            // CRC valid
-                            if (frame_oversize_next) begin
-                                // too long
-                                m_axis_rx_tuser_next = 1'b1;
-                                stat_rx_pkt_bad_next = 1'b1;
-                            end else begin
-                                // length OK
-                                m_axis_rx_tuser_next = 1'b0;
-                                stat_rx_pkt_good_next = 1'b1;
-                            end
-                        end else begin
+                end else if (term_first_cycle_reg) begin
+                    // end this cycle
+                    m_axis_rx_tkeep_next = 4'b1111;
+                    m_axis_rx_tlast_next = 1'b1;
+                    if (crc_valid_save[3]) begin
+                        // CRC valid
+                        if (frame_oversize_next) begin
+                            // too long
                             m_axis_rx_tuser_next = 1'b1;
-                            stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
-                            stat_rx_pkt_jabber_next = frame_oversize_next;
                             stat_rx_pkt_bad_next = 1'b1;
-                            stat_rx_err_bad_fcs_next = 1'b1;
+                        end else begin
+                            // length OK
+                            m_axis_rx_tuser_next = 1'b0;
+                            stat_rx_pkt_good_next = 1'b1;
                         end
-                        stat_rx_pkt_len_next = frame_len_next;
-                        stat_rx_pkt_ucast_next = !is_mcast_reg;
-                        stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
-                        stat_rx_pkt_bcast_next = is_bcast_reg;
-                        stat_rx_pkt_vlan_next = is_8021q_reg;
-                        stat_rx_err_oversize_next = frame_oversize_next;
-                        stat_rx_err_preamble_next = !pre_ok_reg;
-                        state_next = STATE_IDLE;
                     end else begin
-                        // need extra cycle
-                        state_next = STATE_LAST;
+                        m_axis_rx_tuser_next = 1'b1;
+                        stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
+                        stat_rx_pkt_jabber_next = frame_oversize_next;
+                        stat_rx_pkt_bad_next = 1'b1;
+                        stat_rx_err_bad_fcs_next = 1'b1;
                     end
+                    stat_rx_pkt_len_next = frame_len_next;
+                    stat_rx_pkt_ucast_next = !is_mcast_reg;
+                    stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
+                    stat_rx_pkt_bcast_next = is_bcast_reg;
+                    stat_rx_pkt_vlan_next = is_8021q_reg;
+                    stat_rx_err_oversize_next = frame_oversize_next;
+                    stat_rx_err_preamble_next = !pre_ok_reg;
+                    reset_crc = 1'b1;
+                    state_next = STATE_IDLE;
+                end else if (term_present_reg) begin
+                    // need extra cycle
+                    state_next = STATE_LAST;
                 end else begin
                     state_next = STATE_PAYLOAD;
                 end
