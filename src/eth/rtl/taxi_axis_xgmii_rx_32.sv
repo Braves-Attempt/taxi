@@ -109,8 +109,9 @@ logic [1:0] state_reg = STATE_IDLE, state_next;
 // datapath control signals
 logic reset_crc;
 
-logic [1:0] term_lane_reg = 0, term_lane_d0_reg = 0;
 logic term_present_reg = 1'b0;
+logic term_first_cycle_reg = 1'b0;
+logic [1:0] term_lane_reg = 0, term_lane_d0_reg = 0;
 logic framing_error_reg = 1'b0;
 
 logic [DATA_W-1:0] xgmii_rxd_d0 = '0;
@@ -396,11 +397,11 @@ always_comb begin
                     state_next = STATE_IDLE;
                 end else if (term_present_reg) begin
                     reset_crc = 1'b1;
-                    if (term_lane_reg == 0) begin
+                    if (term_first_cycle_reg) begin
                         // end this cycle
                         m_axis_rx_tkeep_next = 4'b1111;
                         m_axis_rx_tlast_next = 1'b1;
-                        if (term_lane_reg == 0 && crc_valid_save[3]) begin
+                        if (crc_valid_save[3]) begin
                             // CRC valid
                             if (frame_oversize_next) begin
                                 // too long
@@ -524,14 +525,16 @@ always_ff @(posedge clk) begin
     stat_rx_err_preamble_reg <= stat_rx_err_preamble_next;
 
     if (!GBX_IF_EN || xgmii_rx_valid) begin
-        term_lane_reg <= 0;
         term_present_reg <= 1'b0;
+        term_first_cycle_reg <= 1'b0;
+        term_lane_reg <= 0;
         framing_error_reg <= xgmii_rxc != 0;
 
         for (integer i = CTRL_W-1; i >= 0; i = i - 1) begin
             if (xgmii_rxc[i] && (xgmii_rxd[i*8 +: 8] == XGMII_TERM)) begin
-                term_lane_reg <= 2'(i);
                 term_present_reg <= 1'b1;
+                term_first_cycle_reg <= i == 0;
+                term_lane_reg <= 2'(i);
                 framing_error_reg <= (xgmii_rxc & ({CTRL_W{1'b1}} >> (CTRL_W-i))) != 0;
             end
         end

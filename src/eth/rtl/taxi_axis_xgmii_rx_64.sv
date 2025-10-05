@@ -114,8 +114,9 @@ logic [31:0] swap_rxd = 32'd0;
 logic [3:0] swap_rxc = 4'd0;
 logic [3:0] swap_rxc_term = 4'd0;
 
-logic [2:0] term_lane_reg = 0, term_lane_d0_reg = 0;
 logic term_present_reg = 1'b0;
+logic term_first_cycle_reg = 1'b0;
+logic [2:0] term_lane_reg = 0, term_lane_d0_reg = 0;
 logic framing_error_reg = 1'b0, framing_error_d0_reg = 1'b0;
 
 logic [DATA_W-1:0] xgmii_rxd_d0 = '0;
@@ -393,7 +394,7 @@ always_comb begin
                     state_next = STATE_IDLE;
                 end else if (term_present_reg) begin
                     reset_crc = 1'b1;
-                    if (term_lane_reg <= 4) begin
+                    if (term_first_cycle_reg) begin
                         // end this cycle
                         m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 3'(CTRL_W-4-term_lane_reg);
                         m_axis_rx_tlast_next = 1'b1;
@@ -552,14 +553,16 @@ always_ff @(posedge clk) begin
             xgmii_rxd_d0 <= {xgmii_rxd_masked[31:0], swap_rxd};
             xgmii_rxc_d0 <= {xgmii_rxc[3:0], swap_rxc};
 
-            term_lane_reg <= 0;
             term_present_reg <= 1'b0;
+            term_first_cycle_reg <= 1'b0;
+            term_lane_reg <= 0;
             framing_error_reg <= {xgmii_rxc[3:0], swap_rxc} != 0;
 
             for (integer i = CTRL_W-1; i >= 0; i = i - 1) begin
                 if ({xgmii_term[3:0], swap_rxc_term}[i]) begin
-                    term_lane_reg <= 3'(i);
                     term_present_reg <= 1'b1;
+                    term_first_cycle_reg <= i <= 4;
+                    term_lane_reg <= 3'(i);
                     framing_error_reg <= ({xgmii_rxc[3:0], swap_rxc} & ({CTRL_W{1'b1}} >> (CTRL_W-i))) != 0;
                 end
             end
@@ -567,14 +570,16 @@ always_ff @(posedge clk) begin
             xgmii_rxd_d0 <= xgmii_rxd_masked;
             xgmii_rxc_d0 <= xgmii_rxc;
 
-            term_lane_reg <= 0;
             term_present_reg <= 1'b0;
+            term_first_cycle_reg <= 1'b0;
+            term_lane_reg <= 0;
             framing_error_reg <= xgmii_rxc != 0;
 
             for (integer i = CTRL_W-1; i >= 0; i = i - 1) begin
                 if (xgmii_rxc[i] && (xgmii_rxd[i*8 +: 8] == XGMII_TERM)) begin
-                    term_lane_reg <= 3'(i);
                     term_present_reg <= 1'b1;
+                    term_first_cycle_reg <= i <= 4;
+                    term_lane_reg <= 3'(i);
                     framing_error_reg <= (xgmii_rxc & ({CTRL_W{1'b1}} >> (CTRL_W-i))) != 0;
                 end
             end
