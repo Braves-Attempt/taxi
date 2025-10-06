@@ -143,8 +143,8 @@ logic [1:0] state_reg = STATE_IDLE, state_next;
 // datapath control signals
 logic reset_crc;
 
-logic lanes_swapped = 1'b0;
-logic [31:0] swap_data = 32'd0;
+logic lanes_swapped_reg = 1'b0;
+logic [31:0] swap_data_reg = 32'd0;
 
 logic [2:0] term_lane_alt_reg = 0;
 logic [2:0] term_lane_reg = 0;
@@ -155,12 +155,12 @@ logic term_first_cycle_alt_reg = 1'b0;
 logic term_first_cycle_reg = 1'b0;
 logic framing_error_reg = 1'b0, framing_error_d0_reg = 1'b0;
 
-logic [DATA_W-1:0] input_data_d0 = '0;
-logic [DATA_W-1:0] input_data_d1 = '0;
+logic [DATA_W-1:0] input_data_d0_reg = '0;
+logic [DATA_W-1:0] input_data_d1_reg = '0;
 
-logic input_start_swap = 1'b0;
-logic input_start_d0 = 1'b0;
-logic input_start_d1 = 1'b0;
+logic input_start_swap_reg = 1'b0;
+logic input_start_d0_reg = 1'b0;
+logic input_start_d1_reg = 1'b0;
 
 logic frame_oversize_reg = 1'b0, frame_oversize_next;
 logic pre_ok_reg = 1'b0, pre_ok_next;
@@ -205,19 +205,19 @@ logic ptp_ts_borrow_reg = '0;
 
 logic [31:0] crc_state_reg = '1;
 
-wire [31:0] crc_state_next;
+wire [31:0] crc_state;
 
 wire [7:0] crc_valid;
-logic [7:0] crc_valid_save;
+logic [7:0] crc_valid_reg = '0;
 
-assign crc_valid[7] = crc_state_next == ~32'h2144df1c;
-assign crc_valid[6] = crc_state_next == ~32'hc622f71d;
-assign crc_valid[5] = crc_state_next == ~32'hb1c2a1a3;
-assign crc_valid[4] = crc_state_next == ~32'h9d6cdf7e;
-assign crc_valid[3] = crc_state_next == ~32'h6522df69;
-assign crc_valid[2] = crc_state_next == ~32'he60914ae;
-assign crc_valid[1] = crc_state_next == ~32'he38a6876;
-assign crc_valid[0] = crc_state_next == ~32'h6b87b1ec;
+assign crc_valid[7] = crc_state == ~32'h2144df1c;
+assign crc_valid[6] = crc_state == ~32'hc622f71d;
+assign crc_valid[5] = crc_state == ~32'hb1c2a1a3;
+assign crc_valid[4] = crc_state == ~32'h9d6cdf7e;
+assign crc_valid[3] = crc_state == ~32'h6522df69;
+assign crc_valid[2] = crc_state == ~32'he60914ae;
+assign crc_valid[1] = crc_state == ~32'he38a6876;
+assign crc_valid[0] = crc_state == ~32'h6b87b1ec;
 
 logic [4+16-1:0] last_ts_reg = '0;
 logic [4+16-1:0] ts_inc_reg = '0;
@@ -263,10 +263,10 @@ taxi_lfsr #(
     .DATA_OUT_EN(1'b0)
 )
 eth_crc (
-    .data_in(input_data_d0),
+    .data_in(input_data_d0_reg),
     .state_in(crc_state_reg),
     .data_out(),
-    .state_out(crc_state_next)
+    .state_out(crc_state)
 );
 
 // Mask input data
@@ -312,7 +312,7 @@ always_comb begin
     frame_len_lim_last_next = frame_len_lim_last_reg;
     frame_len_lim_check_next = frame_len_lim_check_reg;
 
-    m_axis_rx_tdata_next = input_data_d1;
+    m_axis_rx_tdata_next = input_data_d1_reg;
     m_axis_rx_tkeep_next = 8'd0;
     m_axis_rx_tvalid_next = 1'b0;
     m_axis_rx_tlast_next = 1'b0;
@@ -369,10 +369,10 @@ always_comb begin
 
         case (hdr_ptr_reg)
             2'd0: begin
-                is_mcast_next = input_data_d1[0];
-                is_bcast_next = &input_data_d1[47:0];
+                is_mcast_next = input_data_d1_reg[0];
+                is_bcast_next = &input_data_d1_reg[47:0];
             end
-            2'd1: is_8021q_next = {input_data_d1[39:32], input_data_d1[47:40]} == 16'h8100;
+            2'd1: is_8021q_next = {input_data_d1_reg[39:32], input_data_d1_reg[47:40]} == 16'h8100;
             default: begin
                 // do nothing
             end
@@ -389,9 +389,9 @@ always_comb begin
                 frame_len_lim_check_next = 1'b0;
                 hdr_ptr_next = 0;
 
-                pre_ok_next = input_data_d1[63:8] == 56'hD5555555555555;
+                pre_ok_next = input_data_d1_reg[63:8] == 56'hD5555555555555;
 
-                if (input_start_d1 && cfg_rx_enable) begin
+                if (input_start_d1_reg && cfg_rx_enable) begin
                     // start condition
                     reset_crc = 1'b0;
                     stat_rx_byte_next = 4'(KEEP_W);
@@ -402,7 +402,7 @@ always_comb begin
             end
             STATE_PAYLOAD: begin
                 // read payload
-                m_axis_rx_tdata_next = input_data_d1;
+                m_axis_rx_tdata_next = input_data_d1_reg;
                 m_axis_rx_tkeep_next = 8'hff;
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b0;
@@ -450,7 +450,7 @@ always_comb begin
                     // end this cycle
                     m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 3'(KEEP_W-4-term_lane_reg);
                     m_axis_rx_tlast_next = 1'b1;
-                    if ((term_lane_reg == 0 && crc_valid_save[7]) ||
+                    if ((term_lane_reg == 0 && crc_valid_reg[7]) ||
                         (term_lane_reg == 1 && crc_valid[0]) ||
                         (term_lane_reg == 2 && crc_valid[1]) ||
                         (term_lane_reg == 3 && crc_valid[2]) ||
@@ -492,7 +492,7 @@ always_comb begin
             end
             STATE_LAST: begin
                 // last cycle of packet
-                m_axis_rx_tdata_next = input_data_d1;
+                m_axis_rx_tdata_next = input_data_d1_reg;
                 m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 3'(KEEP_W-4-term_lane_d0_reg);
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b1;
@@ -500,9 +500,9 @@ always_comb begin
 
                 reset_crc = 1'b1;
 
-                if ((term_lane_d0_reg == 5 && crc_valid_save[4]) ||
-                    (term_lane_d0_reg == 6 && crc_valid_save[5]) ||
-                    (term_lane_d0_reg == 7 && crc_valid_save[6])) begin
+                if ((term_lane_d0_reg == 5 && crc_valid_reg[4]) ||
+                    (term_lane_d0_reg == 6 && crc_valid_reg[5]) ||
+                    (term_lane_d0_reg == 7 && crc_valid_reg[6])) begin
                     // CRC valid
                     if (frame_oversize_reg) begin
                         // too long
@@ -580,10 +580,10 @@ always_ff @(posedge clk) begin
     stat_rx_err_preamble_reg <= stat_rx_err_preamble_next;
 
     if (!GBX_IF_EN || encoded_rx_data_valid) begin
-        swap_data <= encoded_rx_data_masked[63:32];
+        swap_data_reg <= encoded_rx_data_masked[63:32];
 
-        input_start_swap <= 1'b0;
-        input_start_d0 <= input_start_swap;
+        input_start_swap_reg <= 1'b0;
+        input_start_d0_reg <= input_start_swap_reg;
 
         term_present_alt_reg <= 1'b0;
         term_present_reg <= term_present_alt_reg;
@@ -602,7 +602,7 @@ always_ff @(posedge clk) begin
         end
 
         // lane swapping and termination character detection
-        if (lanes_swapped) begin
+        if (lanes_swapped_reg) begin
             if (!term_present_alt_reg && encoded_rx_hdr[0] == SYNC_CTRL[0]) begin
                 case (encoded_rx_data[7:4])
                     BLOCK_TYPE_TERM_0[7:4]: begin
@@ -649,9 +649,9 @@ always_ff @(posedge clk) begin
             end
             if (term_present_alt_reg) begin
                 // mask off trailing data
-                input_data_d0 <= {32'd0, swap_data};
+                input_data_d0_reg <= {32'd0, swap_data_reg};
             end else begin
-                input_data_d0 <= {encoded_rx_data_masked[31:0], swap_data};
+                input_data_d0_reg <= {encoded_rx_data_masked[31:0], swap_data_reg};
             end
         end else begin
             if (encoded_rx_hdr[0] == SYNC_CTRL[0]) begin
@@ -698,17 +698,17 @@ always_ff @(posedge clk) begin
                     end
                 endcase
             end
-            input_data_d0 <= encoded_rx_data_masked;
+            input_data_d0_reg <= encoded_rx_data_masked;
         end
 
         // start control character detection
         if (encoded_rx_hdr == SYNC_CTRL && encoded_rx_data[7:0] == BLOCK_TYPE_START_0) begin
-            lanes_swapped <= 1'b0;
-            input_start_d0 <= 1'b1;
-            input_data_d0 <= encoded_rx_data_masked;
+            lanes_swapped_reg <= 1'b0;
+            input_start_d0_reg <= 1'b1;
+            input_data_d0_reg <= encoded_rx_data_masked;
         end else if (encoded_rx_hdr == SYNC_CTRL && (encoded_rx_data[7:0] == BLOCK_TYPE_START_4 || encoded_rx_data[7:0] == BLOCK_TYPE_OS_START)) begin
-            lanes_swapped <= 1'b1;
-            input_start_swap <= 1'b1;
+            lanes_swapped_reg <= 1'b1;
+            input_start_swap_reg <= 1'b1;
         end
 
         // check for framing errors
@@ -812,7 +812,7 @@ always_ff @(posedge clk) begin
         end
 
         // capture timestamps
-        if (input_start_swap) begin
+        if (input_start_swap_reg) begin
             start_packet_reg <= 2'b10;
             if (PTP_TS_FMT_TOD) begin
                 ptp_ts_reg[45:0] <= ptp_ts[45:0] + 46'(ts_inc_reg >> 1);
@@ -822,21 +822,21 @@ always_ff @(posedge clk) begin
             end
         end
 
-        if (input_start_d0 && !lanes_swapped) begin
+        if (input_start_d0_reg && !lanes_swapped_reg) begin
             start_packet_reg <= 2'b01;
             ptp_ts_reg <= ptp_ts;
         end
 
-        input_start_d1 <= input_start_d0;
-        input_data_d1 <= input_data_d0;
+        input_start_d1_reg <= input_start_d0_reg;
+        input_data_d1_reg <= input_data_d0_reg;
 
         if (reset_crc) begin
             crc_state_reg <= '1;
         end else begin
-            crc_state_reg <= crc_state_next;
+            crc_state_reg <= crc_state;
         end
 
-        crc_valid_save <= crc_valid;
+        crc_valid_reg <= crc_valid;
     end
 
     last_ts_reg <= (4+16)'(ptp_ts);
@@ -866,11 +866,11 @@ always_ff @(posedge clk) begin
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
 
-        input_start_swap <= 1'b0;
-        input_start_d0 <= 1'b0;
-        input_start_d1 <= 1'b0;
+        input_start_swap_reg <= 1'b0;
+        input_start_d0_reg <= 1'b0;
+        input_start_d1_reg <= 1'b0;
 
-        lanes_swapped <= 1'b0;
+        lanes_swapped_reg <= 1'b0;
     end
 end
 

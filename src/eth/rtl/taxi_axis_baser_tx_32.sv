@@ -205,7 +205,7 @@ logic [TX_TAG_W-1:0] m_axis_tx_cpl_tag_reg = '0, m_axis_tx_cpl_tag_next;
 logic m_axis_tx_cpl_valid_reg = 1'b0, m_axis_tx_cpl_valid_next;
 
 logic [31:0] crc_state_reg[4];
-wire [31:0] crc_state_next[4];
+wire [31:0] crc_state[4];
 
 logic [DATA_W-1:0] encoded_tx_data_reg = {24'd0, BLOCK_TYPE_CTRL};
 logic encoded_tx_data_valid_reg = 1'b0;
@@ -279,7 +279,7 @@ for (genvar n = 0; n < 4; n = n + 1) begin : crc
         .data_in(s_tdata_reg[0 +: 8*(n+1)]),
         .state_in(crc_state_reg[3]),
         .data_out(),
-        .state_out(crc_state_next[n])
+        .state_out(crc_state[n])
     );
 
 end
@@ -305,7 +305,7 @@ end
 always_comb begin
     casez (s_empty_reg)
         2'd3: begin
-            fcs_output_data_0 = {~crc_state_next[0][23:0], s_tdata_reg[7:0]};
+            fcs_output_data_0 = {~crc_state[0][23:0], s_tdata_reg[7:0]};
             fcs_output_data_1 = {24'd0, ~crc_state_reg[0][31:24]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_1;
@@ -313,7 +313,7 @@ always_comb begin
             extra_cycle = 1'b0;
         end
         2'd2: begin
-            fcs_output_data_0 = {~crc_state_next[1][15:0], s_tdata_reg[15:0]};
+            fcs_output_data_0 = {~crc_state[1][15:0], s_tdata_reg[15:0]};
             fcs_output_data_1 = {16'd0, ~crc_state_reg[1][31:16]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_2;
@@ -321,7 +321,7 @@ always_comb begin
             extra_cycle = 1'b0;
         end
         2'd1: begin
-            fcs_output_data_0 = {~crc_state_next[2][7:0], s_tdata_reg[23:0]};
+            fcs_output_data_0 = {~crc_state[2][7:0], s_tdata_reg[23:0]};
             fcs_output_data_1 = {8'd0, ~crc_state_reg[2][31:8]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_3;
@@ -858,11 +858,11 @@ always_ff @(posedge clk) begin
         end
 
         for (integer i = 0; i < 3; i = i + 1) begin
-            crc_state_reg[i] <= crc_state_next[i];
+            crc_state_reg[i] <= crc_state[i];
         end
 
         if (update_crc) begin
-            crc_state_reg[3] <= crc_state_next[3];
+            crc_state_reg[3] <= crc_state[3];
         end
 
         if (reset_crc) begin

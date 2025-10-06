@@ -102,26 +102,26 @@ logic [1:0] state_reg = STATE_IDLE, state_next;
 logic reset_crc;
 logic update_crc;
 
-logic mii_odd = 1'b0;
-logic in_frame = 1'b0;
+logic mii_odd_reg = 1'b0;
+logic in_frame_reg = 1'b0;
 
-logic [DATA_W-1:0] gmii_rxd_d0 = '0;
-logic [DATA_W-1:0] gmii_rxd_d1 = '0;
-logic [DATA_W-1:0] gmii_rxd_d2 = '0;
-logic [DATA_W-1:0] gmii_rxd_d3 = '0;
-logic [DATA_W-1:0] gmii_rxd_d4 = '0;
+logic [DATA_W-1:0] gmii_rxd_d0_reg = '0;
+logic [DATA_W-1:0] gmii_rxd_d1_reg = '0;
+logic [DATA_W-1:0] gmii_rxd_d2_reg = '0;
+logic [DATA_W-1:0] gmii_rxd_d3_reg = '0;
+logic [DATA_W-1:0] gmii_rxd_d4_reg = '0;
 
-logic gmii_rx_dv_d0 = 1'b0;
-logic gmii_rx_dv_d1 = 1'b0;
-logic gmii_rx_dv_d2 = 1'b0;
-logic gmii_rx_dv_d3 = 1'b0;
-logic gmii_rx_dv_d4 = 1'b0;
+logic gmii_rx_dv_d0_reg = 1'b0;
+logic gmii_rx_dv_d1_reg = 1'b0;
+logic gmii_rx_dv_d2_reg = 1'b0;
+logic gmii_rx_dv_d3_reg = 1'b0;
+logic gmii_rx_dv_d4_reg = 1'b0;
 
-logic gmii_rx_er_d0 = 1'b0;
-logic gmii_rx_er_d1 = 1'b0;
-logic gmii_rx_er_d2 = 1'b0;
-logic gmii_rx_er_d3 = 1'b0;
-logic gmii_rx_er_d4 = 1'b0;
+logic gmii_rx_er_d0_reg = 1'b0;
+logic gmii_rx_er_d1_reg = 1'b0;
+logic gmii_rx_er_d2_reg = 1'b0;
+logic gmii_rx_er_d3_reg = 1'b0;
+logic gmii_rx_er_d4_reg = 1'b0;
 
 logic frame_error_reg = 1'b0, frame_error_next;
 logic in_pre_reg = 1'b0, in_pre_next;
@@ -159,8 +159,8 @@ logic stat_rx_err_preamble_reg = 1'b0, stat_rx_err_preamble_next;
 
 logic [PTP_TS_W-1:0] ptp_ts_out_reg = '0;
 
-logic [31:0] crc_state = '1;
-wire [31:0] crc_next;
+logic [31:0] crc_state_reg = '1;
+wire [31:0] crc_state;
 
 assign m_axis_rx.tdata = m_axis_rx_tdata_reg;
 assign m_axis_rx.tkeep = 1'b1;
@@ -203,13 +203,13 @@ taxi_lfsr #(
     .DATA_OUT_EN(1'b0)
 )
 eth_crc_8 (
-    .data_in(gmii_rxd_d0),
-    .state_in(crc_state),
+    .data_in(gmii_rxd_d0_reg),
+    .state_in(crc_state_reg),
     .data_out(),
-    .state_out(crc_next)
+    .state_out(crc_state)
 );
 
-wire crc_valid = crc_next == ~32'h2144df1c;
+wire crc_valid = crc_state == ~32'h2144df1c;
 
 always_comb begin
     state_next = STATE_IDLE;
@@ -251,7 +251,7 @@ always_comb begin
     if (!clk_enable) begin
         // clock disabled - hold state
         state_next = state_reg;
-    end else if (mii_select && !mii_odd) begin
+    end else if (mii_select && !mii_odd_reg) begin
         // MII even cycle - hold state
         state_next = state_reg;
     end else begin
@@ -273,16 +273,16 @@ always_comb begin
 
         case (hdr_ptr_reg)
             4'd0: begin
-                is_mcast_next = gmii_rxd_d4[0];
-                is_bcast_next = gmii_rxd_d4 == 8'hff;
+                is_mcast_next = gmii_rxd_d4_reg[0];
+                is_bcast_next = gmii_rxd_d4_reg == 8'hff;
             end
-            4'd1: is_bcast_next = is_bcast_reg && gmii_rxd_d4 == 8'hff;
-            4'd2: is_bcast_next = is_bcast_reg && gmii_rxd_d4 == 8'hff;
-            4'd3: is_bcast_next = is_bcast_reg && gmii_rxd_d4 == 8'hff;
-            4'd4: is_bcast_next = is_bcast_reg && gmii_rxd_d4 == 8'hff;
-            4'd5: is_bcast_next = is_bcast_reg && gmii_rxd_d4 == 8'hff;
-            4'd12: is_8021q_next = gmii_rxd_d4 == 8'h81;
-            4'd13: is_8021q_next = is_8021q_reg && gmii_rxd_d4 == 8'h00;
+            4'd1: is_bcast_next = is_bcast_reg && gmii_rxd_d4_reg == 8'hff;
+            4'd2: is_bcast_next = is_bcast_reg && gmii_rxd_d4_reg == 8'hff;
+            4'd3: is_bcast_next = is_bcast_reg && gmii_rxd_d4_reg == 8'hff;
+            4'd4: is_bcast_next = is_bcast_reg && gmii_rxd_d4_reg == 8'hff;
+            4'd5: is_bcast_next = is_bcast_reg && gmii_rxd_d4_reg == 8'hff;
+            4'd12: is_8021q_next = gmii_rxd_d4_reg == 8'h81;
+            4'd13: is_8021q_next = is_8021q_reg && gmii_rxd_d4_reg == 8'h00;
             default: begin
                 // do nothing
             end
@@ -302,15 +302,15 @@ always_comb begin
 
                 state_next = STATE_IDLE;
 
-                if (gmii_rx_dv_d0) begin
-                    if (gmii_rx_er_d0) begin
+                if (gmii_rx_dv_d0_reg) begin
+                    if (gmii_rx_er_d0_reg) begin
                         // error in preamble
                         in_pre_next = 1'b0;
                         pre_ok_next = 1'b0;
                         stat_rx_err_framing_next = 1'b1;
-                    end else if (gmii_rxd_d0 == ETH_PRE) begin
+                    end else if (gmii_rxd_d0_reg == ETH_PRE) begin
                         // normal preamble
-                    end else if (gmii_rxd_d0 == ETH_SFD) begin
+                    end else if (gmii_rxd_d0_reg == ETH_SFD) begin
                         // start
                         in_pre_next = 1'b0;
                         if (in_pre_reg && cfg_rx_enable) begin
@@ -342,7 +342,7 @@ always_comb begin
                     stat_rx_err_framing_next = 1'b1;
                 end
 
-                if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
+                if (gmii_rx_dv_d4_reg && !gmii_rx_er_d4_reg && gmii_rxd_d4_reg == ETH_SFD) begin
                     state_next = STATE_PAYLOAD;
                 end else begin
                     state_next = STATE_PIPE;
@@ -352,7 +352,7 @@ always_comb begin
                 // read payload
                 update_crc = 1'b1;
 
-                m_axis_rx_tdata_next = gmii_rxd_d4;
+                m_axis_rx_tdata_next = gmii_rxd_d4_reg;
                 m_axis_rx_tvalid_next = 1'b1;
 
                 stat_rx_byte_next = gmii_rx_dv;
@@ -371,7 +371,7 @@ always_comb begin
                     stat_rx_pkt_bcast_next = is_bcast_reg;
                     stat_rx_pkt_vlan_next = is_8021q_reg;
                     stat_rx_err_oversize_next = frame_len_lim_reg == 0;
-                    stat_rx_err_framing_next = !gmii_rx_dv_d0;
+                    stat_rx_err_framing_next = !gmii_rx_dv_d0_reg;
                     stat_rx_err_preamble_next = !pre_ok_reg;
                     if (frame_error_next) begin
                         // error
@@ -440,71 +440,71 @@ always_ff @(posedge clk) begin
 
     if (clk_enable) begin
         if (mii_select) begin
-            mii_odd <= !mii_odd || !gmii_rx_dv;
+            mii_odd_reg <= !mii_odd_reg || !gmii_rx_dv;
 
-            if (in_frame) begin
-                in_frame <= gmii_rx_dv;
-            end else if (gmii_rx_dv && {gmii_rxd[3:0], gmii_rxd_d0[7:4]} == ETH_SFD) begin
-                in_frame <= 1'b1;
+            if (in_frame_reg) begin
+                in_frame_reg <= gmii_rx_dv;
+            end else if (gmii_rx_dv && {gmii_rxd[3:0], gmii_rxd_d0_reg[7:4]} == ETH_SFD) begin
+                in_frame_reg <= 1'b1;
                 start_packet_int_reg <= 1'b1;
-                mii_odd <= 1'b1;
+                mii_odd_reg <= 1'b1;
             end
 
-            gmii_rxd_d0 <= {gmii_rxd[3:0], gmii_rxd_d0[7:4]};
+            gmii_rxd_d0_reg <= {gmii_rxd[3:0], gmii_rxd_d0_reg[7:4]};
 
-            if (mii_odd) begin
-                gmii_rxd_d1 <= gmii_rxd_d0;
-                gmii_rxd_d2 <= gmii_rxd_d1;
-                gmii_rxd_d3 <= gmii_rxd_d2;
-                gmii_rxd_d4 <= gmii_rxd_d3;
+            if (mii_odd_reg) begin
+                gmii_rxd_d1_reg <= gmii_rxd_d0_reg;
+                gmii_rxd_d2_reg <= gmii_rxd_d1_reg;
+                gmii_rxd_d3_reg <= gmii_rxd_d2_reg;
+                gmii_rxd_d4_reg <= gmii_rxd_d3_reg;
 
-                gmii_rx_dv_d0 <= gmii_rx_dv;
-                gmii_rx_dv_d1 <= gmii_rx_dv_d0;
-                gmii_rx_dv_d2 <= gmii_rx_dv_d1;
-                gmii_rx_dv_d3 <= gmii_rx_dv_d2;
-                gmii_rx_dv_d4 <= gmii_rx_dv_d3;
+                gmii_rx_dv_d0_reg <= gmii_rx_dv;
+                gmii_rx_dv_d1_reg <= gmii_rx_dv_d0_reg;
+                gmii_rx_dv_d2_reg <= gmii_rx_dv_d1_reg;
+                gmii_rx_dv_d3_reg <= gmii_rx_dv_d2_reg;
+                gmii_rx_dv_d4_reg <= gmii_rx_dv_d3_reg;
 
-                gmii_rx_er_d0 <= gmii_rx_er;
-                gmii_rx_er_d1 <= gmii_rx_er_d0;
-                gmii_rx_er_d2 <= gmii_rx_er_d1;
-                gmii_rx_er_d3 <= gmii_rx_er_d2;
-                gmii_rx_er_d4 <= gmii_rx_er_d3;
+                gmii_rx_er_d0_reg <= gmii_rx_er;
+                gmii_rx_er_d1_reg <= gmii_rx_er_d0_reg;
+                gmii_rx_er_d2_reg <= gmii_rx_er_d1_reg;
+                gmii_rx_er_d3_reg <= gmii_rx_er_d2_reg;
+                gmii_rx_er_d4_reg <= gmii_rx_er_d3_reg;
             end else begin
-                gmii_rx_dv_d0 <= gmii_rx_dv & gmii_rx_dv_d0;
-                gmii_rx_er_d0 <= gmii_rx_er | gmii_rx_er_d0;
+                gmii_rx_dv_d0_reg <= gmii_rx_dv & gmii_rx_dv_d0_reg;
+                gmii_rx_er_d0_reg <= gmii_rx_er | gmii_rx_er_d0_reg;
             end
         end else begin
-            if (in_frame) begin
-                in_frame <= gmii_rx_dv;
+            if (in_frame_reg) begin
+                in_frame_reg <= gmii_rx_dv;
             end else if (gmii_rx_dv && gmii_rxd == ETH_SFD) begin
-                in_frame <= 1'b1;
+                in_frame_reg <= 1'b1;
                 start_packet_int_reg <= 1'b1;
             end
 
-            gmii_rxd_d0 <= gmii_rxd;
-            gmii_rxd_d1 <= gmii_rxd_d0;
-            gmii_rxd_d2 <= gmii_rxd_d1;
-            gmii_rxd_d3 <= gmii_rxd_d2;
-            gmii_rxd_d4 <= gmii_rxd_d3;
+            gmii_rxd_d0_reg <= gmii_rxd;
+            gmii_rxd_d1_reg <= gmii_rxd_d0_reg;
+            gmii_rxd_d2_reg <= gmii_rxd_d1_reg;
+            gmii_rxd_d3_reg <= gmii_rxd_d2_reg;
+            gmii_rxd_d4_reg <= gmii_rxd_d3_reg;
 
-            gmii_rx_dv_d0 <= gmii_rx_dv;
-            gmii_rx_dv_d1 <= gmii_rx_dv_d0;
-            gmii_rx_dv_d2 <= gmii_rx_dv_d1;
-            gmii_rx_dv_d3 <= gmii_rx_dv_d2;
-            gmii_rx_dv_d4 <= gmii_rx_dv_d3;
+            gmii_rx_dv_d0_reg <= gmii_rx_dv;
+            gmii_rx_dv_d1_reg <= gmii_rx_dv_d0_reg;
+            gmii_rx_dv_d2_reg <= gmii_rx_dv_d1_reg;
+            gmii_rx_dv_d3_reg <= gmii_rx_dv_d2_reg;
+            gmii_rx_dv_d4_reg <= gmii_rx_dv_d3_reg;
 
-            gmii_rx_er_d0 <= gmii_rx_er;
-            gmii_rx_er_d1 <= gmii_rx_er_d0;
-            gmii_rx_er_d2 <= gmii_rx_er_d1;
-            gmii_rx_er_d3 <= gmii_rx_er_d2;
-            gmii_rx_er_d4 <= gmii_rx_er_d3;
+            gmii_rx_er_d0_reg <= gmii_rx_er;
+            gmii_rx_er_d1_reg <= gmii_rx_er_d0_reg;
+            gmii_rx_er_d2_reg <= gmii_rx_er_d1_reg;
+            gmii_rx_er_d3_reg <= gmii_rx_er_d2_reg;
+            gmii_rx_er_d4_reg <= gmii_rx_er_d3_reg;
         end
     end
 
     if (reset_crc) begin
-        crc_state <= '1;
+        crc_state_reg <= '1;
     end else if (update_crc) begin
-        crc_state <= crc_next;
+        crc_state_reg <= crc_state;
     end
 
     stat_rx_byte_reg <= stat_rx_byte_next;
@@ -547,14 +547,14 @@ always_ff @(posedge clk) begin
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
 
-        in_frame <= 1'b0;
-        mii_odd <= 1'b0;
+        in_frame_reg <= 1'b0;
+        mii_odd_reg <= 1'b0;
 
-        gmii_rx_dv_d0 <= 1'b0;
-        gmii_rx_dv_d1 <= 1'b0;
-        gmii_rx_dv_d2 <= 1'b0;
-        gmii_rx_dv_d3 <= 1'b0;
-        gmii_rx_dv_d4 <= 1'b0;
+        gmii_rx_dv_d0_reg <= 1'b0;
+        gmii_rx_dv_d1_reg <= 1'b0;
+        gmii_rx_dv_d2_reg <= 1'b0;
+        gmii_rx_dv_d3_reg <= 1'b0;
+        gmii_rx_dv_d4_reg <= 1'b0;
     end
 end
 

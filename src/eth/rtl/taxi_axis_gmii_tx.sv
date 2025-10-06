@@ -153,8 +153,8 @@ logic stat_tx_err_oversize_reg = 1'b0, stat_tx_err_oversize_next;
 logic stat_tx_err_user_reg = 1'b0, stat_tx_err_user_next;
 logic stat_tx_err_underflow_reg = 1'b0, stat_tx_err_underflow_next;
 
-logic [31:0] crc_state = '1;
-wire [31:0] crc_next;
+logic [31:0] crc_state_reg = '1;
+wire [31:0] crc_state;
 
 assign s_axis_tx.tready = s_axis_tx_tready_reg;
 
@@ -196,9 +196,9 @@ taxi_lfsr #(
 )
 eth_crc_8 (
     .data_in(s_tdata_reg),
-    .state_in(crc_state),
+    .state_in(crc_state_reg),
     .data_out(),
-    .state_out(crc_next)
+    .state_out(crc_state)
 );
 
 always_comb begin
@@ -471,10 +471,10 @@ always_comb begin
                 ifg_cnt_next = cfg_tx_ifg;
 
                 case (fcs_ptr_reg)
-                    2'd0: gmii_txd_next = ~crc_state[7:0];
-                    2'd1: gmii_txd_next = ~crc_state[15:8];
-                    2'd2: gmii_txd_next = ~crc_state[23:16];
-                    2'd3: gmii_txd_next = ~crc_state[31:24];
+                    2'd0: gmii_txd_next = ~crc_state_reg[7:0];
+                    2'd1: gmii_txd_next = ~crc_state_reg[15:8];
+                    2'd2: gmii_txd_next = ~crc_state_reg[23:16];
+                    2'd3: gmii_txd_next = ~crc_state_reg[31:24];
                 endcase
                 gmii_tx_en_next = 1'b1;
                 gmii_tx_er_next = frame_error_reg;
@@ -552,9 +552,9 @@ always_ff @(posedge clk) begin
     gmii_tx_er_reg <= gmii_tx_er_next;
 
     if (reset_crc) begin
-        crc_state <= '1;
+        crc_state_reg <= '1;
     end else if (update_crc) begin
-        crc_state <= crc_next;
+        crc_state_reg <= crc_state;
     end
 
     start_packet_int_reg <= start_packet_int_next;

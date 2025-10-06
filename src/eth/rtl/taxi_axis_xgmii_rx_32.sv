@@ -114,15 +114,15 @@ logic term_first_cycle_reg = 1'b0;
 logic [1:0] term_lane_reg = 0, term_lane_d0_reg = 0;
 logic framing_error_reg = 1'b0;
 
-logic [DATA_W-1:0] xgmii_rxd_d0 = '0;
-logic [DATA_W-1:0] xgmii_rxd_d1 = '0;
-logic [DATA_W-1:0] xgmii_rxd_d2 = '0;
+logic [DATA_W-1:0] xgmii_rxd_d0_reg = '0;
+logic [DATA_W-1:0] xgmii_rxd_d1_reg = '0;
+logic [DATA_W-1:0] xgmii_rxd_d2_reg = '0;
 
-logic [CTRL_W-1:0] xgmii_rxc_d0 = '0;
+logic [CTRL_W-1:0] xgmii_rxc_d0_reg = '0;
 
-logic xgmii_start_d0 = 1'b0;
-logic xgmii_start_d1 = 1'b0;
-logic xgmii_start_d2 = 1'b0;
+logic xgmii_start_d0_reg = 1'b0;
+logic xgmii_start_d1_reg = 1'b0;
+logic xgmii_start_d2_reg = 1'b0;
 
 logic frame_oversize_reg = 1'b0, frame_oversize_next;
 logic pre_ok_reg = 1'b0, pre_ok_next;
@@ -163,15 +163,15 @@ logic [PTP_TS_W-1:0] ptp_ts_out_reg = '0, ptp_ts_out_next;
 
 logic [31:0] crc_state_reg = '1;
 
-wire [31:0] crc_state_next;
+wire [31:0] crc_state;
 
 wire [3:0] crc_valid;
-logic [3:0] crc_valid_save;
+logic [3:0] crc_valid_reg = '0;
 
-assign crc_valid[3] = crc_state_next == ~32'h2144df1c;
-assign crc_valid[2] = crc_state_next == ~32'hc622f71d;
-assign crc_valid[1] = crc_state_next == ~32'hb1c2a1a3;
-assign crc_valid[0] = crc_state_next == ~32'h9d6cdf7e;
+assign crc_valid[3] = crc_state == ~32'h2144df1c;
+assign crc_valid[2] = crc_state == ~32'hc622f71d;
+assign crc_valid[1] = crc_state == ~32'hb1c2a1a3;
+assign crc_valid[0] = crc_state == ~32'h9d6cdf7e;
 
 assign m_axis_rx.tdata = m_axis_rx_tdata_reg;
 assign m_axis_rx.tkeep = m_axis_rx_tkeep_reg;
@@ -216,10 +216,10 @@ taxi_lfsr #(
     .DATA_OUT_EN(1'b0)
 )
 eth_crc (
-    .data_in(xgmii_rxd_d0),
+    .data_in(xgmii_rxd_d0_reg),
     .state_in(crc_state_reg),
     .data_out(),
-    .state_out(crc_state_next)
+    .state_out(crc_state)
 );
 
 // Mask input data
@@ -247,7 +247,7 @@ always_comb begin
     frame_len_lim_last_next = frame_len_lim_last_reg;
     frame_len_lim_check_next = frame_len_lim_check_reg;
 
-    m_axis_rx_tdata_next = xgmii_rxd_d2;
+    m_axis_rx_tdata_next = xgmii_rxd_d2_reg;
     m_axis_rx_tkeep_next = {KEEP_W{1'b1}};
     m_axis_rx_tvalid_next = 1'b0;
     m_axis_rx_tlast_next = 1'b0;
@@ -306,11 +306,11 @@ always_comb begin
 
         case (hdr_ptr_reg)
             3'd0: begin
-                is_mcast_next = xgmii_rxd_d2[0];
-                is_bcast_next = &xgmii_rxd_d2;
+                is_mcast_next = xgmii_rxd_d2_reg[0];
+                is_bcast_next = &xgmii_rxd_d2_reg;
             end
-            3'd1: is_bcast_next = is_bcast_reg && &xgmii_rxd_d2[15:0];
-            3'd3: is_8021q_next = {xgmii_rxd_d2[7:0], xgmii_rxd_d2[15:8]} == 16'h8100;
+            3'd1: is_bcast_next = is_bcast_reg && &xgmii_rxd_d2_reg[15:0];
+            3'd3: is_8021q_next = {xgmii_rxd_d2_reg[7:0], xgmii_rxd_d2_reg[15:8]} == 16'h8100;
             default: begin
                 // do nothing
             end
@@ -327,9 +327,9 @@ always_comb begin
                 frame_len_lim_check_next = 1'b0;
                 hdr_ptr_next = 0;
 
-                pre_ok_next = xgmii_rxd_d2[31:8] == 24'h555555;
+                pre_ok_next = xgmii_rxd_d2_reg[31:8] == 24'h555555;
 
-                if (xgmii_start_d2 && cfg_rx_enable) begin
+                if (xgmii_start_d2_reg && cfg_rx_enable) begin
                     // start condition
                     if (framing_error_reg) begin
                         // control or error characters in first data word
@@ -352,7 +352,7 @@ always_comb begin
 
                 hdr_ptr_next = 0;
 
-                pre_ok_next = pre_ok_reg && xgmii_rxd_d2 == 32'hD5555555;
+                pre_ok_next = pre_ok_reg && xgmii_rxd_d2_reg == 32'hD5555555;
 
                 if (framing_error_reg) begin
                     // control or error characters in packet
@@ -366,7 +366,7 @@ always_comb begin
             end
             STATE_PAYLOAD: begin
                 // read payload
-                m_axis_rx_tdata_next = xgmii_rxd_d2;
+                m_axis_rx_tdata_next = xgmii_rxd_d2_reg;
                 m_axis_rx_tkeep_next = {KEEP_W{1'b1}};
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b0;
@@ -408,7 +408,7 @@ always_comb begin
                     // end this cycle
                     m_axis_rx_tkeep_next = 4'b1111;
                     m_axis_rx_tlast_next = 1'b1;
-                    if (crc_valid_save[3]) begin
+                    if (crc_valid_reg[3]) begin
                         // CRC valid
                         if (frame_oversize_next) begin
                             // too long
@@ -444,7 +444,7 @@ always_comb begin
             end
             STATE_LAST: begin
                 // last cycle of packet
-                m_axis_rx_tdata_next = xgmii_rxd_d2;
+                m_axis_rx_tdata_next = xgmii_rxd_d2_reg;
                 m_axis_rx_tkeep_next = {KEEP_W{1'b1}} >> 2'(CTRL_W-term_lane_d0_reg);
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b1;
@@ -452,9 +452,9 @@ always_comb begin
 
                 reset_crc = 1'b1;
 
-                if ((term_lane_d0_reg == 1 && crc_valid_save[0]) ||
-                    (term_lane_d0_reg == 2 && crc_valid_save[1]) ||
-                    (term_lane_d0_reg == 3 && crc_valid_save[2])) begin
+                if ((term_lane_d0_reg == 1 && crc_valid_reg[0]) ||
+                    (term_lane_d0_reg == 2 && crc_valid_reg[1]) ||
+                    (term_lane_d0_reg == 3 && crc_valid_reg[2])) begin
                     // CRC valid
                     if (frame_oversize_reg) begin
                         // too long
@@ -551,19 +551,19 @@ always_ff @(posedge clk) begin
         if (reset_crc) begin
             crc_state_reg <= '1;
         end else begin
-            crc_state_reg <= crc_state_next;
+            crc_state_reg <= crc_state;
         end
 
-        crc_valid_save <= crc_valid;
+        crc_valid_reg <= crc_valid;
 
-        xgmii_rxc_d0 <= xgmii_rxc;
-        xgmii_rxd_d0 <= xgmii_rxd_masked;
-        xgmii_rxd_d1 <= xgmii_rxd_d0;
-        xgmii_rxd_d2 <= xgmii_rxd_d1;
+        xgmii_rxc_d0_reg <= xgmii_rxc;
+        xgmii_rxd_d0_reg <= xgmii_rxd_masked;
+        xgmii_rxd_d1_reg <= xgmii_rxd_d0_reg;
+        xgmii_rxd_d2_reg <= xgmii_rxd_d1_reg;
 
-        xgmii_start_d0 <= xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START;
-        xgmii_start_d1 <= xgmii_start_d0;
-        xgmii_start_d2 <= xgmii_start_d1;
+        xgmii_start_d0_reg <= xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START;
+        xgmii_start_d1_reg <= xgmii_start_d0_reg;
+        xgmii_start_d2_reg <= xgmii_start_d1_reg;
     end
 
     if (rst) begin
@@ -589,11 +589,11 @@ always_ff @(posedge clk) begin
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
 
-        xgmii_rxc_d0 <= '0;
+        xgmii_rxc_d0_reg <= '0;
 
-        xgmii_start_d0 <= 1'b0;
-        xgmii_start_d1 <= 1'b0;
-        xgmii_start_d2 <= 1'b0;
+        xgmii_start_d0_reg <= 1'b0;
+        xgmii_start_d1_reg <= 1'b0;
+        xgmii_start_d2_reg <= 1'b0;
     end
 end
 
