@@ -106,9 +106,6 @@ localparam [1:0]
 
 logic [1:0] state_reg = STATE_IDLE, state_next;
 
-// datapath control signals
-logic reset_crc;
-
 logic term_present_reg = 1'b0;
 logic term_first_cycle_reg = 1'b0;
 logic [1:0] term_lane_reg = 0, term_lane_d0_reg = 0;
@@ -166,10 +163,10 @@ wire [31:0] crc_state;
 wire [3:0] crc_valid;
 logic [3:0] crc_valid_reg = '0;
 
-assign crc_valid[3] = crc_state == ~32'h2144df1c;
-assign crc_valid[2] = crc_state == ~32'hc622f71d;
-assign crc_valid[1] = crc_state == ~32'hb1c2a1a3;
-assign crc_valid[0] = crc_state == ~32'h9d6cdf7e;
+assign crc_valid[3] = crc_state_reg == ~32'h2144df1c;
+assign crc_valid[2] = crc_state_reg == ~32'hc622f71d;
+assign crc_valid[1] = crc_state_reg == ~32'hb1c2a1a3;
+assign crc_valid[0] = crc_state_reg == ~32'h9d6cdf7e;
 
 assign m_axis_rx.tdata = m_axis_rx_tdata_reg;
 assign m_axis_rx.tkeep = m_axis_rx_tkeep_reg;
@@ -203,6 +200,15 @@ assign stat_rx_err_preamble = stat_rx_err_preamble_reg;
 
 wire last_cycle = state_reg == STATE_LAST;
 
+// Mask input data
+wire [DATA_W-1:0] xgmii_rxd_masked;
+wire [CTRL_W-1:0] xgmii_term;
+
+for (genvar n = 0; n < CTRL_W; n = n + 1) begin
+    assign xgmii_rxd_masked[n*8 +: 8] = (n > 0 && xgmii_rxc[n]) ? 8'd0 : xgmii_rxd[n*8 +: 8];
+    assign xgmii_term[n] = xgmii_rxc[n] && (xgmii_rxd[n*8 +: 8] == XGMII_TERM);
+end
+
 taxi_lfsr #(
     .LFSR_W(32),
     .LFSR_POLY(32'h4c11db7),
@@ -214,25 +220,14 @@ taxi_lfsr #(
     .DATA_OUT_EN(1'b0)
 )
 eth_crc (
-    .data_in(xgmii_rxd_d0_reg),
+    .data_in(xgmii_rxd_masked),
     .state_in(crc_state_reg),
     .data_out(),
     .state_out(crc_state)
 );
 
-// Mask input data
-wire [DATA_W-1:0] xgmii_rxd_masked;
-wire [CTRL_W-1:0] xgmii_term;
-
-for (genvar n = 0; n < CTRL_W; n = n + 1) begin
-    assign xgmii_rxd_masked[n*8 +: 8] = (n > 0 && xgmii_rxc[n]) ? 8'd0 : xgmii_rxd[n*8 +: 8];
-    assign xgmii_term[n] = xgmii_rxc[n] && (xgmii_rxd[n*8 +: 8] == XGMII_TERM);
-end
-
 always_comb begin
     state_next = STATE_IDLE;
-
-    reset_crc = 1'b0;
 
     frame_oversize_next = frame_oversize_reg;
     pre_ok_next = pre_ok_reg;
@@ -317,8 +312,6 @@ always_comb begin
         case (state_reg)
             STATE_IDLE: begin
                 // idle state - wait for packet
-                reset_crc = 1'b1;
-
                 frame_oversize_next = 1'b0;
                 frame_len_next = 16'(CTRL_W);
                 {frame_len_lim_cyc_next, frame_len_lim_last_next} = cfg_rx_max_pkt_len;
@@ -334,7 +327,6 @@ always_comb begin
                         stat_rx_err_framing_next = 1'b1;
                         state_next = STATE_IDLE;
                     end else begin
-                        reset_crc = 1'b0;
                         stat_rx_byte_next = 3'(CTRL_W);
                         state_next = STATE_PREAMBLE;
                     end
@@ -389,6 +381,7 @@ always_comb begin
                     // control or error characters in packet
                     m_axis_rx_tlast_next = 1'b1;
                     m_axis_rx_tuser_next = 1'b1;
+
                     stat_rx_pkt_bad_next = 1'b1;
                     stat_rx_pkt_len_next = frame_len_next;
                     stat_rx_pkt_ucast_next = !is_mcast_reg;
@@ -400,7 +393,7 @@ always_comb begin
                     stat_rx_err_preamble_next = !pre_ok_reg;
                     stat_rx_pkt_fragment_next = frame_len_next[15:6] == 0;
                     stat_rx_pkt_jabber_next = frame_oversize_next;
-                    reset_crc = 1'b1;
+
                     state_next = STATE_IDLE;
                 end else if (term_first_cycle_reg) begin
                     // end this cycle
@@ -424,6 +417,7 @@ always_comb begin
                         stat_rx_pkt_bad_next = 1'b1;
                         stat_rx_err_bad_fcs_next = 1'b1;
                     end
+
                     stat_rx_pkt_len_next = frame_len_next;
                     stat_rx_pkt_ucast_next = !is_mcast_reg;
                     stat_rx_pkt_mcast_next = is_mcast_reg && !is_bcast_reg;
@@ -431,7 +425,7 @@ always_comb begin
                     stat_rx_pkt_vlan_next = is_8021q_reg;
                     stat_rx_err_oversize_next = frame_oversize_next;
                     stat_rx_err_preamble_next = !pre_ok_reg;
-                    reset_crc = 1'b1;
+
                     state_next = STATE_IDLE;
                 end else if (term_present_reg) begin
                     // need extra cycle
@@ -447,8 +441,6 @@ always_comb begin
                 m_axis_rx_tvalid_next = 1'b1;
                 m_axis_rx_tlast_next = 1'b1;
                 m_axis_rx_tuser_next = 1'b0;
-
-                reset_crc = 1'b1;
 
                 if ((term_lane_d0_reg == 1 && crc_valid_reg[0]) ||
                     (term_lane_d0_reg == 2 && crc_valid_reg[1]) ||
@@ -530,6 +522,8 @@ always_ff @(posedge clk) begin
     stat_rx_err_preamble_reg <= stat_rx_err_preamble_next;
 
     if (!GBX_IF_EN || xgmii_rx_valid) begin
+        xgmii_start_d0_reg <= 1'b0;
+
         term_present_reg <= 1'b0;
         term_first_cycle_reg <= 1'b0;
         term_lane_reg <= 0;
@@ -544,13 +538,17 @@ always_ff @(posedge clk) begin
             end
         end
 
-        term_lane_d0_reg <= term_lane_reg;
-
-        if (reset_crc) begin
-            crc_state_reg <= '1;
-        end else begin
-            crc_state_reg <= crc_state;
+        // start control character detection
+        if (xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START) begin
+            xgmii_start_d0_reg <= 1'b1;
         end
+
+        crc_state_reg <= crc_state;
+        if (xgmii_start_d0_reg) begin
+            crc_state_reg <= 32'hffffffff;
+        end
+
+        term_lane_d0_reg <= term_lane_reg;
 
         crc_valid_reg <= crc_valid;
 
@@ -558,7 +556,6 @@ always_ff @(posedge clk) begin
         xgmii_rxd_d1_reg <= xgmii_rxd_d0_reg;
         xgmii_rxd_d2_reg <= xgmii_rxd_d1_reg;
 
-        xgmii_start_d0_reg <= xgmii_rxc[0] && xgmii_rxd[7:0] == XGMII_START;
         xgmii_start_d1_reg <= xgmii_start_d0_reg;
         xgmii_start_d2_reg <= xgmii_start_d1_reg;
     end
