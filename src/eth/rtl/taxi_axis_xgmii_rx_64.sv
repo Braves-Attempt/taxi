@@ -548,7 +548,11 @@ always_ff @(posedge clk) begin
 
         // lane swapping and termination character detection
         if (lanes_swapped_reg) begin
-            xgmii_rxd_d0_reg <= {xgmii_rxd_masked[31:0], swap_rxd_reg};
+            if (swap_rxc_term_reg != 0 || xgmii_term[0]) begin
+                xgmii_rxd_d0_reg <= {32'd0, swap_rxd_reg};
+            end else begin
+                xgmii_rxd_d0_reg <= {xgmii_rxd_masked[31:0], swap_rxd_reg};
+            end
             xgmii_rxc_d0_reg <= {xgmii_rxc[3:0], swap_rxc_reg};
 
             term_present_reg <= 1'b0;
