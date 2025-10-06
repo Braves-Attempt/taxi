@@ -122,7 +122,6 @@ logic framing_error_reg = 1'b0, framing_error_d0_reg = 1'b0;
 logic [DATA_W-1:0] xgmii_rxd_d0_reg = '0;
 logic [DATA_W-1:0] xgmii_rxd_d1_reg = '0;
 
-logic [CTRL_W-1:0] xgmii_rxc_d0_reg = '0;
 
 logic xgmii_start_swap_reg = 1'b0;
 logic xgmii_start_d0_reg = 1'b0;
@@ -553,7 +552,6 @@ always_ff @(posedge clk) begin
             end else begin
                 xgmii_rxd_d0_reg <= {xgmii_rxd_masked[31:0], swap_rxd_reg};
             end
-            xgmii_rxc_d0_reg <= {xgmii_rxc[3:0], swap_rxc_reg};
 
             term_present_reg <= 1'b0;
             term_first_cycle_reg <= 1'b0;
@@ -570,7 +568,6 @@ always_ff @(posedge clk) begin
             end
         end else begin
             xgmii_rxd_d0_reg <= xgmii_rxd_masked;
-            xgmii_rxc_d0_reg <= xgmii_rxc;
 
             term_present_reg <= 1'b0;
             term_first_cycle_reg <= 1'b0;
@@ -593,7 +590,6 @@ always_ff @(posedge clk) begin
             xgmii_start_d0_reg <= 1'b1;
 
             xgmii_rxd_d0_reg <= xgmii_rxd_masked;
-            xgmii_rxc_d0_reg <= xgmii_rxc;
 
             framing_error_reg <= xgmii_rxc[7:1] != 0;
         end else if (xgmii_rxc[4] && xgmii_rxd[39:32] == XGMII_START) begin
@@ -661,8 +657,6 @@ always_ff @(posedge clk) begin
         stat_rx_err_bad_block_reg <= 1'b0;
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
-
-        xgmii_rxc_d0_reg <= '0;
 
         xgmii_start_swap_reg <= 1'b0;
         xgmii_start_d0_reg <= 1'b0;

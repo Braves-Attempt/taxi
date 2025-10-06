@@ -118,8 +118,6 @@ logic [DATA_W-1:0] xgmii_rxd_d0_reg = '0;
 logic [DATA_W-1:0] xgmii_rxd_d1_reg = '0;
 logic [DATA_W-1:0] xgmii_rxd_d2_reg = '0;
 
-logic [CTRL_W-1:0] xgmii_rxc_d0_reg = '0;
-
 logic xgmii_start_d0_reg = 1'b0;
 logic xgmii_start_d1_reg = 1'b0;
 logic xgmii_start_d2_reg = 1'b0;
@@ -556,7 +554,6 @@ always_ff @(posedge clk) begin
 
         crc_valid_reg <= crc_valid;
 
-        xgmii_rxc_d0_reg <= xgmii_rxc;
         xgmii_rxd_d0_reg <= xgmii_rxd_masked;
         xgmii_rxd_d1_reg <= xgmii_rxd_d0_reg;
         xgmii_rxd_d2_reg <= xgmii_rxd_d1_reg;
@@ -588,8 +585,6 @@ always_ff @(posedge clk) begin
         stat_rx_err_bad_block_reg <= 1'b0;
         stat_rx_err_framing_reg <= 1'b0;
         stat_rx_err_preamble_reg <= 1'b0;
-
-        xgmii_rxc_d0_reg <= '0;
 
         xgmii_start_d0_reg <= 1'b0;
         xgmii_start_d1_reg <= 1'b0;
