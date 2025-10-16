@@ -108,6 +108,8 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  I2C slave AXI lite master
     *  MDIO master
     *  UART
+*  Math
+    *  MT19937/MT19937-64 Mersenne Twister PRNG
 *  PCI Express
     *  PCIe AXI lite master
     *  PCIe AXI lite master for Xilinx UltraScale
