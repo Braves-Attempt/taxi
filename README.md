@@ -61,6 +61,8 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  Pipeline register
     *  Pipeline FIFO
 *  Direct Memory Access
+    *  SV interface for segmented RAM
+    *  SV interface for DMA descriptors
     *  Segmented SDP RAM
     *  Segmented dual-clock SDP RAM
 *  Ethernet
