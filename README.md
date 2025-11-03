@@ -63,6 +63,7 @@ To facilitate the dual-license model, contributions to the project can only be a
 *  Direct Memory Access
     *  SV interface for segmented RAM
     *  SV interface for DMA descriptors
+    *  AXI central DMA
     *  Segmented SDP RAM
     *  Segmented dual-clock SDP RAM
 *  Ethernet
