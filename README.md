@@ -67,6 +67,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  AXI streaming DMA
     *  DMA client for AXI stream
     *  DMA interface for AXI
+    *  DMA interface for UltraScale PCIe
     *  Segmented SDP RAM
     *  Segmented dual-clock SDP RAM
 *  Ethernet
