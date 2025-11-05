@@ -523,7 +523,7 @@ always_comb begin
         end
         REQ_STATE_START: begin
             // start state, compute TLP length
-            if (!op_tbl_active[op_tbl_start_ptr_reg[OP_TAG_W-1:0]] && ($unsigned(op_tbl_start_ptr_reg - op_tbl_finish_ptr_reg) < 2**OP_TAG_W) && ((ram_rd_cmd_valid_reg & ~dma_ram_rd.rd_cmd_ready) == 0) && (!read_cmd_valid_reg || read_cmd_ready)) begin
+            if (!op_tbl_active[op_tbl_start_ptr_reg[OP_TAG_W-1:0]] && ($unsigned(op_tbl_start_ptr_reg - op_tbl_finish_ptr_reg) < 2**OP_TAG_W) && (!read_cmd_valid_reg || read_cmd_ready)) begin
                 read_cmd_pcie_addr_next = pcie_addr_reg;
                 read_cmd_ram_sel_next = ram_sel_reg;
                 read_cmd_ram_addr_next = ram_addr_reg;
