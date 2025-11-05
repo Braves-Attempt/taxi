@@ -67,12 +67,20 @@ class TB:
             for ch in dut.sfp_mac.sfp_mac_inst.ch:
                 gt_inst = ch.ch_inst.gt.gt_inst
 
-                if ch.ch_inst.CFG_LOW_LATENCY.value:
-                    clk = 3.102
-                    gbx_cfg = (66, [64, 65])
+                if ch.ch_inst.DATA_W.value == 64:
+                    if ch.ch_inst.CFG_LOW_LATENCY.value:
+                        clk = 6.206
+                        gbx_cfg = (66, [64, 65])
+                    else:
+                        clk = 6.4
+                        gbx_cfg = None
                 else:
-                    clk = 3.2
-                    gbx_cfg = None
+                    if ch.ch_inst.CFG_LOW_LATENCY.value:
+                        clk = 3.102
+                        gbx_cfg = (66, [64, 65])
+                    else:
+                        clk = 3.2
+                        gbx_cfg = None
 
                 cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
                 cocotb.start_soon(Clock(gt_inst.rx_clk, clk, units="ns").start())
@@ -182,6 +190,8 @@ async def mac_test_10g(tb, source, sink):
     for k in range(1200):
         await RisingEdge(tb.dut.clk_125mhz)
 
+    sink.clear()
+
     tb.log.info("Multiple small packets")
 
     count = 64
@@ -263,8 +273,8 @@ def process_f_files(files):
     return list(lst.values())
 
 
-@pytest.mark.parametrize("sfp_rate", [0, 1])
-def test_fpga_core(request, sfp_rate):
+@pytest.mark.parametrize(("sfp_rate", "mac_data_w"), [(0, 8), (1, 32), (1, 64)])
+def test_fpga_core(request, sfp_rate, mac_data_w):
     dut = "fpga_core"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
@@ -291,7 +301,7 @@ def test_fpga_core(request, sfp_rate):
     parameters['SFP_RATE'] = f"1'b{sfp_rate}"
     parameters['CFG_LOW_LATENCY'] = "1'b1"
     parameters['COMBINED_MAC_PCS'] = "1'b1"
-    parameters['MAC_DATA_W'] = 32
+    parameters['MAC_DATA_W'] = mac_data_w
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
