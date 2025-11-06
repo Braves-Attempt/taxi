@@ -442,13 +442,10 @@ if (STAT_EN) begin : stats
 
 end else begin
 
-    assign m_axis_stat.tdata = '0;
-    assign m_axis_stat.tkeep = '0;
-    assign m_axis_stat.tlast = '0;
-    assign m_axis_stat.tvalid = '0;
-    assign m_axis_stat.tid = '0;
-    assign m_axis_stat.tdest = '0;
-    assign m_axis_stat.tuser = '0;
+    taxi_axis_null_src
+    null_src_inst (
+        .m_axis(m_axis_stat)
+    );
 
 end
 
@@ -725,45 +722,40 @@ if (MAC_CTRL_EN) begin : mac_ctrl
 
 end else begin
 
-    assign axis_tx_int.tdata = s_axis_tx.tdata;
-    assign axis_tx_int.tkeep = s_axis_tx.tkeep;
-    assign axis_tx_int.tvalid = s_axis_tx.tvalid;
-    assign s_axis_tx.tready = axis_tx_int.tready;
-    assign axis_tx_int.tlast = s_axis_tx.tlast;
-    assign axis_tx_int.tid = s_axis_tx.tid;
-    assign axis_tx_int.tdest = s_axis_tx.tdest;
-    assign axis_tx_int.tuser = s_axis_tx.tuser;
+    taxi_axis_tie
+    tx_tie_inst (
+        .s_axis(s_axis_tx),
+        .m_axis(axis_tx_int)
+    );
 
-    assign m_axis_rx.tdata = axis_rx_int.tdata;
-    assign m_axis_rx.tkeep = axis_rx_int.tkeep;
-    assign m_axis_rx.tvalid = axis_rx_int.tvalid;
-    assign m_axis_rx.tlast = axis_rx_int.tlast;
-    assign m_axis_rx.tid = axis_rx_int.tid;
-    assign m_axis_rx.tdest = axis_rx_int.tdest;
-    assign m_axis_rx.tuser = axis_rx_int.tuser;
+    taxi_axis_tie
+    rx_tie_inst (
+        .s_axis(axis_rx_int),
+        .m_axis(m_axis_rx)
+    );
 
-    assign rx_lfc_req = 0;
-    assign rx_pfc_req = 0;
-    assign tx_pause_ack = 0;
+    assign rx_lfc_req = '0;
+    assign rx_pfc_req = '0;
+    assign tx_pause_ack = '0;
 
-    assign stat_tx_mcf = 0;
-    assign stat_rx_mcf = 0;
-    assign stat_tx_lfc_pkt = 0;
-    assign stat_tx_lfc_xon = 0;
-    assign stat_tx_lfc_xoff = 0;
-    assign stat_tx_lfc_paused = 0;
-    assign stat_tx_pfc_pkt = 0;
-    assign stat_tx_pfc_xon = 0;
-    assign stat_tx_pfc_xoff = 0;
-    assign stat_tx_pfc_paused = 0;
-    assign stat_rx_lfc_pkt = 0;
-    assign stat_rx_lfc_xon = 0;
-    assign stat_rx_lfc_xoff = 0;
-    assign stat_rx_lfc_paused = 0;
-    assign stat_rx_pfc_pkt = 0;
-    assign stat_rx_pfc_xon = 0;
-    assign stat_rx_pfc_xoff = 0;
-    assign stat_rx_pfc_paused = 0;
+    assign stat_tx_mcf = '0;
+    assign stat_rx_mcf = '0;
+    assign stat_tx_lfc_pkt = '0;
+    assign stat_tx_lfc_xon = '0;
+    assign stat_tx_lfc_xoff = '0;
+    assign stat_tx_lfc_paused = '0;
+    assign stat_tx_pfc_pkt = '0;
+    assign stat_tx_pfc_xon = '0;
+    assign stat_tx_pfc_xoff = '0;
+    assign stat_tx_pfc_paused = '0;
+    assign stat_rx_lfc_pkt = '0;
+    assign stat_rx_lfc_xon = '0;
+    assign stat_rx_lfc_xoff = '0;
+    assign stat_rx_lfc_paused = '0;
+    assign stat_rx_pfc_pkt = '0;
+    assign stat_rx_pfc_xon = '0;
+    assign stat_rx_pfc_xoff = '0;
+    assign stat_rx_pfc_paused = '0;
 
 end
 
