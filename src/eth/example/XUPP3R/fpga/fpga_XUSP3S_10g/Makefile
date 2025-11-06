@@ -34,10 +34,10 @@ XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_reset.tcl
 XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_signal.tcl
 
 # IP
-IP_TCL_FILES += $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_25g_us_gty_10g_322.tcl
+IP_TCL_FILES += $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_10g_us_gty_322.tcl
 
 # Configuration
-#CONFIG_TCL_FILES = config.tcl
+CONFIG_TCL_FILES = config.tcl
 
 include ../common/vivado.mk
 
@@ -156,4 +156,3 @@ flash%: $(FPGA_TOP)%.mcs $(FPGA_TOP)%.prm
 	echo "boot_hw_device [current_hw_device]" >> flash$*.tcl
 	echo "exit" >> flash$*.tcl
 	vivado -nojournal -nolog -mode batch -source flash$*.tcl
-
