@@ -32,10 +32,10 @@ XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_reset.tcl
 XDC_FILES += $(TAXI_SRC_DIR)/sync/syn/vivado/taxi_sync_signal.tcl
 
 # IP
-IP_TCL_FILES = $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_25g_us_gty_10g_161.tcl
+IP_TCL_FILES = $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_10g_us_gty_161.tcl
 
 # Configuration
-# CONFIG_TCL_FILES = ./config.tcl
+CONFIG_TCL_FILES = ./config.tcl
 
 include ../common/vivado.mk
 
