@@ -22,7 +22,11 @@ module fpga #
     // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
     // device family
-    parameter string FAMILY = "zynquplusRFSOC"
+    parameter string FAMILY = "zynquplusRFSOC",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -756,7 +760,10 @@ fpga_core #(
     .VENDOR(VENDOR),
     .FAMILY(FAMILY),
     .ADC_CNT(ADC_CNT),
-    .DAC_CNT(DAC_CNT)
+    .DAC_CNT(DAC_CNT),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 core_inst (
     /*

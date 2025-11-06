@@ -26,7 +26,11 @@ module fpga_core #
     // number of RFDC ADC channels
     parameter ADC_CNT = 8,
     // number of RFDC DAC channels
-    parameter DAC_CNT = ADC_CNT
+    parameter DAC_CNT = ADC_CNT,
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -291,9 +295,9 @@ wire sfp_mgt_refclk_0_bufg;
 
 wire sfp_rst;
 
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_tx[4]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_tx[4]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[4]();
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[4]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_rx[4]();
 
 if (SIM) begin
 
@@ -340,12 +344,14 @@ taxi_eth_mac_25g_us #(
     .CNT(4),
 
     // GT config
-    .CFG_LOW_LATENCY(1),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
 
     // GT type
     .GT_TYPE("GTY"),
 
-    // PHY parameters
+    // MAC/PHY config
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .DATA_W(MAC_DATA_W),
     .PADDING_EN(1'b1),
     .DIC_EN(1'b1),
     .MIN_FRAME_LEN(64),

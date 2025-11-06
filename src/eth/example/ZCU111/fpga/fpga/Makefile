@@ -41,7 +41,7 @@ IP_TCL_FILES = $(TAXI_SRC_DIR)/eth/rtl/us/taxi_eth_phy_25g_us_gty_25g_156.tcl
 IP_TCL_FILES += ../ip/usp_rfdc_1ghz_1gsps.tcl
 
 # Configuration
-#CONFIG_TCL_FILES = ./config.tcl
+CONFIG_TCL_FILES = ./config.tcl
 
 include ../common/vivado.mk
 
@@ -55,4 +55,3 @@ program: $(FPGA_TOP).bit
 	echo "program_hw_devices [current_hw_device]" >> program.tcl
 	echo "exit" >> program.tcl
 	vivado -nojournal -nolog -mode batch -source program.tcl
-
