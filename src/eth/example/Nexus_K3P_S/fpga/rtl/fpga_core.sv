@@ -17,9 +17,16 @@ Authors:
  */
 module fpga_core #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
-    parameter string FAMILY = "kintexuplus"
+    // device family
+    parameter string FAMILY = "kintexuplus",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -78,9 +85,9 @@ assign sfp_mgt_refclk_out = sfp_mgt_refclk_bufg;
 
 wire sfp_rst;
 
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_tx[2]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_tx[2]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[2]();
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_sfp_rx[2]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_rx[2]();
 taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
 if (SIM) begin
@@ -142,7 +149,7 @@ taxi_eth_mac_25g_us #(
     .CNT(2),
 
     // GT config
-    .CFG_LOW_LATENCY(1),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
 
     // GT type
     .GT_TYPE(FAMILY == "kintexu" ? "GTH" : "GTY"),
@@ -151,7 +158,9 @@ taxi_eth_mac_25g_us #(
     .GT_TX_POLARITY('1),
     .GT_RX_POLARITY('0),
 
-    // MAC/PHY parameters
+    // MAC/PHY config
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .DATA_W(MAC_DATA_W),
     .PADDING_EN(1'b1),
     .DIC_EN(1'b1),
     .MIN_FRAME_LEN(64),
