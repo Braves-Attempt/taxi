@@ -17,9 +17,16 @@ Authors:
  */
 module fpga #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
-    parameter string FAMILY = "virtexuplus"
+    // device family
+    parameter string FAMILY = "virtexuplus",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -120,12 +127,12 @@ wire mmcm_clkfb;
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 clk_125mhz_ibufg_inst (
    .O   (clk_125mhz_ibufg),
    .I   (clk_125mhz_p),
-   .IB  (clk_125mhz_n) 
+   .IB  (clk_125mhz_n)
 );
 
 // MMCM instance
@@ -325,7 +332,7 @@ assign pcspma_an_config_vector[5]     = 1'b0;    // full duplex - SGMII reserved
 assign pcspma_an_config_vector[4:1]   = 4'b0000; // reserved
 assign pcspma_an_config_vector[0]     = 1'b1;    // SGMII
 
-sgmii_pcs_pma_0 
+sgmii_pcs_pma_0
 eth_pcspma (
     // SGMII
     .txp_0                  (phy_sgmii_tx_p),
@@ -355,7 +362,7 @@ eth_pcspma (
     .sgmii_clk_r_0          (),
     .sgmii_clk_f_0          (),
     .sgmii_clk_en_0         (phy_gmii_clk_en_int),
-    
+
     // Speed control
     .speed_is_10_100_0      (pcspma_status_speed != 2'b10),
     .speed_is_100_0         (pcspma_status_speed == 2'b01),
@@ -440,7 +447,10 @@ assign led = sw[3] ? (sw[0] ? pcspma_status_vector[15:8] : pcspma_status_vector[
 fpga_core #(
     .SIM(SIM),
     .VENDOR(VENDOR),
-    .FAMILY(FAMILY)
+    .FAMILY(FAMILY),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 core_inst (
     /*

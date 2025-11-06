@@ -17,9 +17,16 @@ Authors:
  */
 module fpga_core #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
-    parameter string FAMILY = "virtexuplus"
+    // device family
+    parameter string FAMILY = "virtexuplus",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -481,9 +488,9 @@ wire qsfp1_mgt_refclk_0_bufg;
 
 wire qsfp_rst;
 
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_qsfp_tx[8]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_qsfp_tx[8]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_qsfp_tx_cpl[8]();
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) axis_qsfp_rx[8]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_qsfp_rx[8]();
 
 if (SIM) begin
 
@@ -553,12 +560,14 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
         .CNT(4),
 
         // GT config
-        .CFG_LOW_LATENCY(1),
+        .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
 
         // GT type
         .GT_TYPE("GTY"),
 
-        // PHY parameters
+        // MAC/PHY config
+        .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+        .DATA_W(MAC_DATA_W),
         .PADDING_EN(1'b1),
         .DIC_EN(1'b1),
         .MIN_FRAME_LEN(64),
