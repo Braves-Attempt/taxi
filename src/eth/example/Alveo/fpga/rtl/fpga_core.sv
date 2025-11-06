@@ -17,9 +17,13 @@ Authors:
  */
 module fpga_core #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
+    // device family
     parameter string FAMILY = "virtexuplus",
+    // Board configuration
     parameter SW_CNT = 4,
     parameter LED_CNT = 3,
     parameter UART_CNT = 1,
@@ -27,7 +31,11 @@ module fpga_core #
     parameter PORT_LED_CNT = PORT_CNT,
     parameter GTY_QUAD_CNT = PORT_CNT,
     parameter GTY_CNT = GTY_QUAD_CNT*4,
-    parameter GTY_CLK_CNT = GTY_QUAD_CNT
+    parameter GTY_CLK_CNT = GTY_QUAD_CNT,
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -223,12 +231,12 @@ assign eth_port_lpmode = '0;
 
 wire eth_gty_tx_clk[GTY_CNT];
 wire eth_gty_tx_rst[GTY_CNT];
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) eth_gty_axis_tx[GTY_CNT]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) eth_gty_axis_tx[GTY_CNT]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) eth_gty_axis_tx_cpl[GTY_CNT]();
 
 wire eth_gty_rx_clk[GTY_CNT];
 wire eth_gty_rx_rst[GTY_CNT];
-taxi_axis_if #(.DATA_W(64), .ID_W(8)) eth_gty_axis_rx[GTY_CNT]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) eth_gty_axis_rx[GTY_CNT]();
 
 wire eth_gty_rx_status[GTY_CNT];
 
@@ -300,12 +308,14 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
         .CNT(CNT),
 
         // GT config
-        .CFG_LOW_LATENCY(1),
+        .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
 
         // GT type
         .GT_TYPE("GTY"),
 
-        // PHY parameters
+        // MAC/PHY config
+        .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+        .DATA_W(MAC_DATA_W),
         .PADDING_EN(1'b1),
         .DIC_EN(1'b1),
         .MIN_FRAME_LEN(64),

@@ -17,9 +17,16 @@ Authors:
  */
 module fpga #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
-    parameter string FAMILY = "virtexuplus"
+    // device family
+    parameter string FAMILY = "virtexuplus",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -218,7 +225,10 @@ fpga_core #(
     .PORT_CNT(PORT_CNT),
     .GTY_QUAD_CNT(GTY_QUAD_CNT),
     .GTY_CNT(GTY_CNT),
-    .GTY_CLK_CNT(GTY_CLK_CNT)
+    .GTY_CLK_CNT(GTY_CLK_CNT),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 core_inst (
     /*

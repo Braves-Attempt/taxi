@@ -56,12 +56,20 @@ class TB:
             for ch in inst.mac_inst.ch:
                 gt_inst = ch.ch_inst.gt.gt_inst
 
-                if ch.ch_inst.CFG_LOW_LATENCY.value:
-                    clk = 2.482
-                    gbx_cfg = (66, [64, 65])
+                if ch.ch_inst.DATA_W.value == 64:
+                    if ch.ch_inst.CFG_LOW_LATENCY.value:
+                        clk = 2.482
+                        gbx_cfg = (66, [64, 65])
+                    else:
+                        clk = 2.56
+                        gbx_cfg = None
                 else:
-                    clk = 2.56
-                    gbx_cfg = None
+                    if ch.ch_inst.CFG_LOW_LATENCY.value:
+                        clk = 3.102
+                        gbx_cfg = (66, [64, 65])
+                    else:
+                        clk = 3.2
+                        gbx_cfg = None
 
                 cocotb.start_soon(Clock(gt_inst.tx_clk, clk, units="ns").start())
                 cocotb.start_soon(Clock(gt_inst.rx_clk, clk, units="ns").start())
@@ -115,6 +123,8 @@ async def mac_test(tb, source, sink):
     tb.log.info("Wait for block lock")
     for k in range(1200):
         await RisingEdge(tb.dut.clk_125mhz)
+
+    sink.clear()
 
     tb.log.info("Multiple small packets")
 
@@ -226,6 +236,9 @@ def test_fpga_core(request):
     parameters['GTY_QUAD_CNT'] = parameters['PORT_CNT']
     parameters['GTY_CNT'] = parameters['GTY_QUAD_CNT']*4
     parameters['GTY_CLK_CNT'] = parameters['GTY_QUAD_CNT']
+    parameters['CFG_LOW_LATENCY'] = "1'b1"
+    parameters['COMBINED_MAC_PCS'] = "1'b1"
+    parameters['MAC_DATA_W'] = 64
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 
