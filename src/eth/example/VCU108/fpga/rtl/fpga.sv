@@ -17,9 +17,16 @@ Authors:
  */
 module fpga #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
-    parameter string FAMILY = "virtexu"
+    // device family
+    parameter string FAMILY = "virtexu",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -96,12 +103,12 @@ wire mmcm_clkfb;
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 clk_125mhz_ibufg_inst (
    .O   (clk_125mhz_ibufg),
    .I   (clk_125mhz_p),
-   .IB  (clk_125mhz_n) 
+   .IB  (clk_125mhz_n)
 );
 
 // MMCM instance
@@ -351,7 +358,10 @@ assign led = sw[3] ? (sw[0] ? pcspma_status_vector[15:8] : pcspma_status_vector[
 fpga_core #(
     .SIM(SIM),
     .VENDOR(VENDOR),
-    .FAMILY(FAMILY)
+    .FAMILY(FAMILY),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 core_inst (
     /*
