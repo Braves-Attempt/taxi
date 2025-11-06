@@ -187,7 +187,7 @@ assign qsfp_rx_n[4*1 +: 4] = qsfp_1_rx_n;
 
 for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
 
-    localparam CLK = 4;
+    localparam CLK = n;
     localparam CNT = 4;
 
     taxi_eth_mac_25g_us #(
