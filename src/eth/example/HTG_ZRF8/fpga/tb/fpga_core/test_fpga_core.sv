@@ -30,7 +30,10 @@ module test_fpga_core #
     parameter ADC_SAMPLE_CNT = 4,
     parameter DAC_CNT = ADC_CNT,
     parameter DAC_SAMPLE_W = ADC_SAMPLE_W,
-    parameter DAC_SAMPLE_CNT = ADC_SAMPLE_CNT
+    parameter DAC_SAMPLE_CNT = ADC_SAMPLE_CNT,
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
     /* verilator lint_on WIDTHTRUNC */
 )
 ();
@@ -111,7 +114,10 @@ fpga_core #(
     .GTY_CNT(GTY_CNT),
     .GTY_CLK_CNT(GTY_CLK_CNT),
     .ADC_CNT(ADC_CNT),
-    .DAC_CNT(DAC_CNT)
+    .DAC_CNT(DAC_CNT),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 uut (
     /*

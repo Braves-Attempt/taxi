@@ -17,9 +17,16 @@ Authors:
  */
 module fpga #
 (
+    // simulation (set to avoid vendor primitives)
     parameter logic SIM = 1'b0,
+    // vendor ("GENERIC", "XILINX", "ALTERA")
     parameter string VENDOR = "XILINX",
-    parameter string FAMILY = "zynquplusRFSOC"
+    // device family
+    parameter string FAMILY = "zynquplusRFSOC",
+    // 10G/25G MAC configuration
+    parameter logic CFG_LOW_LATENCY = 1'b1,
+    parameter logic COMBINED_MAC_PCS = 1'b1,
+    parameter MAC_DATA_W = 64
 )
 (
     /*
@@ -140,7 +147,7 @@ wire mmcm_clkfb;
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 clk_pl_user1_ibufg_inst (
    .I (clk_pl_user1_p),
@@ -254,12 +261,12 @@ wire fpga_sysref_int;
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 fpga_refclk_ibufg_inst (
    .O   (fpga_refclk_ibufg),
    .I   (fpga_refclk_p),
-   .IB  (fpga_refclk_n) 
+   .IB  (fpga_refclk_n)
 );
 
 BUFG
@@ -270,12 +277,12 @@ fpga_refclk_bufg_inst (
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 fpga_sysref_ibufg_inst (
    .O   (fpga_sysref_ibufg),
    .I   (fpga_sysref_p),
-   .IB  (fpga_sysref_n) 
+   .IB  (fpga_sysref_n)
 );
 
 BUFG
@@ -852,7 +859,10 @@ fpga_core #(
     .GTY_CNT(GTY_CNT),
     .GTY_CLK_CNT(GTY_CLK_CNT),
     .ADC_CNT(ADC_CNT),
-    .DAC_CNT(DAC_CNT)
+    .DAC_CNT(DAC_CNT),
+    .CFG_LOW_LATENCY(CFG_LOW_LATENCY),
+    .COMBINED_MAC_PCS(COMBINED_MAC_PCS),
+    .MAC_DATA_W(MAC_DATA_W)
 )
 core_inst (
     /*
