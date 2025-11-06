@@ -48,6 +48,9 @@ export PARAM_PORT_CNT := 9
 export PARAM_GTY_QUAD_CNT := $(PARAM_PORT_CNT)
 export PARAM_GTY_CNT := $(shell echo $$(( 4 * $(PARAM_GTY_QUAD_CNT) )))
 export PARAM_GTY_CLK_CNT := $(PARAM_GTY_QUAD_CNT)
+export PARAM_CFG_LOW_LATENCY := "1'b1"
+export PARAM_COMBINED_MAC_PCS := "1'b1"
+export PARAM_MAC_DATA_W := "64"
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
