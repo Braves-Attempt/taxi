@@ -187,7 +187,7 @@ reg [1:0] link_speed_sync_reg_2 = 2'b10;
 
 assign link_speed = link_speed_sync_reg_2;
 
-always @(posedge logic_clk) begin
+always_ff @(posedge logic_clk) begin
     link_speed_sync_reg_1 <= link_speed_int;
     link_speed_sync_reg_2 <= link_speed_sync_reg_1;
 end

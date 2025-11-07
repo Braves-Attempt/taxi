@@ -119,7 +119,7 @@ if (SERDES_PIPELINE > 0) begin
             serdes_tx_gbx_sync_pipe_reg[n] = '0;
         end
 
-        always @(posedge clk) begin
+        always_ff @(posedge clk) begin
             serdes_tx_data_pipe_reg[n] <= n == 0 ? serdes_tx_data_int : serdes_tx_data_pipe_reg[n-1];
             serdes_tx_data_valid_pipe_reg[n] <= n == 0 ? serdes_tx_data_valid_reg : serdes_tx_data_valid_pipe_reg[n-1];
             serdes_tx_hdr_pipe_reg[n] <= n == 0 ? serdes_tx_hdr_int : serdes_tx_hdr_pipe_reg[n-1];

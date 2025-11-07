@@ -141,7 +141,7 @@ data_fifo_inst (
     .status_good_frame()
 );
 
-always @* begin
+always_comb begin
     input_state_next = INPUT_STATE_IDLE;
 
     input_count_next = input_count_reg;
@@ -304,7 +304,7 @@ always @* begin
     endcase
 end
 
-always @* begin
+always_comb begin
     output_state_next = OUTPUT_STATE_IDLE;
 
     output_count_next = output_count_reg;
@@ -365,7 +365,7 @@ always @* begin
     endcase
 end
 
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     input_state_reg <= input_state_next;
     output_state_reg <= output_state_next;
 
@@ -407,7 +407,7 @@ assign m_axis.tuser = m_axis_tuser_reg;
 // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
 assign m_axis_tready_int_early = m_axis.tready || (!temp_m_axis_tvalid_reg && (!m_axis_tvalid_reg || !m_axis_tvalid_int));
 
-always @* begin
+always_comb begin
     // transfer sink ready state to source
     m_axis_tvalid_next = m_axis_tvalid_reg;
     temp_m_axis_tvalid_next = temp_m_axis_tvalid_reg;
@@ -435,7 +435,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     m_axis_tvalid_reg <= m_axis_tvalid_next;
     m_axis_tready_int_reg <= m_axis_tready_int_early;
     temp_m_axis_tvalid_reg <= temp_m_axis_tvalid_next;

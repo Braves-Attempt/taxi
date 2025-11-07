@@ -389,7 +389,7 @@ if (GT_TYPE == "GTY") begin : tx_seq
     assign serdes_tx_gbx_req_sync = tx_req_sync_reg;
     assign serdes_tx_gbx_req_stall = tx_req_stall_reg;
 
-    always @(posedge tx_clk) begin
+    always_ff @(posedge tx_clk) begin
         tx_req_sync_reg <= 1'b0;
         tx_req_stall_reg <= 1'b0;
 
@@ -408,7 +408,7 @@ if (GT_TYPE == "GTY") begin : tx_seq
 
     assign gt_txsequence = {1'b0, tx_seq_reg[6:1]};
 
-    always @(posedge tx_clk) begin
+    always_ff @(posedge tx_clk) begin
         tx_seq_reg <= tx_seq_reg + 1;
         if (tx_seq_reg == 65) begin
             tx_seq_reg <= '0;
@@ -430,7 +430,7 @@ end else begin : tx_seq
     assign serdes_tx_gbx_req_sync = tx_req_sync_reg;
     assign serdes_tx_gbx_req_stall = tx_req_stall_reg;
 
-    always @(posedge tx_clk) begin
+    always_ff @(posedge tx_clk) begin
         tx_req_sync_reg <= 1'b0;
         tx_req_stall_reg <= 1'b0;
 
@@ -449,7 +449,7 @@ end else begin : tx_seq
 
     assign gt_txsequence = {1'b0, tx_seq_reg};
 
-    always @(posedge tx_clk) begin
+    always_ff @(posedge tx_clk) begin
         tx_seq_reg <= tx_seq_reg + 1;
         if (tx_seq_reg == 32) begin
             tx_seq_reg <= '0;

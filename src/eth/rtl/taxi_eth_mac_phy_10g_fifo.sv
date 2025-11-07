@@ -161,7 +161,7 @@ reg [0:0] tx_sync_reg_4 = '0;
 
 assign tx_error_underflow = tx_sync_reg_3[0] ^ tx_sync_reg_4[0];
 
-always @(posedge tx_clk or posedge tx_rst) begin
+always_ff @(posedge tx_clk or posedge tx_rst) begin
     if (tx_rst) begin
         tx_sync_reg_1 <= '0;
     end else begin
@@ -169,7 +169,7 @@ always @(posedge tx_clk or posedge tx_rst) begin
     end
 end
 
-always @(posedge logic_clk or posedge logic_rst) begin
+always_ff @(posedge logic_clk or posedge logic_rst) begin
     if (logic_rst) begin
         tx_sync_reg_2 <= '0;
         tx_sync_reg_3 <= '0;
@@ -202,7 +202,7 @@ assign rx_block_lock = rx_sync_reg_4[4];
 assign rx_high_ber = rx_sync_reg_4[5];
 assign rx_status = rx_sync_reg_4[6];
 
-always @(posedge rx_clk or posedge rx_rst) begin
+always_ff @(posedge rx_clk or posedge rx_rst) begin
     if (rx_rst) begin
         rx_sync_reg_1 <= '0;
     end else begin
@@ -216,7 +216,7 @@ always @(posedge rx_clk or posedge rx_rst) begin
     end
 end
 
-always @(posedge logic_clk or posedge logic_rst) begin
+always_ff @(posedge logic_clk or posedge logic_rst) begin
     if (logic_rst) begin
         rx_sync_reg_2 <= '0;
         rx_sync_reg_3 <= '0;

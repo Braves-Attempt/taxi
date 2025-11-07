@@ -157,7 +157,7 @@ end else begin : repack_in
     assign xgmii_txc_int = {xgmii_txc, xgmii_txc_reg};
     assign xgmii_tx_valid_int = xgmii_tx_valid_reg && (GBX_IF_EN ? xgmii_tx_valid : 1'b1);
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (!GBX_IF_EN || xgmii_tx_valid) begin
             xgmii_txd_reg <= xgmii_txd;
             xgmii_txc_reg <= xgmii_txc;

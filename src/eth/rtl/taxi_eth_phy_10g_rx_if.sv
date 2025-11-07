@@ -111,7 +111,7 @@ if (SERDES_PIPELINE > 0) begin
             serdes_rx_hdr_valid_pipe_reg[n] = '0;
         end
 
-        always @(posedge clk) begin
+        always_ff @(posedge clk) begin
             serdes_rx_data_pipe_reg[n] <= n == 0 ? serdes_rx_data_rev : serdes_rx_data_pipe_reg[n-1];
             serdes_rx_data_valid_pipe_reg[n] <= n == 0 ? serdes_rx_data_valid : serdes_rx_data_valid_pipe_reg[n-1];
             serdes_rx_hdr_pipe_reg[n] <= n == 0 ? serdes_rx_hdr_rev : serdes_rx_hdr_pipe_reg[n-1];

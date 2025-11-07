@@ -105,7 +105,7 @@ end
 // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
 wire s_axis_tready_early = ((m_axis_tready & m_axis_tvalid) == m_axis_tvalid) || (!temp_m_axis_tvalid_reg && (m_axis_tvalid == 0 || !s_axis.tvalid));
 
-always @* begin
+always_comb begin
     // transfer sink ready state to source
     m_axis_tvalid_next = m_axis_tvalid_reg & ~m_axis_tready;
     temp_m_axis_tvalid_next = temp_m_axis_tvalid_reg;
@@ -133,7 +133,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     s_axis_tready_reg <= s_axis_tready_early;
     m_axis_tvalid_reg <= m_axis_tvalid_next;
     temp_m_axis_tvalid_reg <= temp_m_axis_tvalid_next;

@@ -152,7 +152,7 @@ end else begin : repack_in
     assign encoded_rx_data_valid_int = encoded_rx_data_valid_reg && (GBX_IF_EN ? encoded_rx_data_valid : 1'b1);
     assign encoded_rx_hdr_int = encoded_rx_hdr_reg;
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (!GBX_IF_EN || encoded_rx_data_valid) begin
             encoded_rx_data_reg <= encoded_rx_data;
             encoded_rx_data_valid_reg <= encoded_rx_hdr_valid;

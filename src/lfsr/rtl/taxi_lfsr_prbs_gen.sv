@@ -170,7 +170,7 @@ lfsr_inst (
     .state_out(lfsr_state)
 );
 
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     if (enable) begin
         state_reg <= lfsr_state;
     end

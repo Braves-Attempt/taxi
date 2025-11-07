@@ -418,7 +418,7 @@ always_comb begin
     end
 end
 
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     state_reg <= state_next;
 
     desc_req_ready_reg <= desc_req_ready_next;
@@ -515,7 +515,7 @@ for (genvar n = 0; n < RAM_SEGS; n = n + 1) begin
 
     assign out_done[n] = done_reg;
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         ram_wr_cmd_valid_reg <= ram_wr_cmd_valid_reg && !dma_ram_wr.wr_cmd_ready[n];
 
         out_fifo_half_full_reg <= $unsigned(out_fifo_wr_ptr_reg - out_fifo_rd_ptr_reg) >= 2**(OUTPUT_FIFO_AW-1);

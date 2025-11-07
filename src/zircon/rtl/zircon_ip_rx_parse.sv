@@ -245,7 +245,7 @@ if (HASH_EN) begin : rss_hash
         end
     endfunction
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (hash_step) begin
             hash_reg <= hash_reg ^ hash_toep32(pkt_data_be, key_reg);
         end

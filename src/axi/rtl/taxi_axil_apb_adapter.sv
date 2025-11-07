@@ -248,7 +248,7 @@ if (APB_BYTE_LANES == AXIL_BYTE_LANES) begin : translate
         endcase
     end
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         state_reg <= state_next;
 
         last_read_reg <= last_read_next;
@@ -447,7 +447,7 @@ end else if (APB_BYTE_LANES > AXIL_BYTE_LANES) begin : upsize
         endcase
     end
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         state_reg <= state_next;
 
         last_read_reg <= last_read_next;

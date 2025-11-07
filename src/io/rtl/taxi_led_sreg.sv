@@ -82,7 +82,7 @@ sync_inst (
     .out(led_sync)
 );
 
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     enable_reg <= 1'b0;
 
     if (prescale_count_reg != 0) begin
