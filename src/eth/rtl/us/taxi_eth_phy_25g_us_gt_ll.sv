@@ -470,7 +470,7 @@ if (SIM) begin : xcvr
     assign xcvr_qpll0clk_out = 1'b0;
     assign xcvr_qpll0refclk_out = xcvr_gtrefclk00_in;
 
-    assign xcvr_qpll1lock_out = !gt_qpll1_reset && !gt_qpll0_pd;
+    assign xcvr_qpll1lock_out = !gt_qpll1_reset && !gt_qpll1_pd;
     assign xcvr_qpll1clk_out = 1'b0;
     assign xcvr_qpll1refclk_out = xcvr_gtrefclk01_in;
 
@@ -1022,6 +1022,10 @@ end else if (!HAS_COMMON && GT_TYPE == "GTY") begin : xcvr
     assign xcvr_qpll0clk_out = 1'b0;
     assign xcvr_qpll0refclk_out = 1'b0;
 
+    assign xcvr_qpll1lock_out = 1'b0;
+    assign xcvr_qpll1clk_out = 1'b0;
+    assign xcvr_qpll1refclk_out = 1'b0;
+
 end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
     // UltraScale/UltraScale+ GTH (channel only)
 
@@ -1122,6 +1126,10 @@ end else if (!HAS_COMMON && GT_TYPE == "GTH") begin : xcvr
     assign xcvr_qpll0lock_out = 1'b0;
     assign xcvr_qpll0clk_out = 1'b0;
     assign xcvr_qpll0refclk_out = 1'b0;
+
+    assign xcvr_qpll1lock_out = 1'b0;
+    assign xcvr_qpll1clk_out = 1'b0;
+    assign xcvr_qpll1refclk_out = 1'b0;
 
 end else begin
 
