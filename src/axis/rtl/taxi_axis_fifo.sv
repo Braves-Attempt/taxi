@@ -130,10 +130,16 @@ if (m_axis.DATA_W != DATA_W)
 if (KEEP_EN && m_axis.KEEP_W != KEEP_W)
     $fatal(0, "Error: Interface KEEP_W parameter mismatch (instance %m)");
 
+if (DROP_BAD_FRAME && !s_axis.USER_EN)
+    $fatal(0, "Error: DROP_BAD_FRAME set requires s_axis.USER_EN (instance %m)");
+
+if (MARK_WHEN_FULL && !m_axis.USER_EN)
+    $fatal(0, "Error: MARK_WHEN_FULL set requires m_axis.USER_EN (instance %m)");
+
 localparam KEEP_OFFSET = DATA_W;
 localparam STRB_OFFSET = KEEP_OFFSET + (KEEP_EN ? KEEP_W : 0);
 localparam LAST_OFFSET = STRB_OFFSET + (STRB_EN ? KEEP_W : 0);
-localparam ID_OFFSET   = LAST_OFFSET + (LAST_EN ? 1          : 0);
+localparam ID_OFFSET   = LAST_OFFSET + (LAST_EN ? 1      : 0);
 localparam DEST_OFFSET = ID_OFFSET   + (ID_EN   ? ID_W   : 0);
 localparam USER_OFFSET = DEST_OFFSET + (DEST_EN ? DEST_W : 0);
 localparam WIDTH       = USER_OFFSET + (USER_EN ? USER_W : 0);
