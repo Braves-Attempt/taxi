@@ -62,20 +62,20 @@ if (m_axi_wr.DATA_W != DATA_W)
 if (m_axi_wr.STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
-reg [FIFO_AW:0] wr_ptr_reg = '0, wr_ptr_next;
-reg [FIFO_AW:0] wr_addr_reg = '0;
-reg [FIFO_AW:0] rd_ptr_reg = '0, rd_ptr_next;
-reg [FIFO_AW:0] rd_addr_reg = '0;
+logic [FIFO_AW:0] wr_ptr_reg = '0, wr_ptr_next;
+logic [FIFO_AW:0] wr_addr_reg = '0;
+logic [FIFO_AW:0] rd_ptr_reg = '0, rd_ptr_next;
+logic [FIFO_AW:0] rd_addr_reg = '0;
 
 (* ramstyle = "no_rw_check" *)
-reg [WWIDTH-1:0] mem[2**FIFO_AW];
-reg [WWIDTH-1:0] mem_read_data_reg;
-reg mem_read_data_valid_reg = 1'b0, mem_read_data_valid_next;
+logic [WWIDTH-1:0] mem[2**FIFO_AW];
+logic [WWIDTH-1:0] mem_read_data_reg;
+logic mem_read_data_valid_reg = 1'b0, mem_read_data_valid_next;
 
 wire [WWIDTH-1:0] s_axi_w;
 
-reg [WWIDTH-1:0] m_axi_w_reg;
-reg m_axi_wvalid_reg = 1'b0, m_axi_wvalid_next;
+logic [WWIDTH-1:0] m_axi_w_reg;
+logic m_axi_wvalid_reg = 1'b0, m_axi_wvalid_next;
 
 // full when first MSB different but rest same
 wire full = ((wr_ptr_reg[FIFO_AW] != rd_ptr_reg[FIFO_AW]) &&
@@ -86,9 +86,9 @@ wire empty = wr_ptr_reg == rd_ptr_reg;
 wire hold;
 
 // control signals
-reg write;
-reg read;
-reg store_output;
+logic write;
+logic read;
+logic store_output;
 
 assign s_axi_wr.wready = !full && !hold;
 assign s_axi_w[DATA_W-1:0] = s_axi_wr.wdata;
@@ -104,25 +104,25 @@ if (FIFO_DELAY) begin
         STATE_TRANSFER_IN = 2'd1,
         STATE_TRANSFER_OUT = 2'd2;
 
-    reg [1:0] state_reg = STATE_IDLE, state_next;
+    logic [1:0] state_reg = STATE_IDLE, state_next;
 
-    reg hold_reg = 1'b1, hold_next;
-    reg [8:0] count_reg = 9'd0, count_next;
+    logic hold_reg = 1'b1, hold_next;
+    logic [8:0] count_reg = 9'd0, count_next;
 
-    reg [ID_W-1:0] m_axi_awid_reg = '0, m_axi_awid_next;
-    reg [ADDR_W-1:0] m_axi_awaddr_reg = '0, m_axi_awaddr_next;
-    reg [7:0] m_axi_awlen_reg = '0, m_axi_awlen_next;
-    reg [2:0] m_axi_awsize_reg = '0, m_axi_awsize_next;
-    reg [1:0] m_axi_awburst_reg = '0, m_axi_awburst_next;
-    reg m_axi_awlock_reg = '0, m_axi_awlock_next;
-    reg [3:0] m_axi_awcache_reg = '0, m_axi_awcache_next;
-    reg [2:0] m_axi_awprot_reg = '0, m_axi_awprot_next;
-    reg [3:0] m_axi_awqos_reg = '0, m_axi_awqos_next;
-    reg [3:0] m_axi_awregion_reg = '0, m_axi_awregion_next;
-    reg [AWUSER_W-1:0] m_axi_awuser_reg = '0, m_axi_awuser_next;
-    reg m_axi_awvalid_reg = 1'b0, m_axi_awvalid_next;
+    logic [ID_W-1:0] m_axi_awid_reg = '0, m_axi_awid_next;
+    logic [ADDR_W-1:0] m_axi_awaddr_reg = '0, m_axi_awaddr_next;
+    logic [7:0] m_axi_awlen_reg = '0, m_axi_awlen_next;
+    logic [2:0] m_axi_awsize_reg = '0, m_axi_awsize_next;
+    logic [1:0] m_axi_awburst_reg = '0, m_axi_awburst_next;
+    logic m_axi_awlock_reg = '0, m_axi_awlock_next;
+    logic [3:0] m_axi_awcache_reg = '0, m_axi_awcache_next;
+    logic [2:0] m_axi_awprot_reg = '0, m_axi_awprot_next;
+    logic [3:0] m_axi_awqos_reg = '0, m_axi_awqos_next;
+    logic [3:0] m_axi_awregion_reg = '0, m_axi_awregion_next;
+    logic [AWUSER_W-1:0] m_axi_awuser_reg = '0, m_axi_awuser_next;
+    logic m_axi_awvalid_reg = 1'b0, m_axi_awvalid_next;
 
-    reg s_axi_awready_reg = 1'b0, s_axi_awready_next;
+    logic s_axi_awready_reg = 1'b0, s_axi_awready_next;
 
     assign m_axi_wr.awid = m_axi_awid_reg;
     assign m_axi_wr.awaddr = m_axi_awaddr_reg;

@@ -61,20 +61,20 @@ if (m_axi_rd.DATA_W != DATA_W)
 if (m_axi_rd.STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
-reg [FIFO_AW:0] wr_ptr_reg = '0, wr_ptr_next;
-reg [FIFO_AW:0] wr_addr_reg = '0;
-reg [FIFO_AW:0] rd_ptr_reg = '0, rd_ptr_next;
-reg [FIFO_AW:0] rd_addr_reg = '0;
+logic [FIFO_AW:0] wr_ptr_reg = '0, wr_ptr_next;
+logic [FIFO_AW:0] wr_addr_reg = '0;
+logic [FIFO_AW:0] rd_ptr_reg = '0, rd_ptr_next;
+logic [FIFO_AW:0] rd_addr_reg = '0;
 
 (* ramstyle = "no_rw_check" *)
-reg [RWIDTH-1:0] mem[2**FIFO_AW];
-reg [RWIDTH-1:0] mem_read_data_reg;
-reg mem_read_data_valid_reg = 1'b0, mem_read_data_valid_next;
+logic [RWIDTH-1:0] mem[2**FIFO_AW];
+logic [RWIDTH-1:0] mem_read_data_reg;
+logic mem_read_data_valid_reg = 1'b0, mem_read_data_valid_next;
 
 wire [RWIDTH-1:0] m_axi_r;
 
-reg [RWIDTH-1:0] s_axi_r_reg;
-reg s_axi_rvalid_reg = 1'b0, s_axi_rvalid_next;
+logic [RWIDTH-1:0] s_axi_r_reg;
+logic s_axi_rvalid_reg = 1'b0, s_axi_rvalid_next;
 
 // full when first MSB different but rest same
 wire full = ((wr_ptr_reg[FIFO_AW] != rd_ptr_reg[FIFO_AW]) &&
@@ -83,9 +83,9 @@ wire full = ((wr_ptr_reg[FIFO_AW] != rd_ptr_reg[FIFO_AW]) &&
 wire empty = wr_ptr_reg == rd_ptr_reg;
 
 // control signals
-reg write;
-reg read;
-reg store_output;
+logic write;
+logic read;
+logic store_output;
 
 assign m_axi_rd.rready = !full;
 
@@ -104,24 +104,24 @@ if (FIFO_DELAY) begin
         STATE_IDLE = 1'd0,
         STATE_WAIT = 1'd1;
 
-    reg [0:0] state_reg = STATE_IDLE, state_next;
+    logic [0:0] state_reg = STATE_IDLE, state_next;
 
-    reg [COUNT_W-1:0] count_reg = 0, count_next;
+    logic [COUNT_W-1:0] count_reg = 0, count_next;
 
-    reg [ID_W-1:0] m_axi_arid_reg = '0, m_axi_arid_next;
-    reg [ADDR_W-1:0] m_axi_araddr_reg = '0, m_axi_araddr_next;
-    reg [7:0] m_axi_arlen_reg = '0, m_axi_arlen_next;
-    reg [2:0] m_axi_arsize_reg = '0, m_axi_arsize_next;
-    reg [1:0] m_axi_arburst_reg = '0, m_axi_arburst_next;
-    reg m_axi_arlock_reg = '0, m_axi_arlock_next;
-    reg [3:0] m_axi_arcache_reg = '0, m_axi_arcache_next;
-    reg [2:0] m_axi_arprot_reg = '0, m_axi_arprot_next;
-    reg [3:0] m_axi_arqos_reg = '0, m_axi_arqos_next;
-    reg [3:0] m_axi_arregion_reg = '0, m_axi_arregion_next;
-    reg [ARUSER_W-1:0] m_axi_aruser_reg = '0, m_axi_aruser_next;
-    reg m_axi_arvalid_reg = 1'b0, m_axi_arvalid_next;
+    logic [ID_W-1:0] m_axi_arid_reg = '0, m_axi_arid_next;
+    logic [ADDR_W-1:0] m_axi_araddr_reg = '0, m_axi_araddr_next;
+    logic [7:0] m_axi_arlen_reg = '0, m_axi_arlen_next;
+    logic [2:0] m_axi_arsize_reg = '0, m_axi_arsize_next;
+    logic [1:0] m_axi_arburst_reg = '0, m_axi_arburst_next;
+    logic m_axi_arlock_reg = '0, m_axi_arlock_next;
+    logic [3:0] m_axi_arcache_reg = '0, m_axi_arcache_next;
+    logic [2:0] m_axi_arprot_reg = '0, m_axi_arprot_next;
+    logic [3:0] m_axi_arqos_reg = '0, m_axi_arqos_next;
+    logic [3:0] m_axi_arregion_reg = '0, m_axi_arregion_next;
+    logic [ARUSER_W-1:0] m_axi_aruser_reg = '0, m_axi_aruser_next;
+    logic m_axi_arvalid_reg = 1'b0, m_axi_arvalid_next;
 
-    reg s_axi_arready_reg = 1'b0, s_axi_arready_next;
+    logic s_axi_arready_reg = 1'b0, s_axi_arready_next;
 
     assign m_axi_rd.arid = m_axi_arid_reg;
     assign m_axi_rd.araddr = m_axi_araddr_reg;

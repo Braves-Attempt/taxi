@@ -183,8 +183,8 @@ end
 
 wire [1:0] link_speed_int;
 
-reg [1:0] link_speed_sync_reg_1 = 2'b10;
-reg [1:0] link_speed_sync_reg_2 = 2'b10;
+logic [1:0] link_speed_sync_reg_1 = 2'b10;
+logic [1:0] link_speed_sync_reg_2 = 2'b10;
 
 assign link_speed = link_speed_sync_reg_2;
 

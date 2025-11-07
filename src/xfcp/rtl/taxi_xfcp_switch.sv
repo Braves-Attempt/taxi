@@ -53,9 +53,9 @@ localparam ID_RESP = 8'hFF;
 // ID ROM
 localparam ID_PTR_W = (XFCP_EXT_ID != 0 || XFCP_EXT_ID_STR != 0) ? 6 : 5;
 localparam ID_ROM_SIZE = 2**ID_PTR_W;
-reg [7:0] id_rom[ID_ROM_SIZE];
+logic [7:0] id_rom[ID_ROM_SIZE];
 
-reg [ID_PTR_W-1:0] id_ptr_reg = '0, id_ptr_next;
+logic [ID_PTR_W-1:0] id_ptr_reg = '0, id_ptr_next;
 
 integer j;
 
@@ -115,49 +115,49 @@ localparam [2:0]
     DN_STATE_PKT = 3'd3,
     DN_STATE_ID = 3'd4;
 
-reg [2:0] dn_state_reg = DN_STATE_IDLE, dn_state_next;
+logic [2:0] dn_state_reg = DN_STATE_IDLE, dn_state_next;
 
 localparam [0:0]
     UP_STATE_IDLE = 1'd0,
     UP_STATE_TRANSFER = 1'd1;
 
-reg [0:0] up_state_reg = UP_STATE_IDLE, up_state_next;
+logic [0:0] up_state_reg = UP_STATE_IDLE, up_state_next;
 
-reg [CL_PORTS-1:0] dn_select_reg = '0, dn_select_next;
-reg dn_frame_reg = 1'b0, dn_frame_next;
-reg dn_enable_reg = 1'b0, dn_enable_next;
+logic [CL_PORTS-1:0] dn_select_reg = '0, dn_select_next;
+logic dn_frame_reg = 1'b0, dn_frame_next;
+logic dn_enable_reg = 1'b0, dn_enable_next;
 
-reg [CL_PORTS_P1-1:0] up_select_reg = '0, up_select_next;
-reg up_frame_reg = 1'b0, up_frame_next;
+logic [CL_PORTS_P1-1:0] up_select_reg = '0, up_select_next;
+logic up_frame_reg = 1'b0, up_frame_next;
 
-reg xfcp_usp_ds_tready_reg = 1'b0, xfcp_usp_ds_tready_next;
+logic xfcp_usp_ds_tready_reg = 1'b0, xfcp_usp_ds_tready_next;
 
-reg [PORTS-1:0] xfcp_dsp_us_tready_reg = '0, xfcp_dsp_us_tready_next;
+logic [PORTS-1:0] xfcp_dsp_us_tready_reg = '0, xfcp_dsp_us_tready_next;
 
 wire [PORTS-1:0] xfcp_dsp_ds_tready;
 wire [PORTS-1:0] xfcp_dsp_ds_tvalid;
 
 // internal datapath
-reg [7:0] xfcp_usp_us_tdata_int;
-reg       xfcp_usp_us_tvalid_int;
-reg       xfcp_usp_us_tready_int_reg = 1'b0;
-reg       xfcp_usp_us_tlast_int;
-reg       xfcp_usp_us_tuser_int;
+logic [7:0] xfcp_usp_us_tdata_int;
+logic       xfcp_usp_us_tvalid_int;
+logic       xfcp_usp_us_tready_int_reg = 1'b0;
+logic       xfcp_usp_us_tlast_int;
+logic       xfcp_usp_us_tuser_int;
 wire      xfcp_usp_us_tready_int_early;
 
-reg [7:0]       xfcp_dsp_ds_tdata_int;
-reg [PORTS-1:0] xfcp_dsp_ds_tvalid_int;
-reg             xfcp_dsp_ds_tready_int_reg = 1'b0;
-reg             xfcp_dsp_ds_tlast_int;
-reg             xfcp_dsp_ds_tuser_int;
+logic [7:0]       xfcp_dsp_ds_tdata_int;
+logic [PORTS-1:0] xfcp_dsp_ds_tvalid_int;
+logic             xfcp_dsp_ds_tready_int_reg = 1'b0;
+logic             xfcp_dsp_ds_tlast_int;
+logic             xfcp_dsp_ds_tuser_int;
 wire            xfcp_dsp_ds_tready_int_early;
 
-reg [7:0] int_loop_tdata_reg = 8'd0, int_loop_tdata_next;
-reg       int_loop_tvalid_reg = 1'b0, int_loop_tvalid_next;
-reg       int_loop_tready;
-reg       int_loop_tready_early;
-reg       int_loop_tlast_reg = 1'b0, int_loop_tlast_next;
-reg       int_loop_tuser_reg = 1'b0, int_loop_tuser_next;
+logic [7:0] int_loop_tdata_reg = 8'd0, int_loop_tdata_next;
+logic       int_loop_tvalid_reg = 1'b0, int_loop_tvalid_next;
+logic       int_loop_tready;
+logic       int_loop_tready_early;
+logic       int_loop_tlast_reg = 1'b0, int_loop_tlast_next;
+logic       int_loop_tuser_reg = 1'b0, int_loop_tuser_next;
 
 assign xfcp_usp_ds.tready = xfcp_usp_ds_tready_reg;
 
@@ -499,20 +499,20 @@ always_ff @(posedge clk) begin
 end
 
 // upstream output datapath logic
-reg [7:0]  xfcp_usp_us_tdata_reg = 8'd0;
-reg        xfcp_usp_us_tvalid_reg = 1'b0, xfcp_usp_us_tvalid_next;
-reg        xfcp_usp_us_tlast_reg = 1'b0;
-reg        xfcp_usp_us_tuser_reg = 1'b0;
+logic [7:0]  xfcp_usp_us_tdata_reg = 8'd0;
+logic        xfcp_usp_us_tvalid_reg = 1'b0, xfcp_usp_us_tvalid_next;
+logic        xfcp_usp_us_tlast_reg = 1'b0;
+logic        xfcp_usp_us_tuser_reg = 1'b0;
 
-reg [7:0]  temp_xfcp_usp_us_tdata_reg = 8'd0;
-reg        temp_xfcp_usp_us_tvalid_reg = 1'b0, temp_xfcp_usp_us_tvalid_next;
-reg        temp_xfcp_usp_us_tlast_reg = 1'b0;
-reg        temp_xfcp_usp_us_tuser_reg = 1'b0;
+logic [7:0]  temp_xfcp_usp_us_tdata_reg = 8'd0;
+logic        temp_xfcp_usp_us_tvalid_reg = 1'b0, temp_xfcp_usp_us_tvalid_next;
+logic        temp_xfcp_usp_us_tlast_reg = 1'b0;
+logic        temp_xfcp_usp_us_tuser_reg = 1'b0;
 
 // datapath control
-reg store_xfcp_usp_us_int_to_output;
-reg store_xfcp_usp_us_int_to_temp;
-reg store_xfcp_usp_us_temp_to_output;
+logic store_xfcp_usp_us_int_to_output;
+logic store_xfcp_usp_us_int_to_temp;
+logic store_xfcp_usp_us_temp_to_output;
 
 assign xfcp_usp_us.tdata = xfcp_usp_us_tdata_reg;
 assign xfcp_usp_us.tkeep = '1;
@@ -584,20 +584,20 @@ always_ff @(posedge clk) begin
 end
 
 // downstream output datapath logic
-reg [7:0]       xfcp_dsp_ds_tdata_reg = 8'd0;
-reg [PORTS-1:0] xfcp_dsp_ds_tvalid_reg = '0, xfcp_dsp_ds_tvalid_next;
-reg             xfcp_dsp_ds_tlast_reg = 1'b0;
-reg             xfcp_dsp_ds_tuser_reg = 1'b0;
+logic [7:0]       xfcp_dsp_ds_tdata_reg = 8'd0;
+logic [PORTS-1:0] xfcp_dsp_ds_tvalid_reg = '0, xfcp_dsp_ds_tvalid_next;
+logic             xfcp_dsp_ds_tlast_reg = 1'b0;
+logic             xfcp_dsp_ds_tuser_reg = 1'b0;
 
-reg [7:0]       temp_xfcp_dsp_ds_tdata_reg = 8'd0;
-reg [PORTS-1:0] temp_xfcp_dsp_ds_tvalid_reg = '0, temp_xfcp_dsp_ds_tvalid_next;
-reg             temp_xfcp_dsp_ds_tlast_reg = 1'b0;
-reg             temp_xfcp_dsp_ds_tuser_reg = 1'b0;
+logic [7:0]       temp_xfcp_dsp_ds_tdata_reg = 8'd0;
+logic [PORTS-1:0] temp_xfcp_dsp_ds_tvalid_reg = '0, temp_xfcp_dsp_ds_tvalid_next;
+logic             temp_xfcp_dsp_ds_tlast_reg = 1'b0;
+logic             temp_xfcp_dsp_ds_tuser_reg = 1'b0;
 
 // datapath control
-reg store_xfcp_dsp_ds_to_output;
-reg store_xfcp_dsp_ds_to_temp;
-reg store_xfcp_dsp_ds_temp_to_output;
+logic store_xfcp_dsp_ds_to_output;
+logic store_xfcp_dsp_ds_to_temp;
+logic store_xfcp_dsp_ds_temp_to_output;
 
 assign xfcp_dsp_ds_tvalid = xfcp_dsp_ds_tvalid_reg;
 

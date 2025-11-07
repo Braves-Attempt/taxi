@@ -87,9 +87,9 @@ localparam ID_RESP = 8'hFF;
 // ID ROM
 localparam ID_PTR_W = (XFCP_EXT_ID != 0 || XFCP_EXT_ID_STR != 0) ? 6 : 5;
 localparam ID_ROM_SIZE = 2**ID_PTR_W;
-reg [7:0] id_rom[ID_ROM_SIZE];
+logic [7:0] id_rom[ID_ROM_SIZE];
 
-reg [ID_PTR_W-1:0] id_ptr_reg = '0, id_ptr_next;
+logic [ID_PTR_W-1:0] id_ptr_reg = '0, id_ptr_next;
 
 integer j;
 
@@ -597,9 +597,9 @@ logic        temp_xfcp_usp_us_tlast_reg = 1'b0;
 logic        temp_xfcp_usp_us_tuser_reg = 1'b0;
 
 // datapath control
-reg store_xfcp_usp_us_int_to_output;
-reg store_xfcp_usp_us_int_to_temp;
-reg store_xfcp_usp_us_temp_to_output;
+logic store_xfcp_usp_us_int_to_output;
+logic store_xfcp_usp_us_int_to_temp;
+logic store_xfcp_usp_us_temp_to_output;
 
 assign xfcp_usp_us.tdata = xfcp_usp_us_tdata_reg;
 assign xfcp_usp_us.tkeep = '1;

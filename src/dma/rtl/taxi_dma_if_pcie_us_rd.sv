@@ -1537,7 +1537,7 @@ always_comb begin
     end
 end
 
-reg [1:0] active_tx_count_ovf;
+logic [1:0] active_tx_count_ovf;
 
 always_comb begin
     {active_tx_count_ovf, active_tx_count_next} = $signed({1'b0, active_tx_count_reg}) + $signed({1'b0, inc_active_tx});

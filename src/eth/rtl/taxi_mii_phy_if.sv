@@ -68,9 +68,9 @@ rx_ssio_sdr_inst (
 );
 
 (* IOB = "TRUE" *)
-reg [3:0] phy_mii_txd_reg = 4'd0;
+logic [3:0] phy_mii_txd_reg = 4'd0;
 (* IOB = "TRUE" *)
-reg phy_mii_tx_en_reg = 1'b0, phy_mii_tx_er_reg = 1'b0;
+logic phy_mii_tx_en_reg = 1'b0, phy_mii_tx_er_reg = 1'b0;
 
 assign phy_mii_txd = phy_mii_txd_reg;
 assign phy_mii_tx_en = phy_mii_tx_en_reg;

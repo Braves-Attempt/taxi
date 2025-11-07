@@ -196,8 +196,8 @@ module taxi_eth_mac_1g_rgmii #
     input  wire logic                 cfg_rx_pfc_en = 1'b0
 );
 
-reg [1:0] link_speed_reg = 2'b10;
-reg mii_select_reg = 1'b0;
+logic [1:0] link_speed_reg = 2'b10;
+logic mii_select_reg = 1'b0;
 
 wire tx_mii_select_sync;
 
@@ -224,7 +224,7 @@ rx_mii_select_sync_inst (
 );
 
 // PHY speed detection
-reg [2:0] rx_prescale = 3'd0;
+logic [2:0] rx_prescale = 3'd0;
 
 always_ff @(posedge rx_clk) begin
     rx_prescale <= rx_prescale + 3'd1;
@@ -242,9 +242,9 @@ rx_prescale_sync_inst (
     .out(rx_prescale_sync)
 );
 
-reg [6:0] rx_speed_count_1 = 0;
-reg [1:0] rx_speed_count_2 = 0;
-reg rx_prescale_sync_last_reg = 1'b0;
+logic [6:0] rx_speed_count_1 = 0;
+logic [1:0] rx_speed_count_2 = 0;
+logic rx_prescale_sync_last_reg = 1'b0;
 
 always_ff @(posedge gtx_clk) begin
     rx_prescale_sync_last_reg <= rx_prescale_sync;

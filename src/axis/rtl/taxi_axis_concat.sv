@@ -123,7 +123,7 @@ end else begin
     // destripe
     logic [CL_S_COUNT-1:0] select_reg = '0, select_next;
 
-    reg [S_COUNT-1:0] s_axis_tready_reg = 0, s_axis_tready_next;
+    logic [S_COUNT-1:0] s_axis_tready_reg = 0, s_axis_tready_next;
 
     assign s_axis_tready = s_axis_tready_reg;
 

@@ -160,7 +160,7 @@ endfunction
 // init_data ROM
 localparam INIT_DATA_LEN = 22;
 
-reg [8:0] init_data [INIT_DATA_LEN-1:0];
+logic [8:0] init_data [INIT_DATA_LEN-1:0];
 
 initial begin
     // single address

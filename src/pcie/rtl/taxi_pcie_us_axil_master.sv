@@ -729,22 +729,22 @@ always_ff @(posedge clk) begin
 end
 
 // output datapath logic
-reg [AXIS_PCIE_DATA_W-1:0]    m_axis_cc_tdata_reg = '0;
-reg [AXIS_PCIE_KEEP_W-1:0]    m_axis_cc_tkeep_reg = '0;
-reg                           m_axis_cc_tvalid_reg = 1'b0, m_axis_cc_tvalid_next;
-reg                           m_axis_cc_tlast_reg = 1'b0;
-reg [AXIS_PCIE_CC_USER_W-1:0] m_axis_cc_tuser_reg = '0;
+logic [AXIS_PCIE_DATA_W-1:0]    m_axis_cc_tdata_reg = '0;
+logic [AXIS_PCIE_KEEP_W-1:0]    m_axis_cc_tkeep_reg = '0;
+logic                           m_axis_cc_tvalid_reg = 1'b0, m_axis_cc_tvalid_next;
+logic                           m_axis_cc_tlast_reg = 1'b0;
+logic [AXIS_PCIE_CC_USER_W-1:0] m_axis_cc_tuser_reg = '0;
 
-reg [AXIS_PCIE_DATA_W-1:0]    temp_m_axis_cc_tdata_reg = '0;
-reg [AXIS_PCIE_KEEP_W-1:0]    temp_m_axis_cc_tkeep_reg = '0;
-reg                           temp_m_axis_cc_tvalid_reg = 1'b0, temp_m_axis_cc_tvalid_next;
-reg                           temp_m_axis_cc_tlast_reg = 1'b0;
-reg [AXIS_PCIE_CC_USER_W-1:0] temp_m_axis_cc_tuser_reg = '0;
+logic [AXIS_PCIE_DATA_W-1:0]    temp_m_axis_cc_tdata_reg = '0;
+logic [AXIS_PCIE_KEEP_W-1:0]    temp_m_axis_cc_tkeep_reg = '0;
+logic                           temp_m_axis_cc_tvalid_reg = 1'b0, temp_m_axis_cc_tvalid_next;
+logic                           temp_m_axis_cc_tlast_reg = 1'b0;
+logic [AXIS_PCIE_CC_USER_W-1:0] temp_m_axis_cc_tuser_reg = '0;
 
 // datapath control
-reg store_axis_int_to_output;
-reg store_axis_int_to_temp;
-reg store_axis_temp_to_output;
+logic store_axis_int_to_output;
+logic store_axis_int_to_temp;
+logic store_axis_temp_to_output;
 
 assign m_axis_cc.tdata = m_axis_cc_tdata_reg;
 assign m_axis_cc.tkeep = m_axis_cc_tkeep_reg;
@@ -766,7 +766,7 @@ always_comb begin
     store_axis_int_to_output = 1'b0;
     store_axis_int_to_temp = 1'b0;
     store_axis_temp_to_output = 1'b0;
-    
+
     if (m_axis_cc_tready_int_reg) begin
         // input is ready
         if (m_axis_cc.tready || !m_axis_cc_tvalid_reg) begin

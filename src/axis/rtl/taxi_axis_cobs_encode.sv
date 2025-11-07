@@ -380,20 +380,20 @@ always_ff @(posedge clk) begin
 end
 
 // output datapath logic
-reg [7:0] m_axis_tdata_reg = 8'd0;
-reg       m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
-reg       m_axis_tlast_reg = 1'b0;
-reg       m_axis_tuser_reg = 1'b0;
+logic [7:0] m_axis_tdata_reg = 8'd0;
+logic       m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
+logic       m_axis_tlast_reg = 1'b0;
+logic       m_axis_tuser_reg = 1'b0;
 
-reg [7:0] temp_m_axis_tdata_reg = 8'd0;
-reg       temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
-reg       temp_m_axis_tlast_reg = 1'b0;
-reg       temp_m_axis_tuser_reg = 1'b0;
+logic [7:0] temp_m_axis_tdata_reg = 8'd0;
+logic       temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
+logic       temp_m_axis_tlast_reg = 1'b0;
+logic       temp_m_axis_tuser_reg = 1'b0;
 
 // datapath control
-reg store_axis_int_to_output;
-reg store_axis_int_to_temp;
-reg store_axis_temp_to_output;
+logic store_axis_int_to_output;
+logic store_axis_int_to_temp;
+logic store_axis_temp_to_output;
 
 assign m_axis.tdata = m_axis_tdata_reg;
 assign m_axis.tkeep = 1'b1;

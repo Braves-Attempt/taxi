@@ -484,27 +484,27 @@ end
 // output datapath logic (write data)
 for (genvar n = 0; n < RAM_SEGS; n = n + 1) begin
 
-    reg [RAM_SEG_BE_W-1:0]   ram_wr_cmd_be_reg = '0;
-    reg [RAM_SEG_ADDR_W-1:0] ram_wr_cmd_addr_reg = '0;
-    reg [RAM_SEG_DATA_W-1:0] ram_wr_cmd_data_reg = '0;
-    reg                      ram_wr_cmd_valid_reg = 1'b0;
+    logic [RAM_SEG_BE_W-1:0]   ram_wr_cmd_be_reg = '0;
+    logic [RAM_SEG_ADDR_W-1:0] ram_wr_cmd_addr_reg = '0;
+    logic [RAM_SEG_DATA_W-1:0] ram_wr_cmd_data_reg = '0;
+    logic                      ram_wr_cmd_valid_reg = 1'b0;
 
-    reg [OUTPUT_FIFO_AW+1-1:0] out_fifo_wr_ptr_reg = '0;
-    reg [OUTPUT_FIFO_AW+1-1:0] out_fifo_rd_ptr_reg = '0;
-    reg out_fifo_half_full_reg = 1'b0;
+    logic [OUTPUT_FIFO_AW+1-1:0] out_fifo_wr_ptr_reg = '0;
+    logic [OUTPUT_FIFO_AW+1-1:0] out_fifo_rd_ptr_reg = '0;
+    logic out_fifo_half_full_reg = 1'b0;
 
     wire out_fifo_full = out_fifo_wr_ptr_reg == (out_fifo_rd_ptr_reg ^ {1'b1, {OUTPUT_FIFO_AW{1'b0}}});
     wire out_fifo_empty = out_fifo_wr_ptr_reg == out_fifo_rd_ptr_reg;
 
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    reg [RAM_SEG_BE_W-1:0]   out_fifo_wr_cmd_be[2**OUTPUT_FIFO_AW];
+    logic [RAM_SEG_BE_W-1:0]   out_fifo_wr_cmd_be[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    reg [RAM_SEG_ADDR_W-1:0] out_fifo_wr_cmd_addr[2**OUTPUT_FIFO_AW];
+    logic [RAM_SEG_ADDR_W-1:0] out_fifo_wr_cmd_addr[2**OUTPUT_FIFO_AW];
     (* ram_style = "distributed", ramstyle = "no_rw_check, mlab" *)
-    reg [RAM_SEG_DATA_W-1:0] out_fifo_wr_cmd_data[2**OUTPUT_FIFO_AW];
+    logic [RAM_SEG_DATA_W-1:0] out_fifo_wr_cmd_data[2**OUTPUT_FIFO_AW];
 
-    reg [OUTPUT_FIFO_AW+1-1:0] done_count_reg = 0;
-    reg done_reg = 1'b0;
+    logic [OUTPUT_FIFO_AW+1-1:0] done_count_reg = 0;
+    logic done_reg = 1'b0;
 
     assign ram_wr_cmd_ready_int[n] = !out_fifo_half_full_reg;
 

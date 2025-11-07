@@ -154,10 +154,10 @@ wire rx_ptp_locked;
 // synchronize MAC status signals into logic clock domain
 wire tx_error_underflow_int;
 
-reg [0:0] tx_sync_reg_1 = '0;
-reg [0:0] tx_sync_reg_2 = '0;
-reg [0:0] tx_sync_reg_3 = '0;
-reg [0:0] tx_sync_reg_4 = '0;
+logic [0:0] tx_sync_reg_1 = '0;
+logic [0:0] tx_sync_reg_2 = '0;
+logic [0:0] tx_sync_reg_3 = '0;
+logic [0:0] tx_sync_reg_4 = '0;
 
 assign tx_error_underflow = tx_sync_reg_3[0] ^ tx_sync_reg_4[0];
 
@@ -189,10 +189,10 @@ wire rx_block_lock_int;
 wire rx_high_ber_int;
 wire rx_status_int;
 
-reg [6:0] rx_sync_reg_1 = '0;
-reg [6:0] rx_sync_reg_2 = '0;
-reg [6:0] rx_sync_reg_3 = '0;
-reg [6:0] rx_sync_reg_4 = '0;
+logic [6:0] rx_sync_reg_1 = '0;
+logic [6:0] rx_sync_reg_2 = '0;
+logic [6:0] rx_sync_reg_3 = '0;
+logic [6:0] rx_sync_reg_4 = '0;
 
 assign rx_error_bad_frame = rx_sync_reg_3[0] ^ rx_sync_reg_4[0];
 assign rx_error_bad_fcs = rx_sync_reg_3[1] ^ rx_sync_reg_4[1];

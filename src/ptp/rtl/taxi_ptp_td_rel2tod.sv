@@ -59,7 +59,7 @@ assign ptp_td_sdi_pipe[0] = ptp_td_sdi;
 for (genvar n = 0; n < TD_SDI_PIPELINE; n = n + 1) begin : pipe_stage
 
     (* shreg_extract = "no" *)
-    reg ptp_td_sdi_reg = 0;
+    logic ptp_td_sdi_reg = 0;
 
     assign ptp_td_sdi_pipe[n+1] = ptp_td_sdi_reg;
 

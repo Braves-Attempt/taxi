@@ -691,20 +691,20 @@ always_ff @(posedge clk) begin
 end
 
 // output datapath logic
-reg [7:0]  xfcp_usp_us_tdata_reg = 8'd0;
-reg        xfcp_usp_us_tvalid_reg = 1'b0, xfcp_usp_us_tvalid_next;
-reg        xfcp_usp_us_tlast_reg = 1'b0;
-reg        xfcp_usp_us_tuser_reg = 1'b0;
+logic [7:0]  xfcp_usp_us_tdata_reg = 8'd0;
+logic        xfcp_usp_us_tvalid_reg = 1'b0, xfcp_usp_us_tvalid_next;
+logic        xfcp_usp_us_tlast_reg = 1'b0;
+logic        xfcp_usp_us_tuser_reg = 1'b0;
 
-reg [7:0]  temp_xfcp_usp_us_tdata_reg = 8'd0;
-reg        temp_xfcp_usp_us_tvalid_reg = 1'b0, temp_xfcp_usp_us_tvalid_next;
-reg        temp_xfcp_usp_us_tlast_reg = 1'b0;
-reg        temp_xfcp_usp_us_tuser_reg = 1'b0;
+logic [7:0]  temp_xfcp_usp_us_tdata_reg = 8'd0;
+logic        temp_xfcp_usp_us_tvalid_reg = 1'b0, temp_xfcp_usp_us_tvalid_next;
+logic        temp_xfcp_usp_us_tlast_reg = 1'b0;
+logic        temp_xfcp_usp_us_tuser_reg = 1'b0;
 
 // datapath control
-reg store_up_xfcp_int_to_output;
-reg store_up_xfcp_int_to_temp;
-reg store_up_xfcp_temp_to_output;
+logic store_up_xfcp_int_to_output;
+logic store_up_xfcp_int_to_temp;
+logic store_up_xfcp_temp_to_output;
 
 assign xfcp_usp_us.tdata = xfcp_usp_us_tdata_reg;
 assign xfcp_usp_us.tkeep = '1;

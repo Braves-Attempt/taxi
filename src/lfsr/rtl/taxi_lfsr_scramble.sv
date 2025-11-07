@@ -148,8 +148,8 @@ pcie        Galois, bit-reverse     16      16'h0039        16'hffff        PCIe
 
 */
 
-reg [LFSR_W-1:0] state_reg = LFSR_INIT;
-reg [DATA_W-1:0] output_reg = '0;
+logic [LFSR_W-1:0] state_reg = LFSR_INIT;
+logic [DATA_W-1:0] output_reg = '0;
 
 wire [DATA_W-1:0] lfsr_data;
 wire [LFSR_W-1:0] lfsr_state;

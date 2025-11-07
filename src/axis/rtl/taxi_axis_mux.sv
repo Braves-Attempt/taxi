@@ -63,21 +63,21 @@ if (KEEP_EN && m_axis.KEEP_W != KEEP_W)
 
 parameter CL_S_COUNT = $clog2(S_COUNT);
 
-reg [CL_S_COUNT-1:0] select_reg = '0, select_next;
-reg frame_reg = 1'b0, frame_next;
+logic [CL_S_COUNT-1:0] select_reg = '0, select_next;
+logic frame_reg = 1'b0, frame_next;
 
-reg [S_COUNT-1:0] s_axis_tready_reg = 0, s_axis_tready_next;
+logic [S_COUNT-1:0] s_axis_tready_reg = 0, s_axis_tready_next;
 
 // internal datapath
-reg  [DATA_W-1:0]  m_axis_tdata_int;
-reg  [KEEP_W-1:0]  m_axis_tkeep_int;
-reg  [KEEP_W-1:0]  m_axis_tstrb_int;
-reg                m_axis_tvalid_int;
-reg                m_axis_tready_int_reg = 1'b0;
-reg                m_axis_tlast_int;
-reg  [ID_W-1:0]    m_axis_tid_int;
-reg  [DEST_W-1:0]  m_axis_tdest_int;
-reg  [USER_W-1:0]  m_axis_tuser_int;
+logic  [DATA_W-1:0]  m_axis_tdata_int;
+logic  [KEEP_W-1:0]  m_axis_tkeep_int;
+logic  [KEEP_W-1:0]  m_axis_tstrb_int;
+logic                m_axis_tvalid_int;
+logic                m_axis_tready_int_reg = 1'b0;
+logic                m_axis_tlast_int;
+logic  [ID_W-1:0]    m_axis_tid_int;
+logic  [DEST_W-1:0]  m_axis_tdest_int;
+logic  [USER_W-1:0]  m_axis_tuser_int;
 wire               m_axis_tready_int_early;
 
 // unpack interface array
@@ -162,28 +162,28 @@ always_ff @(posedge clk) begin
 end
 
 // output datapath logic
-reg [DATA_W-1:0]  m_axis_tdata_reg  = '0;
-reg [KEEP_W-1:0]  m_axis_tkeep_reg  = '0;
-reg [KEEP_W-1:0]  m_axis_tstrb_reg  = '0;
-reg               m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
-reg               m_axis_tlast_reg  = 1'b0;
-reg [ID_W-1:0]    m_axis_tid_reg    = '0;
-reg [DEST_W-1:0]  m_axis_tdest_reg  = '0;
-reg [USER_W-1:0]  m_axis_tuser_reg  = '0;
+logic [DATA_W-1:0]  m_axis_tdata_reg  = '0;
+logic [KEEP_W-1:0]  m_axis_tkeep_reg  = '0;
+logic [KEEP_W-1:0]  m_axis_tstrb_reg  = '0;
+logic               m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
+logic               m_axis_tlast_reg  = 1'b0;
+logic [ID_W-1:0]    m_axis_tid_reg    = '0;
+logic [DEST_W-1:0]  m_axis_tdest_reg  = '0;
+logic [USER_W-1:0]  m_axis_tuser_reg  = '0;
 
-reg [DATA_W-1:0]  temp_m_axis_tdata_reg  = '0;
-reg [KEEP_W-1:0]  temp_m_axis_tkeep_reg  = '0;
-reg [KEEP_W-1:0]  temp_m_axis_tstrb_reg  = '0;
-reg               temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
-reg               temp_m_axis_tlast_reg  = 1'b0;
-reg [ID_W-1:0]    temp_m_axis_tid_reg    = '0;
-reg [DEST_W-1:0]  temp_m_axis_tdest_reg  = '0;
-reg [USER_W-1:0]  temp_m_axis_tuser_reg  = '0;
+logic [DATA_W-1:0]  temp_m_axis_tdata_reg  = '0;
+logic [KEEP_W-1:0]  temp_m_axis_tkeep_reg  = '0;
+logic [KEEP_W-1:0]  temp_m_axis_tstrb_reg  = '0;
+logic               temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
+logic               temp_m_axis_tlast_reg  = 1'b0;
+logic [ID_W-1:0]    temp_m_axis_tid_reg    = '0;
+logic [DEST_W-1:0]  temp_m_axis_tdest_reg  = '0;
+logic [USER_W-1:0]  temp_m_axis_tuser_reg  = '0;
 
 // datapath control
-reg store_axis_int_to_output;
-reg store_axis_int_to_temp;
-reg store_axis_temp_to_output;
+logic store_axis_int_to_output;
+logic store_axis_int_to_temp;
+logic store_axis_temp_to_output;
 
 assign m_axis.tdata  = m_axis_tdata_reg;
 assign m_axis.tkeep  = KEEP_EN ? m_axis_tkeep_reg : '1;
