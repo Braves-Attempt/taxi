@@ -82,6 +82,7 @@ set_input_delay 0 [get_ports {uart_rxd uart_rts}]
 # I2C interface
 #set_property -dict {LOC K21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
 #set_property -dict {LOC L21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
+#set_property -dict {LOC P23  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_mux_reset]
 
 #set_false_path -to [get_ports {i2c_sda i2c_scl}]
 #set_output_delay 0 [get_ports {i2c_sda i2c_scl}]
