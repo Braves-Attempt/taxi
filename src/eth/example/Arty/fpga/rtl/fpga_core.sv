@@ -157,7 +157,7 @@ xfcp_stats_inst (
     .s_axis_stat(axis_mac_stat)
 );
 
-taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_eth();
+taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_tx_cpl();
 
 taxi_eth_mac_mii_fifo #(

@@ -89,9 +89,9 @@ wire qsfp_0_mgt_refclk_bufg;
 
 wire qsfp_rst;
 
-taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_qsfp_tx[8]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_qsfp_tx[8]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_qsfp_tx_cpl[8]();
-taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_qsfp_rx[8]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_qsfp_rx[8]();
 taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_qsfp_stat[2]();
 
 if (SIM) begin

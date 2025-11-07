@@ -85,9 +85,9 @@ assign sfp_mgt_refclk_out = sfp_mgt_refclk_bufg;
 
 wire sfp_rst;
 
-taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_tx[2]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_tx[2]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[2]();
-taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_sfp_rx[2]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_rx[2]();
 taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
 if (SIM) begin

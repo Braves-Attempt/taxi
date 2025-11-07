@@ -199,7 +199,7 @@ stat_mux_inst (
 // BASE-T PHY
 assign phy_reset_n = !rst;
 
-taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_eth();
+taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_tx_cpl();
 
 taxi_eth_mac_1g_fifo #(
@@ -313,9 +313,9 @@ wire qsfp_mgt_refclk_0_bufg;
 
 wire qsfp_rst;
 
-taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_qsfp_tx[4]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_qsfp_tx[4]();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_qsfp_tx_cpl[4]();
-taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8)) axis_qsfp_rx[4]();
+taxi_axis_if #(.DATA_W(MAC_DATA_W), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_qsfp_rx[4]();
 taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_qsfp_stat();
 
 if (SIM) begin

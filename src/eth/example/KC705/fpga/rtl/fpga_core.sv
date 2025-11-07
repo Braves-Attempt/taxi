@@ -212,11 +212,11 @@ stat_mux_inst (
 // BASE-T PHY
 assign phy_reset_n = !rst;
 
-taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_eth();
+taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_tx_cpl();
 
 if (BASET_PHY_TYPE == "GMII") begin : baset_mac_gmii
-    
+
     taxi_eth_mac_1g_gmii_fifo #(
         .SIM(SIM),
         .VENDOR(VENDOR),
@@ -305,7 +305,7 @@ if (BASET_PHY_TYPE == "GMII") begin : baset_mac_gmii
     assign phy_rgmii_tx_ctl = 1'b0;
 
 end else if (BASET_PHY_TYPE == "RGMII") begin : baset_mac_rgmii
-    
+
     taxi_eth_mac_1g_rgmii_fifo #(
         .SIM(SIM),
         .VENDOR(VENDOR),
@@ -392,7 +392,7 @@ end else if (BASET_PHY_TYPE == "RGMII") begin : baset_mac_rgmii
     assign phy_sgmii_txd = '0;
     assign phy_sgmii_tx_en = 1'b0;
     assign phy_sgmii_tx_er = 1'b0;
-    
+
 end else if (BASET_PHY_TYPE == "SGMII") begin : baset_mac_sgmii
 
     taxi_eth_mac_1g_fifo #(
@@ -491,7 +491,7 @@ end
 // SFP+
 assign sfp_tx_disable_b = 1'b1;
 
-taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp_eth();
+taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl();
 
 taxi_eth_mac_1g_fifo #(

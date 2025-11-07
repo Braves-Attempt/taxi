@@ -217,16 +217,16 @@ assign sfp_tx_disable_b = '1;
 
 if (SFP_RATE == 0) begin : sfp_mac
 
-    taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp0_eth();
+    taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp0_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp0_tx_cpl();
 
-    taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp1_eth();
+    taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp1_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp1_tx_cpl();
 
-    taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp2_eth();
+    taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp2_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp2_tx_cpl();
 
-    taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp3_eth();
+    taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp3_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp3_tx_cpl();
 
     taxi_eth_mac_1g_fifo #(
@@ -574,9 +574,9 @@ end else begin : sfp_mac
 
     wire sfp_rst;
 
-    taxi_axis_if #(.DATA_W(32), .ID_W(8)) axis_sfp_tx[4]();
+    taxi_axis_if #(.DATA_W(32), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_tx[4]();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[4]();
-    taxi_axis_if #(.DATA_W(32), .ID_W(8)) axis_sfp_rx[4]();
+    taxi_axis_if #(.DATA_W(32), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_rx[4]();
 
     if (SIM) begin
 

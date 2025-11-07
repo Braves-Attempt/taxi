@@ -99,11 +99,11 @@ module fpga_core #
 assign phy2_reset_n = !rst;
 assign phy3_reset_n = !rst;
 
-taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_phy2_eth();
+taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_phy2_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_phy2_tx_cpl();
 taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_phy2_stat();
 
-taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_phy3_eth();
+taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_phy3_eth();
 taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_phy3_tx_cpl();
 taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_phy3_stat();
 
@@ -256,7 +256,7 @@ assign sfp_tx_disable = 1'b0;
 
 if (SFP_RATE == 0) begin : sfp_mac
 
-    taxi_axis_if #(.DATA_W(8), .ID_W(8)) axis_sfp_eth();
+    taxi_axis_if #(.DATA_W(8), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_eth();
     taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl();
     taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
@@ -353,9 +353,9 @@ end else begin : sfp_mac
 
     wire sfp_rst;
 
-    taxi_axis_if #(.DATA_W(32), .ID_W(8)) axis_sfp_tx[0:0]();
-    taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[0:0]();
-    taxi_axis_if #(.DATA_W(32), .ID_W(8)) axis_sfp_rx[0:0]();
+    taxi_axis_if #(.DATA_W(32), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_tx[1]();
+    taxi_axis_if #(.DATA_W(96), .KEEP_W(1), .ID_W(8)) axis_sfp_tx_cpl[1]();
+    taxi_axis_if #(.DATA_W(32), .ID_W(8), .USER_EN(1), .USER_W(1)) axis_sfp_rx[1]();
     taxi_axis_if #(.DATA_W(16), .KEEP_W(1), .KEEP_EN(0), .LAST_EN(0), .USER_EN(1), .USER_W(1), .ID_EN(1), .ID_W(8)) axis_sfp_stat();
 
     if (SIM) begin
