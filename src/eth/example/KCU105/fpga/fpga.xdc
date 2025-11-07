@@ -123,6 +123,7 @@ set_input_delay 0 [get_ports {uart_rxd uart_rts}]
 # I2C interface
 #set_property -dict {LOC J24  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
 #set_property -dict {LOC J25  IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
+#set_property -dict {LOC AP10 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports i2c_mux_reset]
 
 #set_false_path -to [get_ports {i2c_sda i2c_scl}]
 #set_output_delay 0 [get_ports {i2c_sda i2c_scl}]
@@ -376,14 +377,14 @@ set_output_delay 0 [get_ports {sfp_tx_disable_b[*]}]
 #set_property -dict {LOC N3} [get_ports {fmc_hpc_dp_c2m_n[4]}] ;# MGTHTXN0_227 GTHE3_CHANNEL_X0Y12 / GTHE3_COMMON_X0Y3 from J22.A35 DP4_C2M_N
 #set_property -dict {LOC M2} [get_ports {fmc_hpc_dp_m2c_p[4]}] ;# MGTHRXP0_227 GTHE3_CHANNEL_X0Y12 / GTHE3_COMMON_X0Y3 from J22.A14 DP4_M2C_P
 #set_property -dict {LOC M1} [get_ports {fmc_hpc_dp_m2c_n[4]}] ;# MGTHRXN0_227 GTHE3_CHANNEL_X0Y12 / GTHE3_COMMON_X0Y3 from J22.A15 DP4_M2C_N
-#set_property -dict {LOC L4} [get_ports {fmc_hpc_dp_c2m_p[5]}] ;# MGTHTXP1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A38 DP5_C2M_P
-#set_property -dict {LOC L3} [get_ports {fmc_hpc_dp_c2m_n[5]}] ;# MGTHTXN1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A39 DP5_C2M_N
-#set_property -dict {LOC K2} [get_ports {fmc_hpc_dp_m2c_p[5]}] ;# MGTHRXP1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A18 DP5_M2C_P
-#set_property -dict {LOC K1} [get_ports {fmc_hpc_dp_m2c_n[5]}] ;# MGTHRXN1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A19 DP5_M2C_N
-#set_property -dict {LOC J4} [get_ports {fmc_hpc_dp_c2m_p[6]}] ;# MGTHTXP2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B36 DP6_C2M_P
-#set_property -dict {LOC J3} [get_ports {fmc_hpc_dp_c2m_n[6]}] ;# MGTHTXN2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B37 DP6_C2M_N
-#set_property -dict {LOC H2} [get_ports {fmc_hpc_dp_m2c_p[6]}] ;# MGTHRXP2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B16 DP6_M2C_P
-#set_property -dict {LOC H1} [get_ports {fmc_hpc_dp_m2c_n[6]}] ;# MGTHRXN2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B17 DP6_M2C_N
+#set_property -dict {LOC J4} [get_ports {fmc_hpc_dp_c2m_p[5]}] ;# MGTHTXP2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B36 DP5_C2M_P
+#set_property -dict {LOC J3} [get_ports {fmc_hpc_dp_c2m_n[5]}] ;# MGTHTXN2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B37 DP5_C2M_N
+#set_property -dict {LOC H2} [get_ports {fmc_hpc_dp_m2c_p[5]}] ;# MGTHRXP2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B16 DP5_M2C_P
+#set_property -dict {LOC H1} [get_ports {fmc_hpc_dp_m2c_n[5]}] ;# MGTHRXN2_227 GTHE3_CHANNEL_X0Y14 / GTHE3_COMMON_X0Y3 from J22.B17 DP5_M2C_N
+#set_property -dict {LOC L4} [get_ports {fmc_hpc_dp_c2m_p[6]}] ;# MGTHTXP1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A38 DP6_C2M_P
+#set_property -dict {LOC L3} [get_ports {fmc_hpc_dp_c2m_n[6]}] ;# MGTHTXN1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A39 DP6_C2M_N
+#set_property -dict {LOC K2} [get_ports {fmc_hpc_dp_m2c_p[6]}] ;# MGTHRXP1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A18 DP6_M2C_P
+#set_property -dict {LOC K1} [get_ports {fmc_hpc_dp_m2c_n[6]}] ;# MGTHRXN1_227 GTHE3_CHANNEL_X0Y13 / GTHE3_COMMON_X0Y3 from J22.A19 DP6_M2C_N
 #set_property -dict {LOC G4} [get_ports {fmc_hpc_dp_c2m_p[7]}] ;# MGTHTXP3_227 GTHE3_CHANNEL_X0Y15 / GTHE3_COMMON_X0Y3 from J22.B32 DP7_C2M_P
 #set_property -dict {LOC G3} [get_ports {fmc_hpc_dp_c2m_n[7]}] ;# MGTHTXN3_227 GTHE3_CHANNEL_X0Y15 / GTHE3_COMMON_X0Y3 from J22.B33 DP7_C2M_N
 #set_property -dict {LOC F2} [get_ports {fmc_hpc_dp_m2c_p[7]}] ;# MGTHRXP3_227 GTHE3_CHANNEL_X0Y15 / GTHE3_COMMON_X0Y3 from J22.B12 DP7_M2C_P
