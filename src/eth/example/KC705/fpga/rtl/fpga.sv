@@ -59,6 +59,13 @@ module fpga #
     output wire logic        uart_cts,
 
     /*
+     * I2C
+     */
+    inout  wire logic        i2c_scl,
+    inout  wire logic        i2c_sda,
+    output wire logic        i2c_mux_reset,
+
+    /*
      * Ethernet: SFP+
      */
     input  wire logic        sfp_rx_p,
@@ -69,8 +76,8 @@ module fpga #
     input  wire logic        phy_sgmii_rx_n,
     output wire logic        phy_sgmii_tx_p,
     output wire logic        phy_sgmii_tx_n,
-    input  wire logic        sgmii_clk_p,
-    input  wire logic        sgmii_clk_n,
+    input  wire logic        sgmii_mgt_refclk_p,
+    input  wire logic        sgmii_mgt_refclk_n,
 
     output wire logic        sfp_tx_disable_b,
 
@@ -265,6 +272,17 @@ sync_signal_inst (
 
 wire [7:0] led_int;
 
+// I2C
+wire i2c_scl_i;
+wire i2c_scl_o;
+wire i2c_sda_i;
+wire i2c_sda_o;
+
+assign i2c_scl_i = i2c_scl;
+assign i2c_scl = i2c_scl_o ? 1'bz : 1'b0;
+assign i2c_sda_i = i2c_sda;
+assign i2c_sda = i2c_sda_o ? 1'bz : 1'b0;
+
 // SGMII interface to PHY
 wire phy_sgmii_clk_int;
 wire phy_sgmii_rst_int;
@@ -338,8 +356,8 @@ assign sgmii_an_config_vect[0]     = 1'b1;    // SGMII
 sgmii_pcs_pma_0
 sgmii_pcspma (
     // Transceiver Interface
-    .gtrefclk_p            (sgmii_clk_p),
-    .gtrefclk_n            (sgmii_clk_n),
+    .gtrefclk_p            (sgmii_mgt_refclk_p),
+    .gtrefclk_n            (sgmii_mgt_refclk_n),
     .gtrefclk_out          (sgmii_gtrefclk),
     .gtrefclk_bufg_out     (sgmii_gtrefclk_bufg),
     .txp                   (phy_sgmii_tx_p),
@@ -554,7 +572,7 @@ if (BASET_PHY_TYPE == "RGMII") begin : phy_if
     );
 
     for (genvar n = 0; n < 4; n = n + 1) begin : phy_rxd_idelay_bit
-        
+
         IDELAYE2 #(
             .IDELAY_TYPE("FIXED")
         )
@@ -660,6 +678,14 @@ core_inst (
     .uart_txd(uart_txd),
     .uart_rts(uart_rts_int),
     .uart_cts(uart_cts),
+
+    /*
+     * I2C
+     */
+    .i2c_scl_i(i2c_scl_i),
+    .i2c_scl_o(i2c_scl_o),
+    .i2c_sda_i(i2c_sda_i),
+    .i2c_sda_o(i2c_sda_o),
 
     /*
      * Ethernet: 1000BASE-X SFP

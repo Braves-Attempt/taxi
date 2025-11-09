@@ -80,9 +80,9 @@ set_false_path -from [get_ports {uart_rxd uart_rts}]
 set_input_delay 0 [get_ports {uart_rxd uart_rts}]
 
 # I2C interface
-#set_property -dict {LOC K21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
-#set_property -dict {LOC L21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
-#set_property -dict {LOC P23  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_mux_reset]
+set_property -dict {LOC K21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_scl]
+set_property -dict {LOC L21  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_sda]
+set_property -dict {LOC P23  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 8} [get_ports i2c_mux_reset]
 
 #set_false_path -to [get_ports {i2c_sda i2c_scl}]
 #set_output_delay 0 [get_ports {i2c_sda i2c_scl}]
@@ -140,17 +140,28 @@ set_property -dict {LOC H6   } [get_ports phy_sgmii_rx_p] ;# MGTXRXP1_117 GTXE2_
 set_property -dict {LOC H5   } [get_ports phy_sgmii_rx_n] ;# MGTXRXN1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A8 SOUT_N
 set_property -dict {LOC J4   } [get_ports phy_sgmii_tx_p] ;# MGTXTXP1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A3 SIN_P
 set_property -dict {LOC J3   } [get_ports phy_sgmii_tx_n] ;# MGTXTXN1_117 GTXE2_CHANNEL_X0Y9 / GTXE2_COMMON_X0Y2 from U37.A4 SIN_N
-set_property -dict {LOC G8   } [get_ports sgmii_clk_p] ;# MGTREFCLK0P_117 from U2.7
-set_property -dict {LOC G7   } [get_ports sgmii_clk_n] ;# MGTREFCLK0N_117 from U2.6
-#set_property -dict {LOC L8   } [get_ports sfp_clk_p] ;# MGTREFCLK0P_116 from Si5324 U70.28 CKOUT1_P
-#set_property -dict {LOC L7   } [get_ports sfp_clk_n] ;# MGTREFCLK0N_116 from Si5324 U70.29 CKOUT1_N
+set_property -dict {LOC G8   } [get_ports sgmii_mgt_refclk_p] ;# MGTREFCLK0P_117 from U2.7
+set_property -dict {LOC G7   } [get_ports sgmii_mgt_refclk_n] ;# MGTREFCLK0N_117 from U2.6
+#set_property -dict {LOC L8   } [get_ports sfp_mgt_refclk_p] ;# MGTREFCLK0P_116 from Si5324 U70.28 CKOUT1_P
+#set_property -dict {LOC L7   } [get_ports sfp_mgt_refclk_n] ;# MGTREFCLK0N_116 from Si5324 U70.29 CKOUT1_N
 #set_property -dict {LOC W27 IOSTANDARD LVDS} [get_ports sfp_recclk_p] ;# to Si5324 U70.16 CKIN1_P
 #set_property -dict {LOC W28 IOSTANDARD LVDS} [get_ports sfp_recclk_n] ;# to Si5324 U70.17 CKIN1_N
 
+#set_property -dict {LOC AE20 IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 12} [get_ports si5324_rst]
+#set_property -dict {LOC AG24 IOSTANDARD LVCMOS25 PULLUP true} [get_ports si5324_int]
+
 set_property -dict {LOC Y20  IOSTANDARD LVCMOS25 SLEW SLOW DRIVE 12} [get_ports {sfp_tx_disable_b}]
 
-create_clock -period 8.000 -name sgmii_clk [get_ports sgmii_clk_p]
-#create_clock -period 6.400 -name sgmii_clk [get_ports sfp_clk_p]
+# 125 MHz MGT reference clock (SGMII, 1000BASE-X)
+#create_clock -period 8.000 -name sgmii_mgt_refclk [get_ports sgmii_mgt_refclk_p]
+
+# 156.25 MHz MGT reference clock (10GBASE-R)
+#create_clock -period 6.400 -name sgmii_mgt_refclk [get_ports sfp_mgt_refclk_p]
+
+#set_false_path -to [get_ports {si5324_rst}]
+#set_output_delay 0 [get_ports {si5324_rst}]
+#set_false_path -from [get_ports {si5324_int}]
+#set_input_delay 0 [get_ports {si5324_int}]
 
 set_false_path -to [get_ports {sfp_tx_disable_b}]
 set_output_delay 0 [get_ports {sfp_tx_disable_b}]

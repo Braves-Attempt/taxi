@@ -150,20 +150,22 @@ async def run_test(dut):
 
     await tb.init()
 
+    tests = []
+
     tb.log.info("Start BASE-T MAC loopback test")
 
     if hasattr(dut, "baset_mac_gmii"):
-        baset_test_cr = cocotb.start_soon(mac_test(tb, tb.baset_phy.rx, tb.baset_phy.tx))
+        tests.append(cocotb.start_soon(mac_test(tb, tb.baset_phy.rx, tb.baset_phy.tx)))
     elif hasattr(dut, "baset_mac_rgmii"):
-        baset_test_cr = cocotb.start_soon(mac_test(tb, tb.baset_phy.rx, tb.baset_phy.tx))
+        tests.append(cocotb.start_soon(mac_test(tb, tb.baset_phy.rx, tb.baset_phy.tx)))
     elif hasattr(dut, "baset_mac_sgmii"):
-        baset_test_cr = cocotb.start_soon(mac_test(tb, tb.sgmii_source, tb.sgmii_sink))
+        tests.append(cocotb.start_soon(mac_test(tb, tb.sgmii_source, tb.sgmii_sink)))
 
     tb.log.info("Start SFP MAC loopback test")
 
-    sfp_test_cr = cocotb.start_soon(mac_test(tb, tb.sfp_source, tb.sfp_sink))
+    tests.append(cocotb.start_soon(mac_test(tb, tb.sfp_source, tb.sfp_sink)))
 
-    await Combine(baset_test_cr, sfp_test_cr)
+    await Combine(*tests)
 
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -203,6 +205,7 @@ def test_fpga_core(request, phy_type):
         os.path.join(taxi_src_dir, "eth", "rtl", "taxi_eth_mac_1g_rgmii_fifo.f"),
         os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_if_uart.f"),
         os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_switch.sv"),
+        os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_mod_i2c_master.f"),
         os.path.join(taxi_src_dir, "xfcp", "rtl", "taxi_xfcp_mod_stats.f"),
         os.path.join(taxi_src_dir, "sync", "rtl", "taxi_sync_reset.sv"),
         os.path.join(taxi_src_dir, "sync", "rtl", "taxi_sync_signal.sv"),

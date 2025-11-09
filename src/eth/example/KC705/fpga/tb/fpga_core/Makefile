@@ -28,6 +28,7 @@ VERILOG_SOURCES += $(TAXI_SRC_DIR)/eth/rtl/taxi_eth_mac_1g_gmii_fifo.f
 VERILOG_SOURCES += $(TAXI_SRC_DIR)/eth/rtl/taxi_eth_mac_1g_rgmii_fifo.f
 VERILOG_SOURCES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_if_uart.f
 VERILOG_SOURCES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_switch.sv
+VERILOG_SOURCES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_mod_i2c_master.f
 VERILOG_SOURCES += $(TAXI_SRC_DIR)/xfcp/rtl/taxi_xfcp_mod_stats.f
 VERILOG_SOURCES += $(TAXI_SRC_DIR)/sync/rtl/taxi_sync_reset.sv
 VERILOG_SOURCES += $(TAXI_SRC_DIR)/sync/rtl/taxi_sync_signal.sv

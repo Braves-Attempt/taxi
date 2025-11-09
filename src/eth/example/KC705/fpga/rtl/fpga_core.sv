@@ -59,6 +59,14 @@ module fpga_core #
     output wire logic        uart_cts,
 
     /*
+     * I2C
+     */
+    input  wire logic        i2c_scl_i,
+    output wire logic        i2c_scl_o,
+    input  wire logic        i2c_sda_i,
+    output wire logic        i2c_sda_o,
+
+    /*
      * Ethernet: 1000BASE-X SFP
      */
     input  wire logic        sfp_gmii_clk,
@@ -136,7 +144,7 @@ xfcp_if_uart_inst (
     .prescale(16'(125000000/921600))
 );
 
-taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[1](), xfcp_sw_us[1]();
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[2](), xfcp_sw_us[2]();
 
 taxi_xfcp_switch #(
     .XFCP_ID_STR("KC705"),
@@ -207,6 +215,30 @@ stat_mux_inst (
      * AXI4-Stream output (source)
      */
     .m_axis(axis_stat)
+);
+
+// I2C
+taxi_xfcp_mod_i2c_master #(
+    .XFCP_EXT_ID_STR("I2C"),
+    .DEFAULT_PRESCALE(16'(125000000/200000/4))
+)
+xfcp_mod_i2c_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * XFCP upstream port
+     */
+    .xfcp_usp_ds(xfcp_sw_ds[1]),
+    .xfcp_usp_us(xfcp_sw_us[1]),
+
+    /*
+     * I2C interface
+     */
+    .i2c_scl_i(i2c_scl_i),
+    .i2c_scl_o(i2c_scl_o),
+    .i2c_sda_i(i2c_sda_i),
+    .i2c_sda_o(i2c_sda_o)
 );
 
 // BASE-T PHY
