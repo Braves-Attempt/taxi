@@ -172,6 +172,7 @@ Example designs are provided for several different FPGA boards, showcasing many 
 *  Xilinx KC705 (Xilinx Kintex 7 XC7K325T)
 *  Xilinx KCU105 (Xilinx Kintex UltraScale XCKU040)
 *  Xilinx Kria KR260 (Xilinx Kria K26 SoM / Zynq UltraScale+ XCK26)
+*  Xilinx VC709 (Xilinx Virtex 7 XC7V690T)
 *  Xilinx VCU108 (Xilinx Virtex UltraScale XCVU095)
 *  Xilinx VCU118 (Xilinx Virtex UltraScale+ XCVU9P)
 *  Xilinx VCU1525 (Xilinx Virtex UltraScale+ XCVU9P)
