@@ -40,6 +40,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  SV interface for AXI lite
     *  AXI lite to AXI adapter
     *  AXI lite to APB adapter
+    *  Crossbar
     *  Interconnect
     *  Register slice
     *  Width converter
