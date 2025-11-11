@@ -56,15 +56,15 @@ module taxi_axil_interconnect_wr #
 );
 
 // extract parameters
-localparam DATA_W = s_axil_wr.DATA_W;
-localparam S_ADDR_W = s_axil_wr.ADDR_W;
-localparam STRB_W = s_axil_wr.STRB_W;
-localparam logic AWUSER_EN = s_axil_wr.AWUSER_EN && m_axil_wr.AWUSER_EN;
-localparam AWUSER_W = s_axil_wr.AWUSER_W;
-localparam logic WUSER_EN = s_axil_wr.WUSER_EN && m_axil_wr.WUSER_EN;
-localparam WUSER_W = s_axil_wr.WUSER_W;
-localparam logic BUSER_EN = s_axil_wr.BUSER_EN && m_axil_wr.BUSER_EN;
-localparam BUSER_W = s_axil_wr.BUSER_W;
+localparam DATA_W = s_axil_wr[0].DATA_W;
+localparam S_ADDR_W = s_axil_wr[0].ADDR_W;
+localparam STRB_W = s_axil_wr[0].STRB_W;
+localparam logic AWUSER_EN = s_axil_wr[0].AWUSER_EN && m_axil_wr.AWUSER_EN;
+localparam AWUSER_W = s_axil_wr[0].AWUSER_W;
+localparam logic WUSER_EN = s_axil_wr[0].WUSER_EN && m_axil_wr.WUSER_EN;
+localparam WUSER_W = s_axil_wr[0].WUSER_W;
+localparam logic BUSER_EN = s_axil_wr[0].BUSER_EN && m_axil_wr.BUSER_EN;
+localparam BUSER_W = s_axil_wr[0].BUSER_W;
 
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
@@ -102,7 +102,7 @@ endfunction
 localparam [M_COUNT*M_REGIONS-1:0][ADDR_W-1:0] M_BASE_ADDR_INT = M_BASE_ADDR != 0 ? (M_COUNT*M_REGIONS*ADDR_W)'(M_BASE_ADDR) : calcBaseAddrs(0);
 
 // check configuration
-if (s_axil_wr.ADDR_W != ADDR_W)
+if (s_axil_wr[0].ADDR_W != ADDR_W)
     $fatal(0, "Error: Interface ADDR_W parameter mismatch (instance %m)");
 
 if (m_axil_wr.DATA_W != DATA_W)

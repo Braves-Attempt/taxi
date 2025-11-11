@@ -56,15 +56,15 @@ module taxi_axi_interconnect_rd #
 );
 
 // extract parameters
-localparam DATA_W = s_axi_rd.DATA_W;
-localparam S_ADDR_W = s_axi_rd.ADDR_W;
-localparam STRB_W = s_axi_rd.STRB_W;
-localparam S_ID_W = s_axi_rd.ID_W;
+localparam DATA_W = s_axi_rd[0].DATA_W;
+localparam S_ADDR_W = s_axi_rd[0].ADDR_W;
+localparam STRB_W = s_axi_rd[0].STRB_W;
+localparam S_ID_W = s_axi_rd[0].ID_W;
 localparam M_ID_W = m_axi_rd.ID_W;
-localparam logic ARUSER_EN = s_axi_rd.ARUSER_EN && m_axi_rd.ARUSER_EN;
-localparam ARUSER_W = s_axi_rd.ARUSER_W;
-localparam logic RUSER_EN = s_axi_rd.RUSER_EN && m_axi_rd.RUSER_EN;
-localparam RUSER_W = s_axi_rd.RUSER_W;
+localparam logic ARUSER_EN = s_axi_rd[0].ARUSER_EN && m_axi_rd.ARUSER_EN;
+localparam ARUSER_W = s_axi_rd[0].ARUSER_W;
+localparam logic RUSER_EN = s_axi_rd[0].RUSER_EN && m_axi_rd.RUSER_EN;
+localparam RUSER_W = s_axi_rd[0].RUSER_W;
 
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
@@ -102,7 +102,7 @@ endfunction
 localparam [M_COUNT*M_REGIONS-1:0][ADDR_W-1:0] M_BASE_ADDR_INT = M_BASE_ADDR != 0 ? (M_COUNT*M_REGIONS*ADDR_W)'(M_BASE_ADDR) : calcBaseAddrs(0);
 
 // check configuration
-if (s_axi_rd.ADDR_W != ADDR_W)
+if (s_axi_rd[0].ADDR_W != ADDR_W)
     $fatal(0, "Error: Interface ADDR_W parameter mismatch (instance %m)");
 
 if (m_axi_rd.DATA_W != DATA_W)
@@ -111,12 +111,10 @@ if (m_axi_rd.DATA_W != DATA_W)
 if (m_axi_rd.STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
-initial begin
-    if (M_REGIONS < 1 || M_REGIONS > 16) begin
-        $error("Error: M_REGIONS must be between 1 and 16 (instance %m)");
-        $finish;
-    end
+if (M_REGIONS < 1 || M_REGIONS > 16)
+    $fatal(0, "Error: M_REGIONS must be between 1 and 16 (instance %m)");
 
+initial begin
     for (integer i = 0; i < M_COUNT*M_REGIONS; i = i + 1) begin
         /* verilator lint_off UNSIGNED */
         if (M_ADDR_W_INT[i] != 0 && (M_ADDR_W_INT[i] < $clog2(STRB_W) || M_ADDR_W_INT[i] > ADDR_W)) begin
