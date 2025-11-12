@@ -32,7 +32,7 @@ module taxi_axil_crossbar_wr #
     // Master interface base addresses
     // M_COUNT concatenated fields of M_REGIONS concatenated fields of ADDR_W bits
     // set to zero for default addressing based on M_ADDR_W
-    parameter M_BASE_ADDR = 0,
+    parameter M_BASE_ADDR = '0,
     // Master interface address widths
     // M_COUNT concatenated fields of M_REGIONS concatenated fields of 32 bits
     parameter M_ADDR_W = {M_COUNT{{M_REGIONS{32'd24}}}},
@@ -108,19 +108,22 @@ if (m_axil_wr[0].DATA_W != DATA_W)
 if (m_axil_wr[0].STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
-wire [ADDR_W-1:0]   int_s_axil_awaddr[S_COUNT];
-wire [2:0]          int_s_axil_awprot[S_COUNT];
+wire [ADDR_W-1:0]    int_s_axil_awaddr[S_COUNT];
+wire [2:0]           int_s_axil_awprot[S_COUNT];
+wire [AWUSER_W-1:0]  int_s_axil_awuser[S_COUNT];
 
 logic [M_COUNT-1:0]  int_axil_awvalid[S_COUNT];
 logic [S_COUNT-1:0]  int_axil_awready[M_COUNT];
 
-wire [DATA_W-1:0]   int_s_axil_wdata[S_COUNT];
-wire [STRB_W-1:0]   int_s_axil_wstrb[S_COUNT];
+wire [DATA_W-1:0]    int_s_axil_wdata[S_COUNT];
+wire [STRB_W-1:0]    int_s_axil_wstrb[S_COUNT];
+wire [WUSER_W-1:0]   int_s_axil_wuser[S_COUNT];
 
 logic [M_COUNT-1:0]  int_axil_wvalid[S_COUNT];
 logic [S_COUNT-1:0]  int_axil_wready[M_COUNT];
 
-wire [1:0]          int_m_axil_bresp[M_COUNT];
+wire [1:0]           int_m_axil_bresp[M_COUNT];
+wire [BUSER_W-1:0]   int_m_axil_buser[M_COUNT];
 
 logic [S_COUNT-1:0]  int_axil_bvalid[M_COUNT];
 logic [M_COUNT-1:0]  int_axil_bready[S_COUNT];
@@ -136,11 +139,7 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
         .WUSER_EN(s_axil_wr[0].WUSER_EN),
         .WUSER_W(s_axil_wr[0].WUSER_W),
         .BUSER_EN(s_axil_wr[0].BUSER_EN),
-        .BUSER_W(s_axil_wr[0].BUSER_W),
-        .ARUSER_EN(s_axil_wr[0].ARUSER_EN),
-        .ARUSER_W(s_axil_wr[0].ARUSER_W),
-        .RUSER_EN(s_axil_wr[0].RUSER_EN),
-        .RUSER_W(s_axil_wr[0].RUSER_W)
+        .BUSER_W(s_axil_wr[0].BUSER_W)
     ) int_axil();
 
     // S side register
@@ -287,6 +286,7 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
 
     assign int_s_axil_awaddr[m] = int_axil.awaddr;
     assign int_s_axil_awprot[m] = int_axil.awprot;
+    assign int_s_axil_awuser[m] = int_axil.awuser;
 
     always_comb begin
         int_axil_awvalid[m] = '0;
@@ -326,6 +326,7 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
     // write data forwarding
     assign int_s_axil_wdata[m] = int_axil.wdata;
     assign int_s_axil_wstrb[m] = int_axil.wstrb;
+    assign int_s_axil_wuser[m] = int_axil.wuser;
 
     always_comb begin
         int_axil_wvalid[m] = '0;
@@ -346,6 +347,7 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
 
     // write response mux
     assign int_axil.bresp = b_decerr ? 2'b11 : int_m_axil_bresp[b_select];
+    assign int_axil.buser = b_decerr ? '0 : int_m_axil_buser[b_select];
     assign int_axil.bvalid = (b_decerr ? 1'b1 : int_axil_bvalid[b_select][m]) && b_valid;
 
     always_comb begin
@@ -368,11 +370,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
         .WUSER_EN(m_axil_wr[0].WUSER_EN),
         .WUSER_W(m_axil_wr[0].WUSER_W),
         .BUSER_EN(m_axil_wr[0].BUSER_EN),
-        .BUSER_W(m_axil_wr[0].BUSER_W),
-        .ARUSER_EN(m_axil_wr[0].ARUSER_EN),
-        .ARUSER_W(m_axil_wr[0].ARUSER_W),
-        .RUSER_EN(m_axil_wr[0].RUSER_EN),
-        .RUSER_W(m_axil_wr[0].RUSER_W)
+        .BUSER_W(m_axil_wr[0].BUSER_W)
     ) int_axil();
 
     // response routing FIFO
@@ -466,6 +464,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     // address mux
     assign int_axil.awaddr   = int_s_axil_awaddr[a_grant_index];
     assign int_axil.awprot   = int_s_axil_awprot[a_grant_index];
+    assign int_axil.awuser   = int_s_axil_awuser[a_grant_index];
     assign int_axil.awvalid  = int_axil_awvalid[a_grant_index][n] && a_grant_valid;
 
     always_comb begin
@@ -484,6 +483,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     // write data mux
     assign int_axil.wdata   = int_s_axil_wdata[w_select_reg];
     assign int_axil.wstrb   = int_s_axil_wstrb[w_select_reg];
+    assign int_axil.wuser   = int_s_axil_wuser[w_select_reg];
     assign int_axil.wvalid  = int_axil_wvalid[w_select_reg][n] && w_select_valid_reg;
 
     always_comb begin
@@ -519,6 +519,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     wire [CL_S_COUNT_INT-1:0] b_select = S_COUNT > 1 ? fifo_select[fifo_rd_ptr_reg[FIFO_AW-1:0]] : '0;
 
     assign int_m_axil_bresp[n] = int_axil.bresp;
+    assign int_m_axil_buser[n] = int_axil.buser;
 
     always_comb begin
         int_axil_bvalid[n] = '0;

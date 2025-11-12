@@ -100,14 +100,16 @@ if (m_axil_rd[0].DATA_W != DATA_W)
 if (m_axil_rd[0].STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
-wire [ADDR_W-1:0]   int_s_axil_araddr[S_COUNT];
-wire [2:0]          int_s_axil_arprot[S_COUNT];
+wire [ADDR_W-1:0]    int_s_axil_araddr[S_COUNT];
+wire [2:0]           int_s_axil_arprot[S_COUNT];
+wire [ARUSER_W-1:0]  int_s_axil_aruser[S_COUNT];
 
 logic [M_COUNT-1:0]  int_axil_arvalid[S_COUNT];
 logic [S_COUNT-1:0]  int_axil_arready[M_COUNT];
 
-wire [DATA_W-1:0]   int_m_axil_rdata[M_COUNT];
-wire [1:0]          int_m_axil_rresp[M_COUNT];
+wire [DATA_W-1:0]    int_m_axil_rdata[M_COUNT];
+wire [1:0]           int_m_axil_rresp[M_COUNT];
+wire [RUSER_W-1:0]   int_m_axil_ruser[M_COUNT];
 
 logic [S_COUNT-1:0]  int_axil_rvalid[M_COUNT];
 logic [M_COUNT-1:0]  int_axil_rready[S_COUNT];
@@ -118,12 +120,6 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
         .DATA_W(s_axil_rd[0].DATA_W),
         .ADDR_W(s_axil_rd[0].ADDR_W),
         .STRB_W(s_axil_rd[0].STRB_W),
-        .AWUSER_EN(s_axil_rd[0].AWUSER_EN),
-        .AWUSER_W(s_axil_rd[0].AWUSER_W),
-        .WUSER_EN(s_axil_rd[0].WUSER_EN),
-        .WUSER_W(s_axil_rd[0].WUSER_W),
-        .BUSER_EN(s_axil_rd[0].BUSER_EN),
-        .BUSER_W(s_axil_rd[0].BUSER_W),
         .ARUSER_EN(s_axil_rd[0].ARUSER_EN),
         .ARUSER_W(s_axil_rd[0].ARUSER_W),
         .RUSER_EN(s_axil_rd[0].RUSER_EN),
@@ -270,6 +266,7 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
 
     assign int_s_axil_araddr[m] = int_axil.araddr;
     assign int_s_axil_arprot[m] = int_axil.arprot;
+    assign int_s_axil_aruser[m] = int_axil.aruser;
 
     always_comb begin
         int_axil_arvalid[m] = '0;
@@ -291,6 +288,7 @@ for (genvar m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
     // read response mux
     assign int_axil.rdata  = r_decerr ? '0 : int_m_axil_rdata[r_select];
     assign int_axil.rresp  = r_decerr ? 2'b11 : int_m_axil_rresp[r_select];
+    assign int_axil.ruser  = r_decerr ? '0 : int_m_axil_ruser[r_select];
     assign int_axil.rvalid = (r_decerr ? 1'b1 : int_axil_rvalid[r_select][m]) && r_valid;
 
     always_comb begin
@@ -308,12 +306,6 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
         .DATA_W(m_axil_rd[0].DATA_W),
         .ADDR_W(m_axil_rd[0].ADDR_W),
         .STRB_W(m_axil_rd[0].STRB_W),
-        .AWUSER_EN(m_axil_rd[0].AWUSER_EN),
-        .AWUSER_W(m_axil_rd[0].AWUSER_W),
-        .WUSER_EN(m_axil_rd[0].WUSER_EN),
-        .WUSER_W(m_axil_rd[0].WUSER_W),
-        .BUSER_EN(m_axil_rd[0].BUSER_EN),
-        .BUSER_W(m_axil_rd[0].BUSER_W),
         .ARUSER_EN(m_axil_rd[0].ARUSER_EN),
         .ARUSER_W(m_axil_rd[0].ARUSER_W),
         .RUSER_EN(m_axil_rd[0].RUSER_EN),
@@ -407,6 +399,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     // address mux
     assign int_axil.araddr   = int_s_axil_araddr[a_grant_index];
     assign int_axil.arprot   = int_s_axil_arprot[a_grant_index];
+    assign int_axil.aruser   = int_s_axil_aruser[a_grant_index];
     assign int_axil.arvalid  = int_axil_arvalid[a_grant_index][n] && a_grant_valid;
 
     always_comb begin
@@ -427,6 +420,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
 
     assign int_m_axil_rdata[n] = int_axil.rdata;
     assign int_m_axil_rresp[n] = int_axil.rresp;
+    assign int_m_axil_ruser[n] = int_axil.ruser;
 
     always_comb begin
         int_axil_rvalid[n] = '0;
