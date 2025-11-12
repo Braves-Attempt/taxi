@@ -31,6 +31,7 @@ To facilitate the dual-license model, contributions to the project can only be a
 *  AXI
     *  SV interface for AXI
     *  AXI to AXI lite adapter
+    *  Crossbar
     *  Interconnect
     *  Register slice
     *  Width converter
