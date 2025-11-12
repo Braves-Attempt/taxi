@@ -31,9 +31,9 @@ process_f_files = $(foreach f,$1,$(if $(filter %.f,$f),$(call process_f_file,$f)
 uniq_base = $(if $1,$(call uniq_base,$(foreach f,$1,$(if $(filter-out $(notdir $(lastword $1)),$(notdir $f)),$f,))) $(lastword $1))
 VERILOG_SOURCES := $(call uniq_base,$(call process_f_files,$(VERILOG_SOURCES)))
 
-REG_TYPE ?= 1
-
 # module parameters
+export PARAM_S_COUNT := 4
+export PARAM_M_COUNT := 4
 export PARAM_DATA_W := 32
 export PARAM_ADDR_W := 32
 export PARAM_STRB_W := $(shell expr $(PARAM_DATA_W) / 8 )
