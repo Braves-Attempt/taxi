@@ -91,7 +91,7 @@ To facilitate the dual-license model, contributions to the project can only be a
     *  MII PHY interface
     *  GMII PHY interface
     *  RGMII PHY interface
-    *  10G/25G MAC/PHY/GT wrapper for UltraScale/UltraScale+
+    *  10G/25G MAC/PHY/GT wrapper for 7-series/UltraScale/UltraScale+
 *  General input/output
     *  Switch debouncer
     *  LED shift register driver
