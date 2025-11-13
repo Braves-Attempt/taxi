@@ -61,9 +61,9 @@ localparam S_ADDR_W = s_axi_rd[0].ADDR_W;
 localparam STRB_W = s_axi_rd[0].STRB_W;
 localparam S_ID_W = s_axi_rd[0].ID_W;
 localparam M_ID_W = m_axi_rd.ID_W;
-localparam logic ARUSER_EN = s_axi_rd[0].ARUSER_EN && m_axi_rd.ARUSER_EN;
+localparam logic ARUSER_EN = s_axi_rd[0].ARUSER_EN && m_axi_rd[0].ARUSER_EN;
 localparam ARUSER_W = s_axi_rd[0].ARUSER_W;
-localparam logic RUSER_EN = s_axi_rd[0].RUSER_EN && m_axi_rd.RUSER_EN;
+localparam logic RUSER_EN = s_axi_rd[0].RUSER_EN && m_axi_rd[0].RUSER_EN;
 localparam RUSER_W = s_axi_rd[0].RUSER_W;
 
 localparam CL_S_COUNT = $clog2(S_COUNT);
@@ -105,10 +105,10 @@ localparam [M_COUNT*M_REGIONS-1:0][ADDR_W-1:0] M_BASE_ADDR_INT = M_BASE_ADDR != 
 if (s_axi_rd[0].ADDR_W != ADDR_W)
     $fatal(0, "Error: Interface ADDR_W parameter mismatch (instance %m)");
 
-if (m_axi_rd.DATA_W != DATA_W)
+if (m_axi_rd[0].DATA_W != DATA_W)
     $fatal(0, "Error: Interface DATA_W parameter mismatch (instance %m)");
 
-if (m_axi_rd.STRB_W != STRB_W)
+if (m_axi_rd[0].STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
 if (M_REGIONS < 1 || M_REGIONS > 16)
