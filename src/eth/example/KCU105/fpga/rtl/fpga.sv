@@ -55,6 +55,13 @@ module fpga #
     output wire logic        uart_cts,
 
     /*
+     * I2C
+     */
+    inout  wire logic        i2c_scl,
+    inout  wire logic        i2c_sda,
+    output wire logic        i2c_mux_reset,
+
+    /*
      * Ethernet: 1000BASE-T SGMII
      */
     input  wire logic        phy_sgmii_rx_p,
@@ -98,12 +105,12 @@ wire mmcm_clkfb;
 
 IBUFGDS #(
    .DIFF_TERM("FALSE"),
-   .IBUF_LOW_PWR("FALSE")   
+   .IBUF_LOW_PWR("FALSE")
 )
 clk_125mhz_ibufg_inst (
    .O   (clk_125mhz_ibufg),
    .I   (clk_125mhz_p),
-   .IB  (clk_125mhz_n) 
+   .IB  (clk_125mhz_n)
 );
 
 // MMCM instance
@@ -249,6 +256,17 @@ sync_signal_inst (
 );
 
 wire [7:0] led_int;
+
+// I2C
+wire i2c_scl_i;
+wire i2c_scl_o;
+wire i2c_sda_i;
+wire i2c_sda_o;
+
+assign i2c_scl_i = i2c_scl;
+assign i2c_scl = i2c_scl_o ? 1'bz : 1'b0;
+assign i2c_sda_i = i2c_sda;
+assign i2c_sda = i2c_sda_o ? 1'bz : 1'b0;
 
 // SGMII interface to PHY
 wire phy_gmii_clk_int;
@@ -572,6 +590,14 @@ core_inst (
     .uart_txd(uart_txd),
     .uart_rts(uart_rts_int),
     .uart_cts(uart_cts),
+
+    /*
+     * I2C
+     */
+    .i2c_scl_i(i2c_scl_i),
+    .i2c_scl_o(i2c_scl_o),
+    .i2c_sda_i(i2c_sda_i),
+    .i2c_sda_o(i2c_sda_o),
 
     /*
      * Ethernet: 1000BASE-T SGMII
