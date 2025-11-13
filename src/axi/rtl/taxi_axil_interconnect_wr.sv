@@ -66,7 +66,7 @@ localparam WUSER_W = s_axil_wr[0].WUSER_W;
 localparam logic BUSER_EN = s_axil_wr[0].BUSER_EN && m_axil_wr[0].BUSER_EN;
 localparam BUSER_W = s_axil_wr[0].BUSER_W;
 
-localparam AXIL_M_ADDR_W = m_axi_wr[0].ADDR_W;
+localparam AXIL_M_ADDR_W = m_axil_wr[0].ADDR_W;
 
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);

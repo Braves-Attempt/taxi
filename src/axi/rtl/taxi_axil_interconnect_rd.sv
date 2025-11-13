@@ -229,7 +229,7 @@ for (genvar n = 0; n < S_COUNT; n = n + 1) begin
 end
 
 for (genvar n = 0; n < M_COUNT; n = n + 1) begin
-    assign m_axil_rd[n].araddr = AXIL_M_ADDR_W'(axil_addr_reg);
+    assign m_axil_rd[n].araddr = AXIL_M_ADDR_W'(axil_araddr_reg);
     assign m_axil_rd[n].arprot = axil_arprot_reg;
     assign m_axil_rd[n].aruser = ARUSER_EN ? axil_aruser_reg : '0;
     assign m_axil_rd[n].arvalid = m_axil_arvalid_reg[n];
