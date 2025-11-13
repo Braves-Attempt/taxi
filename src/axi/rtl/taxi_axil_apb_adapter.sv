@@ -73,7 +73,7 @@ if (AXIL_BYTE_W * AXIL_STRB_W != AXIL_DATA_W)
     $fatal(0, "Error: AXI slave interface data width not evenly divisible (instance %m)");
 
 if (APB_BYTE_W * APB_STRB_W != APB_DATA_W)
-    $fatal(0, "Error: AXI master interface data width not evenly divisible (instance %m)");
+    $fatal(0, "Error: APB master interface data width not evenly divisible (instance %m)");
 
 if (AXIL_BYTE_W != APB_BYTE_W)
     $fatal(0, "Error: byte size mismatch (instance %m)");
@@ -287,7 +287,7 @@ if (APB_BYTE_LANES == AXIL_BYTE_LANES) begin : translate
             s_axil_rvalid_reg <= 1'b0;
 
             m_apb_psel_reg <= 1'b0;
-            m_apb_penable_reg <= 1'b0;            
+            m_apb_penable_reg <= 1'b0;
         end
     end
 
@@ -486,7 +486,7 @@ end else if (APB_BYTE_LANES > AXIL_BYTE_LANES) begin : upsize
             s_axil_rvalid_reg <= 1'b0;
 
             m_apb_psel_reg <= 1'b0;
-            m_apb_penable_reg <= 1'b0;            
+            m_apb_penable_reg <= 1'b0;
         end
     end
 
@@ -726,7 +726,7 @@ end else begin : downsize
             s_axil_rvalid_reg <= 1'b0;
 
             m_apb_psel_reg <= 1'b0;
-            m_apb_penable_reg <= 1'b0;   
+            m_apb_penable_reg <= 1'b0;
         end
     end
 
