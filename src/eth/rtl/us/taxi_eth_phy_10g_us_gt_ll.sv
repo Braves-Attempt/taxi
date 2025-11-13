@@ -133,17 +133,6 @@ if (DATA_W != 32)
 if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
 
-wire xcvr_ctrl_rst_sync;
-
-taxi_sync_reset #(
-    .N(4)
-)
-reset_sync_inst (
-    .clk(xcvr_ctrl_clk),
-    .rst(xcvr_ctrl_rst),
-    .out(xcvr_ctrl_rst_sync)
-);
-
 wire gt_qpll0_pd;
 wire gt_qpll0_reset;
 wire gt_qpll1_pd;
@@ -160,7 +149,7 @@ if (HAS_COMMON) begin : common_ctrl
     )
     qpll0_reset_inst (
         .clk(xcvr_ctrl_clk),
-        .rst(xcvr_ctrl_rst_sync),
+        .rst(xcvr_ctrl_rst),
 
         /*
          * GT
@@ -183,7 +172,7 @@ if (HAS_COMMON) begin : common_ctrl
     )
     qpll1_reset_inst (
         .clk(xcvr_ctrl_clk),
-        .rst(xcvr_ctrl_rst_sync),
+        .rst(xcvr_ctrl_rst),
 
         /*
          * GT
@@ -249,7 +238,7 @@ taxi_gt_tx_reset #(
 )
 gt_tx_reset_inst (
     .clk(xcvr_ctrl_clk),
-    .rst(xcvr_ctrl_rst_sync),
+    .rst(xcvr_ctrl_rst),
 
     /*
      * GT
@@ -317,7 +306,7 @@ taxi_gt_rx_reset #(
 )
 gt_rx_reset_inst (
     .clk(xcvr_ctrl_clk),
-    .rst(xcvr_ctrl_rst_sync),
+    .rst(xcvr_ctrl_rst),
 
     /*
      * GT

@@ -268,6 +268,17 @@ module taxi_eth_mac_25g_us #
     input  wire logic                 cfg_rx_pfc_en[CNT] = '{CNT{1'b0}}
 );
 
+wire xcvr_ctrl_rst_sync;
+
+taxi_sync_reset #(
+    .N(4)
+)
+reset_sync_inst (
+    .clk(xcvr_ctrl_clk),
+    .rst(xcvr_ctrl_rst),
+    .out(xcvr_ctrl_rst_sync)
+);
+
 // statistics
 localparam STAT_TX_CNT = STAT_TX_LEVEL == 0 ? 8 : (STAT_TX_LEVEL == 1 ? 16: 32);
 localparam STAT_RX_CNT = STAT_RX_LEVEL == 0 ? 8 : (STAT_RX_LEVEL == 1 ? 16: 32);
@@ -395,7 +406,7 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
     )
     ch_inst (
         .xcvr_ctrl_clk(xcvr_ctrl_clk),
-        .xcvr_ctrl_rst(xcvr_ctrl_rst),
+        .xcvr_ctrl_rst(xcvr_ctrl_rst_sync),
 
         /*
          * Common
