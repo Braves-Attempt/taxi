@@ -87,6 +87,8 @@ localparam ARUSER_W = s_axi_rd[0].ARUSER_W;
 localparam logic RUSER_EN = s_axi_rd[0].RUSER_EN && m_axi_rd[0].RUSER_EN;
 localparam RUSER_W = s_axi_rd[0].RUSER_W;
 
+localparam AXI_M_ADDR_W = m_axi_rd[0].ADDR_W;
+
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
@@ -451,7 +453,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     end else begin
         assign int_axi.arid = int_s_axi_arid[a_grant_index];
     end
-    assign int_axi.araddr   = int_s_axi_araddr[a_grant_index];
+    assign int_axi.araddr   = AXI_M_ADDR_W'(int_s_axi_araddr[a_grant_index]);
     assign int_axi.arlen    = int_s_axi_arlen[a_grant_index];
     assign int_axi.arsize   = int_s_axi_arsize[a_grant_index];
     assign int_axi.arburst  = int_s_axi_arburst[a_grant_index];

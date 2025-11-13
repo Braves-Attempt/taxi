@@ -90,6 +90,8 @@ localparam WUSER_W = s_axil_wr[0].WUSER_W;
 localparam logic BUSER_EN = s_axil_wr[0].BUSER_EN && m_axil_wr[0].BUSER_EN;
 localparam BUSER_W = s_axil_wr[0].BUSER_W;
 
+localparam AXIL_M_ADDR_W = m_axil_wr[0].ADDR_W;
+
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
@@ -462,7 +464,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     end
 
     // address mux
-    assign int_axil.awaddr   = int_s_axil_awaddr[a_grant_index];
+    assign int_axil.awaddr   = AXIL_M_ADDR_W'(int_s_axil_awaddr[a_grant_index]);
     assign int_axil.awprot   = int_s_axil_awprot[a_grant_index];
     assign int_axil.awuser   = int_s_axil_awuser[a_grant_index];
     assign int_axil.awvalid  = int_axil_awvalid[a_grant_index][n] && a_grant_valid;

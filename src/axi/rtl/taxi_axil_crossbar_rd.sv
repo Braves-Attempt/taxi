@@ -82,6 +82,8 @@ localparam ARUSER_W = s_axil_rd[0].ARUSER_W;
 localparam logic RUSER_EN = s_axil_rd[0].RUSER_EN && m_axil_rd[0].RUSER_EN;
 localparam RUSER_W = s_axil_rd[0].RUSER_W;
 
+localparam AXIL_M_ADDR_W = m_axil_rd[0].ADDR_W;
+
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
@@ -397,7 +399,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     end
 
     // address mux
-    assign int_axil.araddr   = int_s_axil_araddr[a_grant_index];
+    assign int_axil.araddr   = AXIL_M_ADDR_W'(int_s_axil_araddr[a_grant_index]);
     assign int_axil.arprot   = int_s_axil_arprot[a_grant_index];
     assign int_axil.aruser   = int_s_axil_aruser[a_grant_index];
     assign int_axil.arvalid  = int_axil_arvalid[a_grant_index][n] && a_grant_valid;

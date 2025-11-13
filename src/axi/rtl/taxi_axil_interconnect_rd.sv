@@ -64,6 +64,8 @@ localparam ARUSER_W = s_axil_rd[0].ARUSER_W;
 localparam logic RUSER_EN = s_axil_rd[0].RUSER_EN && m_axil_rd[0].RUSER_EN;
 localparam RUSER_W = s_axil_rd[0].RUSER_W;
 
+localparam AXIL_M_ADDR_W = m_axil_rd[0].ADDR_W;
+
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
@@ -76,12 +78,12 @@ localparam [M_COUNT-1:0] M_SECURE_INT = M_SECURE;
 // default address computation
 function [M_COUNT*M_REGIONS-1:0][ADDR_W-1:0] calcBaseAddrs(input [31:0] dummy);
     logic [ADDR_W-1:0] base;
-    logic [ADDR_W-1:0] width;
+    integer width;
     logic [ADDR_W-1:0] size;
     logic [ADDR_W-1:0] mask;
     begin
         calcBaseAddrs = '0;
-        base = 0;
+        base = '0;
         for (integer i = 0; i < M_COUNT*M_REGIONS; i = i + 1) begin
             width = M_ADDR_W_INT[i];
             mask = {ADDR_W{1'b1}} >> (ADDR_W - width);
@@ -227,7 +229,7 @@ for (genvar n = 0; n < S_COUNT; n = n + 1) begin
 end
 
 for (genvar n = 0; n < M_COUNT; n = n + 1) begin
-    assign m_axil_rd[n].araddr = axil_araddr_reg;
+    assign m_axil_rd[n].araddr = AXIL_M_ADDR_W'(axil_addr_reg);
     assign m_axil_rd[n].arprot = axil_arprot_reg;
     assign m_axil_rd[n].aruser = ARUSER_EN ? axil_aruser_reg : '0;
     assign m_axil_rd[n].arvalid = m_axil_arvalid_reg[n];

@@ -96,12 +96,12 @@ localparam [M_COUNT-1:0] M_SECURE_INT = M_SECURE;
 // default address computation
 function [M_COUNT*M_REGIONS-1:0][ADDR_W-1:0] calcBaseAddrs(input [31:0] dummy);
     logic [ADDR_W-1:0] base;
-    logic [ADDR_W-1:0] width;
+    integer width;
     logic [ADDR_W-1:0] size;
     logic [ADDR_W-1:0] mask;
     begin
         calcBaseAddrs = '0;
-        base = 0;
+        base = '0;
         for (integer i = 0; i < M_COUNT*M_REGIONS; i = i + 1) begin
             width = M_ADDR_W_INT[i];
             mask = {ADDR_W{1'b1}} >> (ADDR_W - width);

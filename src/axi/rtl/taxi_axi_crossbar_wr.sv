@@ -95,6 +95,8 @@ localparam WUSER_W = s_axi_wr[0].WUSER_W;
 localparam logic BUSER_EN = s_axi_wr[0].BUSER_EN && m_axi_wr[0].BUSER_EN;
 localparam BUSER_W = s_axi_wr[0].BUSER_W;
 
+localparam AXI_M_ADDR_W = m_axi_wr[0].ADDR_W;
+
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
@@ -502,7 +504,7 @@ for (genvar n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
     end else begin
         assign int_axi.awid = int_s_axi_awid[a_grant_index];
     end
-    assign int_axi.awaddr   = int_s_axi_awaddr[a_grant_index];
+    assign int_axi.awaddr   = AXI_M_ADDR_W'(int_s_axi_awaddr[a_grant_index]);
     assign int_axi.awlen    = int_s_axi_awlen[a_grant_index];
     assign int_axi.awsize   = int_s_axi_awsize[a_grant_index];
     assign int_axi.awburst  = int_s_axi_awburst[a_grant_index];

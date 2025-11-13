@@ -68,6 +68,8 @@ localparam WUSER_W = s_axi_wr[0].WUSER_W;
 localparam logic BUSER_EN = s_axi_wr[0].BUSER_EN && m_axi_wr[0].BUSER_EN;
 localparam BUSER_W = s_axi_wr[0].BUSER_W;
 
+localparam AXI_M_ADDR_W = m_axi_wr[0].ADDR_W;
+
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
@@ -80,12 +82,12 @@ localparam [M_COUNT-1:0] M_SECURE_INT = M_SECURE;
 // default address computation
 function [M_COUNT*M_REGIONS-1:0][ADDR_W-1:0] calcBaseAddrs(input [31:0] dummy);
     logic [ADDR_W-1:0] base;
-    logic [ADDR_W-1:0] width;
+    integer width;
     logic [ADDR_W-1:0] size;
     logic [ADDR_W-1:0] mask;
     begin
         calcBaseAddrs = '0;
-        base = 0;
+        base = '0;
         for (integer i = 0; i < M_COUNT*M_REGIONS; i = i + 1) begin
             width = M_ADDR_W_INT[i];
             mask = {ADDR_W{1'b1}} >> (ADDR_W - width);
@@ -281,7 +283,7 @@ end
 
 for (genvar n = 0; n < M_COUNT; n = n + 1) begin
     assign m_axi_wr[n].awid = axi_id_reg;
-    assign m_axi_wr[n].awaddr = axi_addr_reg;
+    assign m_axi_wr[n].awaddr = AXI_M_ADDR_W'(axi_addr_reg);
     assign m_axi_wr[n].awlen = axi_len_reg;
     assign m_axi_wr[n].awsize = axi_size_reg;
     assign m_axi_wr[n].awburst = axi_burst_reg;
