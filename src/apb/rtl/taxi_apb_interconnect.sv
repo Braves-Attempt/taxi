@@ -202,7 +202,7 @@ assign s_apb.pready = s_apb_pready_reg;
 assign s_apb.prdata = s_apb_prdata_reg;
 assign s_apb.pslverr = s_apb_pslverr_reg;
 assign s_apb.pruser = PRUSER_EN ? s_apb_pruser_reg : '0;
-assign s_apb.pbuser = PWUSER_EN ? s_apb_pbuser_reg : '0;
+assign s_apb.pbuser = PBUSER_EN ? s_apb_pbuser_reg : '0;
 
 for (genvar n = 0; n < M_CNT; n += 1) begin
     assign m_apb[n].paddr = APB_M_ADDR_W'(m_apb_paddr_reg);
