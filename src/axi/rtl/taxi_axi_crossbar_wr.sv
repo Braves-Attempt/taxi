@@ -95,12 +95,6 @@ localparam WUSER_W = s_axi_wr[0].WUSER_W;
 localparam logic BUSER_EN = s_axi_wr[0].BUSER_EN && m_axi_wr[0].BUSER_EN;
 localparam BUSER_W = s_axi_wr[0].BUSER_W;
 
-if (m_axi_wr.DATA_W != DATA_W)
-    $fatal(0, "Error: Interface DATA_W parameter mismatch (instance %m)");
-
-if (m_axi_wr.STRB_W != STRB_W)
-    $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
-
 localparam CL_S_COUNT = $clog2(S_COUNT);
 localparam CL_M_COUNT = $clog2(M_COUNT);
 localparam CL_S_COUNT_INT = CL_S_COUNT > 0 ? CL_S_COUNT : 1;
