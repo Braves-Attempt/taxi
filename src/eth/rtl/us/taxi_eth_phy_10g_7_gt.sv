@@ -52,6 +52,11 @@ module taxi_eth_phy_10g_7_gt #
     input  wire logic               xcvr_ctrl_rst,
 
     /*
+     * Transceiver control
+     */
+    taxi_apb_if.slv                 s_apb_ctrl,
+
+    /*
      * PLL out
      */
     input  wire logic               xcvr_gtrefclk0_in = 1'b0,
@@ -111,10 +116,185 @@ if (DATA_W != 32)
 if (HDR_W != 2)
     $fatal(0, "Error: HDR_W must be 2");
 
+// status
+wire qpll_lock;
+
+wire tx_reset_done;
+wire tx_pma_reset_done;
+wire tx_prgdiv_reset_done;
+
+wire rx_reset_done;
+wire rx_pma_reset_done;
+wire rx_prgdiv_reset_done;
+
+// control registers
+wire [10:0]  gt_drp_addr;
+wire [15:0]  gt_drp_di;
+wire         gt_drp_en;
+wire         gt_drp_we;
+wire [15:0]  gt_drp_do;
+wire         gt_drp_rdy;
+
+wire [10:0]  com_drp_addr;
+wire [15:0]  com_drp_di;
+wire         com_drp_en;
+wire         com_drp_we;
+wire [15:0]  com_drp_do;
+wire         com_drp_rdy;
+
+wire         ctrl_qpll_reset;
+wire         ctrl_qpll_pd;
+
+wire [2:0]   ctrl_loopback;
+
+wire         ctrl_tx_reset;
+wire         ctrl_tx_pma_reset;
+wire         ctrl_tx_pcs_reset;
+wire         ctrl_tx_pd;
+wire         ctrl_tx_qpll_sel;
+wire         ctrl_rx_reset;
+wire         ctrl_rx_pma_reset;
+wire         ctrl_rx_pcs_reset;
+wire         ctrl_rx_dfe_lpm_reset;
+wire         ctrl_eyescan_reset;
+wire         ctrl_rx_pd;
+wire         ctrl_rx_qpll_sel;
+
+wire         ctrl_rxcdrhold;
+wire         ctrl_rxlpmen;
+
+wire [3:0]   ctrl_txprbssel;
+wire         ctrl_txprbsforceerr;
+wire         ctrl_txpolarity;
+wire         ctrl_txelecidle;
+wire         ctrl_txinhibit;
+wire [4:0]   ctrl_txdiffctrl;
+wire [6:0]   ctrl_txmaincursor;
+wire [4:0]   ctrl_txpostcursor;
+wire [4:0]   ctrl_txprecursor;
+
+wire         ctrl_rxpolarity;
+wire         ctrl_rxprbscntreset;
+wire [3:0]   ctrl_rxprbssel;
+
+wire         ctrl_rxprbserr;
+
+wire [15:0]  ctrl_dmonitorout;
+
+wire         ctrl_phy_rx_reset_req_en;
+
+taxi_eth_phy_25g_us_gt_apb #(
+    .HAS_COMMON(HAS_COMMON),
+
+    // PLL parameters
+    .QPLL0_PD(QPLL_PD),
+
+    // GT parameters
+    .GT_TX_PD(GT_TX_PD),
+    .GT_TX_POLARITY(GT_TX_POLARITY),
+    .GT_TX_ELECIDLE(GT_TX_ELECIDLE),
+    .GT_TX_INHIBIT(GT_TX_INHIBIT),
+    .GT_TX_DIFFCTRL(GT_TX_DIFFCTRL),
+    .GT_TX_MAINCURSOR(GT_TX_MAINCURSOR),
+    .GT_TX_POSTCURSOR(GT_TX_POSTCURSOR),
+    .GT_TX_PRECURSOR(GT_TX_PRECURSOR),
+    .GT_RX_PD(GT_RX_PD),
+    .GT_RX_LPM_EN(GT_RX_LPM_EN),
+    .GT_RX_POLARITY(GT_RX_POLARITY)
+)
+ctrl_regs_inst (
+    .clk(xcvr_ctrl_clk),
+    .rst(xcvr_ctrl_rst),
+
+    /*
+     * Transceiver clocks
+     */
+    .gt_txusrclk2(tx_clk),
+    .gt_rxusrclk2(rx_clk),
+
+    /*
+     * Transceiver control
+     */
+    .s_apb_ctrl(s_apb_ctrl),
+
+    /*
+     * DRP (channel)
+     */
+    .gt_drp_addr(gt_drp_addr),
+    .gt_drp_di(gt_drp_di),
+    .gt_drp_en(gt_drp_en),
+    .gt_drp_we(gt_drp_we),
+    .gt_drp_do(gt_drp_do),
+    .gt_drp_rdy(gt_drp_rdy),
+
+    /*
+     * DRP (common)
+     */
+    .com_drp_addr(com_drp_addr),
+    .com_drp_di(com_drp_di),
+    .com_drp_en(com_drp_en),
+    .com_drp_we(com_drp_we),
+    .com_drp_do(com_drp_do),
+    .com_drp_rdy(com_drp_rdy),
+
+    /*
+     * Control and status signals
+     */
+    .qpll0_reset(ctrl_qpll_reset),
+    .qpll0_pd(ctrl_qpll_pd),
+    .qpll0_lock(qpll_lock),
+    .qpll1_reset(),
+    .qpll1_pd(),
+    .qpll1_lock(1'b0),
+
+    .gt_loopback(ctrl_loopback),
+
+    .gt_tx_reset(ctrl_tx_reset),
+    .gt_tx_pma_reset(ctrl_tx_pma_reset),
+    .gt_tx_pcs_reset(ctrl_tx_pcs_reset),
+    .gt_tx_reset_done(tx_reset_done),
+    .gt_tx_pma_reset_done(tx_pma_reset_done),
+    .gt_tx_prgdiv_reset_done(tx_prgdiv_reset_done),
+    .gt_tx_pd(ctrl_tx_pd),
+    .gt_tx_qpll_sel(ctrl_tx_qpll_sel),
+    .gt_rx_reset(ctrl_rx_reset),
+    .gt_rx_pma_reset(ctrl_rx_pma_reset),
+    .gt_rx_pcs_reset(ctrl_rx_pcs_reset),
+    .gt_rx_dfe_lpm_reset(ctrl_rx_dfe_lpm_reset),
+    .gt_eyescan_reset(ctrl_eyescan_reset),
+    .gt_rx_reset_done(rx_reset_done),
+    .gt_rx_pma_reset_done(rx_pma_reset_done),
+    .gt_rx_prgdiv_reset_done(rx_prgdiv_reset_done),
+    .gt_rx_pd(ctrl_rx_pd),
+    .gt_rx_qpll_sel(ctrl_rx_qpll_sel),
+
+    .gt_rxcdrhold(ctrl_rxcdrhold),
+    .gt_rxlpmen(ctrl_rxlpmen),
+
+    .gt_txprbssel(ctrl_txprbssel),
+    .gt_txprbsforceerr(ctrl_txprbsforceerr),
+    .gt_txpolarity(ctrl_txpolarity),
+    .gt_txelecidle(ctrl_txelecidle),
+    .gt_txinhibit(ctrl_txinhibit),
+    .gt_txdiffctrl(ctrl_txdiffctrl),
+    .gt_txmaincursor(ctrl_txmaincursor),
+    .gt_txpostcursor(ctrl_txpostcursor),
+    .gt_txprecursor(ctrl_txprecursor),
+
+    .gt_rxpolarity(ctrl_rxpolarity),
+    .gt_rxprbscntreset(ctrl_rxprbscntreset),
+    .gt_rxprbssel(ctrl_rxprbssel),
+
+    .gt_rxprbserr(ctrl_rxprbserr),
+
+    .gt_dmonitorout(ctrl_dmonitorout),
+
+    .phy_rx_reset_req_en(ctrl_phy_rx_reset_req_en)
+);
+
 wire gt_qpll_pd;
 wire gt_qpll_reset;
 
-wire qpll_lock;
 wire qpll_refclk_lost;
 
 if (HAS_COMMON) begin : common_ctrl
@@ -137,8 +317,8 @@ if (HAS_COMMON) begin : common_ctrl
         /*
          * Control/status
          */
-        .qpll_reset_in(1'b0),
-        .qpll_pd_in(QPLL_PD),
+        .qpll_reset_in(ctrl_qpll_reset),
+        .qpll_pd_in(ctrl_qpll_pd),
         .qpll_lock_out(qpll_lock)
     );
 
@@ -202,8 +382,6 @@ wire gt_tx_pcs_reset;
 wire gt_tx_pma_reset_done;
 wire gt_tx_userrdy;
 
-wire tx_reset_done;
-
 taxi_sync_reset #(
     .N(4)
 )
@@ -224,6 +402,7 @@ gt_tx_reset_inst (
     /*
      * GT
      */
+    .gt_txusrclk2(tx_clk),
     .gt_tx_pd_out(gt_tx_pd),
     .gt_tx_reset_out(gt_tx_reset),
     .gt_tx_reset_done_in(gt_tx_reset_done),
@@ -241,13 +420,13 @@ gt_tx_reset_inst (
      */
     .qpll0_lock_in(qpll_lock),
     .qpll1_lock_in(1'b1),
-    .tx_reset_in(tx_rst_in),
+    .tx_reset_in(tx_rst_in || ctrl_tx_reset),
     .tx_reset_done_out(tx_reset_done),
-    .tx_pma_reset_in(1'b0),
-    .tx_pma_reset_done_out(),
-    .tx_prgdiv_reset_done_out(),
-    .tx_pcs_reset_in(1'b0),
-    .tx_pd_in(GT_TX_PD),
+    .tx_pma_reset_in(ctrl_tx_pma_reset),
+    .tx_pma_reset_done_out(tx_pma_reset_done),
+    .tx_prgdiv_reset_done_out(tx_prgdiv_reset_done),
+    .tx_pcs_reset_in(ctrl_tx_pcs_reset),
+    .tx_pd_in(ctrl_tx_pd),
     .tx_qpll_sel_in(1'b0)
 );
 
@@ -263,8 +442,6 @@ wire gt_rx_pma_reset_done;
 wire gt_rx_userrdy;
 wire gt_rx_cdr_lock;
 wire gt_rx_lpm_en;
-
-wire rx_reset_done;
 
 taxi_sync_reset #(
     .N(4)
@@ -288,6 +465,7 @@ gt_rx_reset_inst (
     /*
      * GT
      */
+    .gt_rxusrclk2(rx_clk),
     .gt_rx_pd_out(gt_rx_pd),
     .gt_rx_reset_out(gt_rx_reset),
     .gt_rx_reset_done_in(gt_rx_reset_done),
@@ -309,17 +487,17 @@ gt_rx_reset_inst (
      */
     .qpll0_lock_in(qpll_lock),
     .qpll1_lock_in(1'b1),
-    .rx_reset_in(rx_rst_in),
+    .rx_reset_in(rx_rst_in || ctrl_rx_reset),
     .rx_reset_done_out(rx_reset_done),
-    .rx_pma_reset_in(1'b0),
-    .rx_pma_reset_done_out(),
-    .rx_prgdiv_reset_done_out(),
-    .rx_pcs_reset_in(1'b0),
-    .rx_dfe_lpm_reset_in(1'b0),
-    .eyescan_reset_in(1'b0),
-    .rx_pd_in(GT_RX_PD),
+    .rx_pma_reset_in(ctrl_rx_pma_reset),
+    .rx_pma_reset_done_out(rx_pma_reset_done),
+    .rx_prgdiv_reset_done_out(rx_prgdiv_reset_done),
+    .rx_pcs_reset_in(ctrl_rx_pcs_reset),
+    .rx_dfe_lpm_reset_in(ctrl_rx_dfe_lpm_reset),
+    .eyescan_reset_in(ctrl_eyescan_reset),
+    .rx_pd_in(ctrl_rx_pd),
     .rx_qpll_sel_in(1'b0),
-    .rx_lpm_en_in(GT_RX_LPM_EN)
+    .rx_lpm_en_in(ctrl_rxlpmen)
 );
 
 wire [6:0] gt_txsequence;
@@ -399,6 +577,12 @@ if (SIM) begin : xcvr
     assign gt_rx_pma_reset_done = gt_rx_reset_done;
     assign gt_rx_cdr_lock = gt_rx_reset_done;
 
+    assign com_drp_do = 16'hCC00;
+    assign com_drp_rdy = 1'b1;
+
+    assign gt_drp_do = 16'hDA00;
+    assign gt_drp_rdy = 1'b1;
+
 end else if (GT_TYPE == "GTH") begin : xcvr
     // 7-series GTH
 
@@ -462,13 +646,13 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         gt_common_inst
         (
             //----------- Common Block  - Dynamic Reconfiguration Port (DRP) -----------
-            .DRPADDR            (8'd0),
-            .DRPCLK             (1'b0),
-            .DRPDI              (16'd0),
-            .DRPDO              (),
-            .DRPEN              (1'b0),
-            .DRPRDY             (),
-            .DRPWE              (1'b0),
+            .DRPADDR            (com_drp_addr),
+            .DRPCLK             (xcvr_ctrl_clk),
+            .DRPDI              (com_drp_di),
+            .DRPDO              (com_drp_do),
+            .DRPEN              (com_drp_en),
+            .DRPRDY             (com_drp_rdy),
+            .DRPWE              (com_drp_we),
             //-------------------- Common Block  - Ref Clock Ports ---------------------
             .GTGREFCLK          (1'b0),
             .GTNORTHREFCLK0     (1'b0),
@@ -511,6 +695,9 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         assign xcvr_qplllock_out = 1'b0;
         assign xcvr_qpllclk_out = 1'b0;
         assign xcvr_qpllrefclk_out = 1'b0;
+
+        assign com_drp_do = '0;
+        assign com_drp_rdy = 1'b1;
 
     end
 
@@ -848,13 +1035,13 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         .GTSOUTHREFCLK0                 (1'b0),
         .GTSOUTHREFCLK1                 (1'b0),
         //-------------------------- Channel - DRP Ports  --------------------------
-        .DRPADDR                        ('0),
-        .DRPCLK                         ('0),
-        .DRPDI                          ('0),
-        .DRPDO                          (),
-        .DRPEN                          ('0),
-        .DRPRDY                         (),
-        .DRPWE                          ('0),
+        .DRPADDR                        (gt_drp_addr),
+        .DRPCLK                         (xcvr_ctrl_clk),
+        .DRPDI                          (gt_drp_di),
+        .DRPDO                          (gt_drp_do),
+        .DRPEN                          (gt_drp_en),
+        .DRPRDY                         (gt_drp_rdy),
+        .DRPWE                          (gt_drp_we),
         //----------------------------- Clocking Ports -----------------------------
         .GTREFCLKMONITOR                (),
         .QPLLCLK                        (xcvr_qpllclk_in),
@@ -1052,7 +1239,7 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         .RXELECIDLE                     (),
         .RXELECIDLEMODE                 (2'b11),
         //--------------- Receive Ports - RX Polarity Control Ports ----------------
-        .RXPOLARITY                     (GT_RX_POLARITY),
+        .RXPOLARITY                     (ctrl_rxpolarity),
         //----------------- Receive Ports - RX8B/10B Decoder Ports -----------------
         .RXCHARISCOMMA                  (),
         .RXCHARISK                      (),
@@ -1087,7 +1274,7 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         .TXUSRCLK                       (gt_txusrclk),
         .TXUSRCLK2                      (gt_txusrclk2),
         //------------------- Transmit Ports - PCI Express Ports -------------------
-        .TXELECIDLE                     (GT_TX_ELECIDLE),
+        .TXELECIDLE                     (ctrl_txelecidle),
         .TXMARGIN                       (3'd0),
         .TXRATE                         (3'd0),
         .TXSWING                        (1'b0),
@@ -1119,14 +1306,14 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         //------------- Transmit Ports - TX Configurable Driver Ports --------------
         .TXBUFDIFFCTRL                  (3'b100),
         .TXDEEMPH                       (1'b0),
-        .TXDIFFCTRL                     (GT_TX_DIFFCTRL),
+        .TXDIFFCTRL                     (ctrl_txdiffctrl[4:0]),
         .TXDIFFPD                       (1'b0),
-        .TXINHIBIT                      (GT_TX_INHIBIT),
-        .TXMAINCURSOR                   (GT_TX_MAINCURSOR),
+        .TXINHIBIT                      (ctrl_txinhibit),
+        .TXMAINCURSOR                   (ctrl_txmaincursor),
         .TXPISOPD                       (1'b0),
-        .TXPOSTCURSOR                   (GT_TX_POSTCURSOR),
+        .TXPOSTCURSOR                   (ctrl_txpostcursor),
         .TXPOSTCURSORINV                (1'b0),
-        .TXPRECURSOR                    (GT_TX_PRECURSOR),
+        .TXPRECURSOR                    (ctrl_txprecursor),
         .TXPRECURSORINV                 (1'b0),
         .TXQPIBIASEN                    (1'b0),
         .TXQPISTRONGPDOWN               (1'b0),
@@ -1162,7 +1349,7 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         .TXCOMWAKE                      (1'b0),
         .TXPDELECIDLEMODE               (1'b1),
         //--------------- Transmit Ports - TX Polarity Control Ports ---------------
-        .TXPOLARITY                     (GT_TX_POLARITY),
+        .TXPOLARITY                     (ctrl_txpolarity),
         //------------- Transmit Ports - TX Receiver Detection Ports  --------------
         .TXDETECTRX                     (1'b0),
         //---------------- Transmit Ports - TX8b/10b Encoder Ports -----------------
@@ -1231,13 +1418,13 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         gt_common_inst
         (
             //----------- Common Block  - Dynamic Reconfiguration Port (DRP) -----------
-            .DRPADDR            (8'd0),
-            .DRPCLK             (1'b0),
-            .DRPDI              (16'd0),
-            .DRPDO              (),
-            .DRPEN              (1'b0),
-            .DRPRDY             (),
-            .DRPWE              (1'b0),
+            .DRPADDR            (com_drp_addr),
+            .DRPCLK             (xcvr_ctrl_clk),
+            .DRPDI              (com_drp_di),
+            .DRPDO              (com_drp_do),
+            .DRPEN              (com_drp_en),
+            .DRPRDY             (com_drp_rdy),
+            .DRPWE              (com_drp_we),
             //-------------------- Common Block  - Ref Clock Ports ---------------------
             .GTGREFCLK          (1'b0),
             .GTNORTHREFCLK0     (1'b0),
@@ -1278,6 +1465,9 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         assign xcvr_qplllock_out = 1'b0;
         assign xcvr_qpllclk_out = 1'b0;
         assign xcvr_qpllrefclk_out = 1'b0;
+
+        assign com_drp_do = '0;
+        assign com_drp_rdy = 1'b1;
 
     end
 
@@ -1554,13 +1744,13 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         .GTSOUTHREFCLK0                 (1'b0),
         .GTSOUTHREFCLK1                 (1'b0),
         //-------------------------- Channel - DRP Ports  --------------------------
-        .DRPADDR                        ('0),
-        .DRPCLK                         ('0),
-        .DRPDI                          ('0),
-        .DRPDO                          (),
-        .DRPEN                          ('0),
-        .DRPRDY                         (),
-        .DRPWE                          ('0),
+        .DRPADDR                        (gt_drp_addr),
+        .DRPCLK                         (xcvr_ctrl_clk),
+        .DRPDI                          (gt_drp_di),
+        .DRPDO                          (gt_drp_do),
+        .DRPEN                          (gt_drp_en),
+        .DRPRDY                         (gt_drp_rdy),
+        .DRPWE                          (gt_drp_we),
         //----------------------------- Clocking Ports -----------------------------
         .GTREFCLKMONITOR                (),
         .QPLLCLK                        (xcvr_qpllclk_in),
@@ -1715,7 +1905,7 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         .RXELECIDLE                     (),
         .RXELECIDLEMODE                 (2'b11),
         //--------------- Receive Ports - RX Polarity Control Ports ----------------
-        .RXPOLARITY                     (GT_RX_POLARITY),
+        .RXPOLARITY                     (ctrl_rxpolarity),
         //-------------------- Receive Ports - RX gearbox ports --------------------
         .RXSLIDE                        (1'b0),
         //----------------- Receive Ports - RX8B/10B Decoder Ports -----------------
@@ -1730,9 +1920,9 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         //------------------------- TX Buffer Bypass Ports -------------------------
         .TXPHDLYTSTCLK                  (1'b0),
         //---------------------- TX Configurable Driver Ports ----------------------
-        .TXPOSTCURSOR                   (GT_TX_POSTCURSOR),
+        .TXPOSTCURSOR                   (ctrl_txpostcursor),
         .TXPOSTCURSORINV                (1'b0),
-        .TXPRECURSOR                    (GT_TX_PRECURSOR),
+        .TXPRECURSOR                    (ctrl_txprecursor),
         .TXPRECURSORINV                 (1'b0),
         .TXQPIBIASEN                    (1'b0),
         .TXQPISTRONGPDOWN               (1'b0),
@@ -1752,7 +1942,7 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         .TXUSRCLK                       (gt_txusrclk),
         .TXUSRCLK2                      (gt_txusrclk2),
         //------------------- Transmit Ports - PCI Express Ports -------------------
-        .TXELECIDLE                     (GT_TX_ELECIDLE),
+        .TXELECIDLE                     (ctrl_txelecidle),
         .TXMARGIN                       (3'd0),
         .TXRATE                         (3'd0),
         .TXSWING                        (1'b0),
@@ -1779,10 +1969,10 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         //------------- Transmit Ports - TX Configurable Driver Ports --------------
         .TXBUFDIFFCTRL                  (3'b100),
         .TXDEEMPH                       (1'b0),
-        .TXDIFFCTRL                     (GT_TX_DIFFCTRL),
+        .TXDIFFCTRL                     (ctrl_txdiffctrl[4:0]),
         .TXDIFFPD                       (1'b0),
-        .TXINHIBIT                      (GT_TX_INHIBIT),
-        .TXMAINCURSOR                   (GT_TX_MAINCURSOR),
+        .TXINHIBIT                      (ctrl_txinhibit),
+        .TXMAINCURSOR                   (ctrl_txmaincursor),
         .TXPISOPD                       (1'b0),
         //---------------- Transmit Ports - TX Data Path interface -----------------
         .TXDATA                         (gt_txdata),
@@ -1812,7 +2002,7 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         .TXCOMWAKE                      (1'b0),
         .TXPDELECIDLEMODE               (1'b0),
         //--------------- Transmit Ports - TX Polarity Control Ports ---------------
-        .TXPOLARITY                     (GT_TX_POLARITY),
+        .TXPOLARITY                     (ctrl_txpolarity),
         //------------- Transmit Ports - TX Receiver Detection Ports  --------------
         .TXDETECTRX                     (1'b0),
         //---------------- Transmit Ports - TX8b/10b Encoder Ports -----------------

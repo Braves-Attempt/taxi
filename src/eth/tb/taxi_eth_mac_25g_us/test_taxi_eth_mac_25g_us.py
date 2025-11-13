@@ -28,6 +28,7 @@ from cocotb.regression import TestFactory
 
 from cocotbext.eth import XgmiiFrame, PtpClockSimTime
 from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStreamFrame
+from cocotbext.axi import ApbBus, ApbMaster
 
 try:
     from baser import BaseRSerdesSource, BaseRSerdesSink
@@ -50,6 +51,8 @@ class TB:
         cocotb.start_soon(Clock(dut.xcvr_ctrl_clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.stat_clk, 8, units="ns").start())
         cocotb.start_soon(Clock(dut.xcvr_gtrefclk00_in, 6.206, units="ns").start())
+
+        self.apb_ctrl = ApbMaster(ApbBus.from_entity(dut.s_apb_ctrl), dut.xcvr_ctrl_clk, dut.xcvr_ctrl_rst)
 
         self.serdes_sources = []
         self.serdes_sinks = []
@@ -177,6 +180,24 @@ class TB:
         self.dut.stat_rst.value = 0
         await RisingEdge(self.dut.xcvr_ctrl_clk)
         await RisingEdge(self.dut.xcvr_ctrl_clk)
+
+
+async def run_test_regs(dut):
+    tb = TB(dut)
+    await tb.reset()
+
+    data = await tb.apb_ctrl.read(0x00000, 2)
+    data = await tb.apb_ctrl.read(0x04000, 2)
+    data = await tb.apb_ctrl.read(0x08000, 2)
+    data = await tb.apb_ctrl.read(0x0C000, 2)
+
+    data = await tb.apb_ctrl.read(0x10000, 2)
+    data = await tb.apb_ctrl.read(0x14000, 2)
+    data = await tb.apb_ctrl.read(0x18000, 2)
+    data = await tb.apb_ctrl.read(0x1C000, 2)
+
+    for k in range(10):
+        await RisingEdge(dut.xcvr_ctrl_clk)
 
 
 async def run_test_rx(dut, port=0, payload_lengths=None, payload_data=None, ifg=12):
@@ -914,6 +935,9 @@ def cycle_en():
 
 
 if getattr(cocotb, 'top', None) is not None:
+
+    factory = TestFactory(run_test_regs)
+    factory.generate_tests()
 
     for test in [run_test_rx, run_test_tx]:
 

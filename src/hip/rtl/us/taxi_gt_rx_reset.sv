@@ -30,6 +30,7 @@ module taxi_gt_rx_reset #
     /*
      * GT
      */
+    input  wire logic  gt_rxusrclk2,
     output wire logic  gt_rx_pd_out,
     output wire logic  gt_rx_reset_out,
     input  wire logic  gt_rx_reset_done_in,
@@ -94,6 +95,16 @@ gt_status_sync_inst (
     .out({gt_rx_reset_done_sync, gt_rx_pma_reset_done_sync, gt_rx_prgdiv_reset_done_sync, gt_userclk_rx_active_sync, gt_rx_cdr_lock_sync})
 );
 
+taxi_sync_signal #(
+    .WIDTH(1),
+    .N(2)
+)
+gt_ctrl_sync_inst (
+    .clk(gt_rxusrclk2),
+    .in({gt_rx_pd_reg}),
+    .out({gt_rx_pd_out})
+);
+
 wire rx_reset_sync;
 
 taxi_sync_reset #(
@@ -119,7 +130,6 @@ logic rx_reset_done_reg = 1'b0;
 
 assign rx_reset_done_out = rx_reset_done_reg;
 
-assign gt_rx_pd_out = gt_rx_pd_reg;
 assign gt_rx_reset_out = gt_rx_reset_reg;
 assign gt_rx_pma_reset_out = gt_rx_pma_reset_reg;
 assign gt_rx_dfe_lpm_reset_out = gt_rx_dfe_lpm_reset_reg;

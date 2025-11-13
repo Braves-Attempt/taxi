@@ -80,6 +80,11 @@ module taxi_eth_mac_25g_us_ch #
     input  wire logic                 xcvr_ctrl_rst,
 
     /*
+     * Transceiver control
+     */
+    taxi_apb_if.slv                   s_apb_ctrl,
+
+    /*
      * Common
      */
     output wire logic                 xcvr_gtpowergood_out,
@@ -337,6 +342,11 @@ if (GT_7) begin : gt
         .xcvr_ctrl_rst(xcvr_ctrl_rst),
 
         /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(s_apb_ctrl),
+
+        /*
          * PLL out
          */
         .xcvr_gtrefclk0_in(xcvr_gtrefclk00_in),
@@ -435,6 +445,11 @@ end else if (DATA_W == 64 && CFG_LOW_LATENCY) begin : gt
     gt_inst (
         .xcvr_ctrl_clk(xcvr_ctrl_clk),
         .xcvr_ctrl_rst(xcvr_ctrl_rst),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(s_apb_ctrl),
 
         /*
          * Common
@@ -546,6 +561,11 @@ end else if (DATA_W == 64 && !CFG_LOW_LATENCY) begin : gt
         .xcvr_ctrl_rst(xcvr_ctrl_rst),
 
         /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(s_apb_ctrl),
+
+        /*
          * Common
          */
         .xcvr_gtpowergood_out(xcvr_gtpowergood_out),
@@ -655,6 +675,11 @@ end else if (DATA_W == 32 && CFG_LOW_LATENCY) begin : gt
         .xcvr_ctrl_rst(xcvr_ctrl_rst),
 
         /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(s_apb_ctrl),
+
+        /*
          * Common
          */
         .xcvr_gtpowergood_out(xcvr_gtpowergood_out),
@@ -762,6 +787,11 @@ end else if (DATA_W == 32 && !CFG_LOW_LATENCY) begin : gt
     gt_inst (
         .xcvr_ctrl_clk(xcvr_ctrl_clk),
         .xcvr_ctrl_rst(xcvr_ctrl_rst),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(s_apb_ctrl),
 
         /*
          * Common

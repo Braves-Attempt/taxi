@@ -8,3 +8,4 @@ taxi_eth_phy_10g_7_gt.f
 ../taxi_eth_mac_phy_10g.f
 ../taxi_eth_mac_10g.f
 ../taxi_eth_phy_10g.f
+../../lib/taxi/src/apb/rtl/taxi_apb_interconnect.sv

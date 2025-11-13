@@ -22,6 +22,9 @@ set int_data_width $user_data_width
 set rx_eq_mode {DFE}
 set extra_ports [list]
 set extra_pll_ports [list]
+# DRP connections
+lappend extra_ports drpclk_in drpaddr_in drpdi_in drpen_in drpwe_in drpdo_out drprdy_out
+lappend extra_pll_ports drpclk_common_in drpaddr_common_in drpdi_common_in drpen_common_in drpwe_common_in drpdo_common_out drprdy_common_out
 # PLL reset and power down
 lappend extra_pll_ports qpll0reset_in qpll1reset_in
 lappend extra_pll_ports qpll0pd_in qpll1pd_in

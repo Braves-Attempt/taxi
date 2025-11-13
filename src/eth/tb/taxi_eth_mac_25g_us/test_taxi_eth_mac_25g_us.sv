@@ -75,6 +75,12 @@ localparam RX_USER_W = (PTP_TS_EN ? PTP_TS_W : 0) + 1;
 logic xcvr_ctrl_clk;
 logic xcvr_ctrl_rst;
 
+// transceiver control
+taxi_apb_if #(
+    .ADDR_W(24),
+    .DATA_W(16)
+) s_apb_ctrl();
+
 logic xcvr_gtpowergood_out;
 logic xcvr_gtrefclk00_in;
 logic xcvr_qpll0pd_in;
@@ -275,6 +281,11 @@ taxi_eth_mac_25g_us #(
 uut (
     .xcvr_ctrl_clk(xcvr_ctrl_clk),
     .xcvr_ctrl_rst(xcvr_ctrl_rst),
+
+    /*
+     * Transceiver control
+     */
+    .s_apb_ctrl(s_apb_ctrl),
 
     /*
      * Common

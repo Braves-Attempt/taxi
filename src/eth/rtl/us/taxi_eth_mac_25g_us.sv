@@ -81,6 +81,11 @@ module taxi_eth_mac_25g_us #
     input  wire logic                 xcvr_ctrl_rst,
 
     /*
+     * Transceiver control
+     */
+    taxi_apb_if.slv                   s_apb_ctrl,
+
+    /*
      * Common
      */
     output wire logic                 xcvr_gtpowergood_out,
@@ -279,6 +284,35 @@ reset_sync_inst (
     .out(xcvr_ctrl_rst_sync)
 );
 
+// transceiver control
+taxi_apb_if #(
+    .ADDR_W(16),
+    .DATA_W(16)
+)
+ch_apb_ctrl[CNT]();
+
+taxi_apb_interconnect #(
+    .M_CNT(CNT),
+    .ADDR_W(s_apb_ctrl.ADDR_W),
+    .M_REGIONS(1),
+    .M_BASE_ADDR('0),
+    .M_ADDR_W({CNT{{1{32'd16}}}})
+)
+ctrl_intercon_inst (
+    .clk(xcvr_ctrl_clk),
+    .rst(xcvr_ctrl_rst_sync),
+
+    /*
+     * APB slave interface
+     */
+    .s_apb(s_apb_ctrl),
+
+    /*
+     * APB master interface
+     */
+    .m_apb(ch_apb_ctrl)
+);
+
 // statistics
 localparam STAT_TX_CNT = STAT_TX_LEVEL == 0 ? 8 : (STAT_TX_LEVEL == 1 ? 16: 32);
 localparam STAT_RX_CNT = STAT_RX_LEVEL == 0 ? 8 : (STAT_RX_LEVEL == 1 ? 16: 32);
@@ -407,6 +441,11 @@ for (genvar n = 0; n < CNT; n = n + 1) begin : ch
     ch_inst (
         .xcvr_ctrl_clk(xcvr_ctrl_clk),
         .xcvr_ctrl_rst(xcvr_ctrl_rst_sync),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(ch_apb_ctrl[n]),
 
         /*
          * Common
