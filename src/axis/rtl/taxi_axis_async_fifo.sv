@@ -651,7 +651,7 @@ always_ff @(posedge m_clk) begin
             mem_rd_valid_pipe_reg[0] <= 1'b1;
             rd_ptr_temp = rd_ptr_reg + 1;
             rd_ptr_reg <= rd_ptr_temp;
-            rd_ptr_gray_reg <= rd_ptr_temp ^ (rd_ptr_temp >> 1);
+            rd_ptr_gray_reg <= bin2gray(rd_ptr_temp);;
         end
     end
 
