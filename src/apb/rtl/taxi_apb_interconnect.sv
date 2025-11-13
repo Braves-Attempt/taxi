@@ -99,10 +99,10 @@ localparam [M_CNT*M_REGIONS-1:0][ADDR_W-1:0] M_BASE_ADDR_INT = M_BASE_ADDR != 0 
 if (s_apb.ADDR_W != ADDR_W)
     $fatal(0, "Error: Interface ADDR_W parameter mismatch (instance %m)");
 
-if (m_apb.DATA_W != DATA_W)
+if (m_apb[0].DATA_W != DATA_W)
     $fatal(0, "Error: Interface DATA_W parameter mismatch (instance %m)");
 
-if (m_apb.STRB_W != STRB_W)
+if (m_apb[0].STRB_W != STRB_W)
     $fatal(0, "Error: Interface STRB_W parameter mismatch (instance %m)");
 
 initial begin
