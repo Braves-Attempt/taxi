@@ -18,7 +18,7 @@ Authors:
 module taxi_xfcp_mod_apb #
 (
     parameter logic [15:0] XFCP_ID_TYPE = 16'h8001,
-    parameter XFCP_ID_STR = "AXIL Master",
+    parameter XFCP_ID_STR = "APB Master",
     parameter logic [8*16-1:0] XFCP_EXT_ID = 0,
     parameter XFCP_EXT_ID_STR = "",
     parameter COUNT_SIZE = 16
@@ -608,7 +608,7 @@ always_comb begin
     store_xfcp_usp_us_int_to_output = 1'b0;
     store_xfcp_usp_us_int_to_temp = 1'b0;
     store_xfcp_usp_us_temp_to_output = 1'b0;
-    
+
     if (xfcp_usp_us_tready_int_reg) begin
         // input is ready
         if (xfcp_usp_us.tready || !xfcp_usp_us_tvalid_reg) begin
@@ -654,7 +654,7 @@ always_ff @(posedge clk) begin
         xfcp_usp_us_tvalid_reg <= 1'b0;
         xfcp_usp_us_tready_int_reg <= 1'b0;
         temp_xfcp_usp_us_tvalid_reg <= 1'b0;
-    end 
+    end
 end
 
 endmodule
