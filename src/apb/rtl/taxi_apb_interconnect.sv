@@ -52,7 +52,7 @@ module taxi_apb_interconnect #
 
 // extract parameters
 localparam DATA_W = s_apb.DATA_W;
-// localparam ADDR_W = s_apb.ADDR_W;
+localparam S_ADDR_W = s_apb.ADDR_W;
 localparam STRB_W = s_apb.STRB_W;
 localparam logic PAUSER_EN = s_apb.PAUSER_EN && m_apb[0].PAUSER_EN;
 localparam PAUSER_W = s_apb.PAUSER_W;
@@ -63,6 +63,8 @@ localparam PRUSER_W = s_apb.PRUSER_W;
 localparam logic PBUSER_EN = s_apb.PBUSER_EN && m_apb[0].PBUSER_EN;
 localparam PBUSER_W = s_apb.PBUSER_W;
 
+localparam APB_M_ADDR_W = m_apb[0].ADDR_W;
+
 localparam CL_M_CNT = $clog2(M_CNT);
 localparam CL_M_CNT_INT = CL_M_CNT > 0 ? CL_M_CNT : 1;
 
@@ -72,12 +74,12 @@ localparam [M_CNT-1:0] M_SECURE_INT = M_SECURE;
 // default address computation
 function [M_CNT*M_REGIONS-1:0][ADDR_W-1:0] calcBaseAddrs(input [31:0] dummy);
     logic [ADDR_W-1:0] base;
-    logic [ADDR_W-1:0] width;
+    integer width;
     logic [ADDR_W-1:0] size;
     logic [ADDR_W-1:0] mask;
     begin
         calcBaseAddrs = '0;
-        base = 0;
+        base = '0;
         for (integer i = 0; i < M_CNT*M_REGIONS; i = i + 1) begin
             width = M_ADDR_W_INT[i];
             mask = {ADDR_W{1'b1}} >> (ADDR_W - width);
@@ -203,7 +205,7 @@ assign s_apb.pruser = PRUSER_EN ? s_apb_pruser_reg : '0;
 assign s_apb.pbuser = PWUSER_EN ? s_apb_pbuser_reg : '0;
 
 for (genvar n = 0; n < M_CNT; n += 1) begin
-    assign m_apb[n].paddr = m_apb_paddr_reg;
+    assign m_apb[n].paddr = APB_M_ADDR_W'(m_apb_paddr_reg);
     assign m_apb[n].pprot = m_apb_pprot_reg;
     assign m_apb[n].psel = m_apb_psel_reg[n];
     assign m_apb[n].penable = m_apb_penable_reg;
