@@ -123,7 +123,9 @@ xfcp_if_uart_inst (
     .prescale(16'(125000000/2000000))
 );
 
-taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[1](), xfcp_sw_us[1]();
+localparam XFCP_PORTS = SFP_RATE ? 2 : 1;
+
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[XFCP_PORTS](), xfcp_sw_us[XFCP_PORTS]();
 
 taxi_xfcp_switch #(
     .XFCP_ID_STR("ZCU106"),
@@ -429,6 +431,31 @@ end else begin : sfp_mac
         .out(sfp_rst)
     );
 
+    taxi_apb_if #(
+        .ADDR_W(18),
+        .DATA_W(16)
+    )
+    gt_apb_ctrl();
+
+    taxi_xfcp_mod_apb #(
+        .XFCP_EXT_ID_STR("GTH CTRL")
+    )
+    xfcp_mod_apb_inst (
+        .clk(clk_125mhz),
+        .rst(rst_125mhz),
+
+        /*
+         * XFCP upstream port
+         */
+        .xfcp_usp_ds(xfcp_sw_ds[1]),
+        .xfcp_usp_us(xfcp_sw_us[1]),
+
+        /*
+         * APB master interface
+         */
+        .m_apb(gt_apb_ctrl)
+    );
+
     taxi_eth_mac_25g_us #(
         .SIM(SIM),
         .VENDOR(VENDOR),
@@ -467,6 +494,11 @@ end else begin : sfp_mac
     sfp_mac_inst (
         .xcvr_ctrl_clk(clk_125mhz),
         .xcvr_ctrl_rst(sfp_rst),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(gt_apb_ctrl),
 
         /*
          * Common

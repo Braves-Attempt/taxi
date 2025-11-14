@@ -198,7 +198,9 @@ xfcp_if_uart_inst (
     .prescale(16'(125000000/921600))
 );
 
-taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[2](), xfcp_sw_us[2]();
+localparam XFCP_PORTS = 2+GTY_QUAD_CNT;
+
+taxi_axis_if #(.DATA_W(8), .USER_EN(1), .USER_W(1)) xfcp_sw_ds[XFCP_PORTS](), xfcp_sw_us[XFCP_PORTS]();
 
 taxi_xfcp_switch #(
     .XFCP_ID_STR("HTG-9200"),
@@ -381,6 +383,31 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
     localparam CLK = n;
     localparam CNT = 4;
 
+    taxi_apb_if #(
+        .ADDR_W(18),
+        .DATA_W(16)
+    )
+    gt_apb_ctrl();
+
+    taxi_xfcp_mod_apb #(
+        .XFCP_EXT_ID_STR("GTY CTRL")
+    )
+    xfcp_mod_apb_inst (
+        .clk(clk_125mhz),
+        .rst(rst_125mhz),
+
+        /*
+         * XFCP upstream port
+         */
+        .xfcp_usp_ds(xfcp_sw_ds[n+2]),
+        .xfcp_usp_us(xfcp_sw_us[n+2]),
+
+        /*
+         * APB master interface
+         */
+        .m_apb(gt_apb_ctrl)
+    );
+
     taxi_eth_mac_25g_us #(
         .SIM(SIM),
         .VENDOR(VENDOR),
@@ -434,6 +461,11 @@ for (genvar n = 0; n < GTY_QUAD_CNT; n = n + 1) begin : gty_quad
     mac_inst (
         .xcvr_ctrl_clk(clk_125mhz),
         .xcvr_ctrl_rst(eth_gty_rst[CLK]),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(gt_apb_ctrl),
 
         /*
          * Common

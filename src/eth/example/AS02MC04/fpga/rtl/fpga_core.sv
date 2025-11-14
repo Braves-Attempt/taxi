@@ -147,6 +147,12 @@ sfp_sync_reset_inst (
     .out(sfp_rst)
 );
 
+taxi_apb_if #(
+    .ADDR_W(18),
+    .DATA_W(16)
+)
+gt_apb_ctrl();
+
 taxi_eth_mac_25g_us #(
     .SIM(SIM),
     .VENDOR(VENDOR),
@@ -182,6 +188,11 @@ taxi_eth_mac_25g_us #(
 sfp_mac_inst (
     .xcvr_ctrl_clk(clk_125mhz),
     .xcvr_ctrl_rst(sfp_rst),
+
+    /*
+     * Transceiver control
+     */
+    .s_apb_ctrl(gt_apb_ctrl),
 
     /*
      * Common

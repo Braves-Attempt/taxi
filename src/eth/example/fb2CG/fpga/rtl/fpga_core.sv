@@ -197,6 +197,12 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
     localparam CLK = n;
     localparam CNT = 4;
 
+    taxi_apb_if #(
+        .ADDR_W(18),
+        .DATA_W(16)
+    )
+    gt_apb_ctrl();
+
     taxi_eth_mac_25g_us #(
         .SIM(SIM),
         .VENDOR(VENDOR),
@@ -228,6 +234,11 @@ for (genvar n = 0; n < 2; n = n + 1) begin : gty_quad
     mac_inst (
         .xcvr_ctrl_clk(clk_125mhz),
         .xcvr_ctrl_rst(qsfp_rst[CLK]),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(gt_apb_ctrl),
 
         /*
          * Common

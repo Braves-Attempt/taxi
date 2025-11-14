@@ -405,6 +405,12 @@ end else begin : sfp_mac
     assign eth_gty_rx_p[0] = sfp_rx_p;
     assign eth_gty_rx_n[0] = sfp_rx_n;
 
+    taxi_apb_if #(
+        .ADDR_W(18),
+        .DATA_W(16)
+    )
+    gt_apb_ctrl();
+
     taxi_eth_mac_25g_us #(
         .SIM(SIM),
         .VENDOR(VENDOR),
@@ -435,6 +441,11 @@ end else begin : sfp_mac
     sfp_mac_inst (
         .xcvr_ctrl_clk(clk),
         .xcvr_ctrl_rst(sfp_rst),
+
+        /*
+         * Transceiver control
+         */
+        .s_apb_ctrl(gt_apb_ctrl),
 
         /*
          * Common
