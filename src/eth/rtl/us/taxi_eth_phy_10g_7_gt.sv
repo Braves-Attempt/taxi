@@ -194,7 +194,7 @@ taxi_eth_phy_25g_us_gt_apb #(
     .GT_TX_POLARITY(GT_TX_POLARITY),
     .GT_TX_ELECIDLE(GT_TX_ELECIDLE),
     .GT_TX_INHIBIT(GT_TX_INHIBIT),
-    .GT_TX_DIFFCTRL(GT_TX_DIFFCTRL),
+    .GT_TX_DIFFCTRL(5'(GT_TX_DIFFCTRL)),
     .GT_TX_MAINCURSOR(GT_TX_MAINCURSOR),
     .GT_TX_POSTCURSOR(GT_TX_POSTCURSOR),
     .GT_TX_PRECURSOR(GT_TX_PRECURSOR),
@@ -1306,7 +1306,7 @@ end else if (GT_TYPE == "GTH") begin : xcvr
         //------------- Transmit Ports - TX Configurable Driver Ports --------------
         .TXBUFDIFFCTRL                  (3'b100),
         .TXDEEMPH                       (1'b0),
-        .TXDIFFCTRL                     (ctrl_txdiffctrl[4:0]),
+        .TXDIFFCTRL                     (ctrl_txdiffctrl[3:0]),
         .TXDIFFPD                       (1'b0),
         .TXINHIBIT                      (ctrl_txinhibit),
         .TXMAINCURSOR                   (ctrl_txmaincursor),
@@ -1969,7 +1969,7 @@ end else if (GT_TYPE == "GTX") begin : xcvr
         //------------- Transmit Ports - TX Configurable Driver Ports --------------
         .TXBUFDIFFCTRL                  (3'b100),
         .TXDEEMPH                       (1'b0),
-        .TXDIFFCTRL                     (ctrl_txdiffctrl[4:0]),
+        .TXDIFFCTRL                     (ctrl_txdiffctrl[3:0]),
         .TXDIFFPD                       (1'b0),
         .TXINHIBIT                      (ctrl_txinhibit),
         .TXMAINCURSOR                   (ctrl_txmaincursor),
