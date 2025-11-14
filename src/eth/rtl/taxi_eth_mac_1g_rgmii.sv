@@ -196,9 +196,6 @@ module taxi_eth_mac_1g_rgmii #
     input  wire logic                 cfg_rx_pfc_en = 1'b0
 );
 
-logic [1:0] link_speed_reg = 2'b10;
-logic mii_select_reg = 1'b0;
-
 wire tx_mii_select_sync;
 
 taxi_sync_signal #(
@@ -207,7 +204,7 @@ taxi_sync_signal #(
 )
 tx_mii_select_sync_inst (
     .clk(tx_clk),
-    .in(mii_select_reg),
+    .in(!link_speed[1]),
     .out(tx_mii_select_sync)
 );
 
@@ -219,73 +216,9 @@ taxi_sync_signal #(
 )
 rx_mii_select_sync_inst (
     .clk(rx_clk),
-    .in(mii_select_reg),
+    .in(!link_speed[1]),
     .out(rx_mii_select_sync)
 );
-
-// PHY speed detection
-logic [2:0] rx_prescale = 3'd0;
-
-always_ff @(posedge rx_clk) begin
-    rx_prescale <= rx_prescale + 3'd1;
-end
-
-wire rx_prescale_sync;
-
-taxi_sync_signal #(
-    .WIDTH(1),
-    .N(2)
-)
-rx_prescale_sync_inst (
-    .clk(gtx_clk),
-    .in(rx_prescale[2]),
-    .out(rx_prescale_sync)
-);
-
-logic [6:0] rx_speed_count_1 = 0;
-logic [1:0] rx_speed_count_2 = 0;
-logic rx_prescale_sync_last_reg = 1'b0;
-
-always_ff @(posedge gtx_clk) begin
-    rx_prescale_sync_last_reg <= rx_prescale_sync;
-    rx_speed_count_1 <= rx_speed_count_1 + 1;
-
-    if (rx_prescale_sync ^ rx_prescale_sync_last_reg) begin
-        rx_speed_count_2 <= rx_speed_count_2 + 1;
-    end
-
-    if (&rx_speed_count_1) begin
-        // reference count overflow - 10M
-        rx_speed_count_1 <= 0;
-        rx_speed_count_2 <= 0;
-        link_speed_reg <= 2'b00;
-        mii_select_reg <= 1'b1;
-    end
-
-    if (&rx_speed_count_2) begin
-        // prescaled count overflow - 100M or 1000M
-        rx_speed_count_1 <= 0;
-        rx_speed_count_2 <= 0;
-        if (rx_speed_count_1[6:5] != 0) begin
-            // large reference count - 100M
-            link_speed_reg <= 2'b01;
-            mii_select_reg <= 1'b1;
-        end else begin
-            // small reference count - 1000M
-            link_speed_reg <= 2'b10;
-            mii_select_reg <= 1'b0;
-        end
-    end
-
-    if (gtx_rst) begin
-        rx_speed_count_1 <= 0;
-        rx_speed_count_2 <= 0;
-        link_speed_reg <= 2'b10;
-        mii_select_reg <= 1'b0;
-    end
-end
-
-assign link_speed = link_speed_reg;
 
 wire [7:0]  mac_gmii_rxd;
 wire        mac_gmii_rx_dv;
@@ -331,7 +264,7 @@ rgmii_phy_if_inst (
     .phy_rgmii_txd(rgmii_txd),
     .phy_rgmii_tx_ctl(rgmii_tx_ctl),
 
-    .speed(link_speed)
+    .link_speed(link_speed)
 );
 
 taxi_eth_mac_1g #(

@@ -56,10 +56,72 @@ module taxi_gmii_phy_if #
     output wire logic        phy_gmii_tx_er,
 
     /*
-     * Control
+     * Status
      */
-    input  wire logic        mii_select
+    output wire logic [1:0]  link_speed
 );
+
+// PHY speed detection
+logic [2:0] rx_prescale = 3'd0;
+
+always_ff @(posedge mac_gmii_rx_clk) begin
+    rx_prescale <= rx_prescale + 3'd1;
+end
+
+wire rx_prescale_sync;
+
+taxi_sync_signal #(
+    .WIDTH(1),
+    .N(2)
+)
+rx_prescale_sync_inst (
+    .clk(gtx_clk),
+    .in(rx_prescale[2]),
+    .out(rx_prescale_sync)
+);
+
+logic [6:0] rx_speed_count_1 = '0;
+logic [1:0] rx_speed_count_2 = '0;
+logic rx_prescale_sync_last_reg = 1'b0;
+
+logic [1:0] link_speed_reg = '0;
+
+assign link_speed = link_speed_reg;
+
+always_ff @(posedge gtx_clk) begin
+    rx_prescale_sync_last_reg <= rx_prescale_sync;
+    rx_speed_count_1 <= rx_speed_count_1 + 1;
+
+    if (rx_prescale_sync ^ rx_prescale_sync_last_reg) begin
+        rx_speed_count_2 <= rx_speed_count_2 + 1;
+    end
+
+    if (&rx_speed_count_1) begin
+        // reference count overflow - 10M
+        rx_speed_count_1 <= '0;
+        rx_speed_count_2 <= '0;
+        link_speed_reg <= 2'b00;
+    end
+
+    if (&rx_speed_count_2) begin
+        // prescaled count overflow - 100M or 1000M
+        rx_speed_count_1 <= '0;
+        rx_speed_count_2 <= '0;
+        if (rx_speed_count_1[6:5] != 0) begin
+            // large reference count - 100M
+            link_speed_reg <= 2'b01;
+        end else begin
+            // small reference count - 1000M
+            link_speed_reg <= 2'b10;
+        end
+    end
+
+    if (gtx_rst) begin
+        rx_speed_count_1 <= '0;
+        rx_speed_count_2 <= '0;
+        link_speed_reg <= 2'b10;
+    end
+end
 
 taxi_ssio_sdr_in #(
     .SIM(SIM),
@@ -92,16 +154,16 @@ if (!SIM && VENDOR == "XILINX") begin
 
     BUFGMUX
     gmii_bufgmux_inst (
-        .I0(gtx_clk),
-        .I1(phy_mii_tx_clk),
-        .S(mii_select),
+        .I0(phy_mii_tx_clk),
+        .I1(gtx_clk),
+        .S(link_speed_reg[1]),
         .O(mac_gmii_tx_clk)
     );
 
 end else begin
     // generic/simulation implementation (no vendor primitives)
 
-    assign mac_gmii_tx_clk = mii_select ? phy_mii_tx_clk : gtx_clk;
+    assign mac_gmii_tx_clk = link_speed_reg[1] ? gtx_clk : phy_mii_tx_clk;
 
 end
 
